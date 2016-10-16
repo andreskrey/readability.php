@@ -4,7 +4,7 @@ namespace andreskrey\Readability;
 
 use DOMDocument;
 
-class Readability
+class HTMLParser
 {
 
     private $dom = null;
