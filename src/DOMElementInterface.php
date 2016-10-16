@@ -2,7 +2,9 @@
 
 namespace andreskrey\Readability;
 
-interface DOMElementInterface
+use League\HTMLToMarkdown\ElementInterface;
+
+interface DOMElementInterface extends ElementInterface
 {
     /**
      * @param string $value
@@ -16,4 +18,10 @@ interface DOMElementInterface
      * @return bool
      */
     public function hasSinglePNode();
+
+    /**
+     *
+     * @return integer
+     */
+    public function getNodeAncestors();
 }

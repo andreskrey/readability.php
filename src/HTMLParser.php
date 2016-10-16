@@ -51,6 +51,8 @@ class HTMLParser
         $root = new DOMElement($root);
 
         $this->getNodes($root);
+
+        $this->rateNodes($this->elementsToScore);
     }
 
     private function loadHTML($html)
@@ -133,6 +135,41 @@ class HTMLParser
             $node = $pNode[0];
         }
 
-        $this->elementsToScore[] = $node;
+        if (trim($node->getValue())) {
+            $this->elementsToScore[] = $node;
+        }
+    }
+
+    /**
+     * @param DOMElement $nodes
+     */
+    private function rateNodes($nodes)
+    {
+        $candidates = [];
+
+        foreach ($nodes as $node) {
+            if (strlen($node->getValue()) < 25) {
+                continue;
+            }
+
+            $ancestors = $node->getNodeAncestors();
+            if ($ancestors < 3) {
+                continue;
+            }
+
+            // Start with a point for the paragraph itself as a base.
+            $contentScore = 1;
+
+            // Add points for any commas within this paragraph.
+            $contentScore += count(explode(', ', $node->getValue()));
+
+            // For every 100 characters in this paragraph, add another point. Up to 3 points.
+            $contentScore += min(floor(strlen($node->getValue()) / 100), 3);
+
+            foreach ($ancestors as $ancestor) {
+                $tes  = $ancestor->node->getTagName();
+            }
+
+        }
     }
 }

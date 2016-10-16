@@ -54,4 +54,26 @@ class DOMElement extends Element implements DOMElementInterface
 
         return false;
     }
+
+    /**
+     * @param integer $maxLevel
+     * @return array
+     */
+    public function getNodeAncestors($maxLevel = 3)
+    {
+        $ancestors = [];
+        $level = 0;
+
+        $node = $this;
+        while ($node->getParent()) {
+            $ancestors[] = new static($this->node);
+            $level++;
+            if ($level >= $maxLevel) {
+                break;
+            }
+            $node = $node->getParent();
+        }
+
+        return $ancestors;
+    }
 }
