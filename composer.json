@@ -20,7 +20,8 @@
     "require": {
         "php": ">=5.3.3",
         "ext-dom": "*",
-        "ext-xml": "*"
+        "ext-xml": "*",
+        "league/html-to-markdown": "^4.2"
     },
     "require-dev": {
         "phpunit/phpunit": "4.*"
