@@ -48,7 +48,7 @@ class HTMLParser
             throw new \InvalidArgumentException('Invalid HTML was provided');
         }
 
-        $root = new Element($root);
+        $root = new DOMElement($root);
 
         $this->getNodes($root);
     }
@@ -109,7 +109,7 @@ class HTMLParser
         return null;
     }
 
-    private function getNodes(ElementInterface $node)
+    private function getNodes(DOMElementInterface $node)
     {
         $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
