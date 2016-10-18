@@ -11,11 +11,6 @@ class DOMElement extends Element implements DOMElementInterface
      */
     protected $node;
 
-    /**
-     * @var DOMElementInterface|null
-     */
-    private $nextCached;
-
     public function __construct(\DOMNode $node)
     {
         parent::__construct($node);
@@ -65,8 +60,9 @@ class DOMElement extends Element implements DOMElementInterface
         $level = 0;
 
         $node = $this;
-        while ($node->getParent()) {
-            $ancestors[] = new static($this->node);
+
+        while ($node && $node->getParent()) {
+            $ancestors[] = new static($node->node);
             $level++;
             if ($level >= $maxLevel) {
                 break;
@@ -76,4 +72,17 @@ class DOMElement extends Element implements DOMElementInterface
 
         return $ancestors;
     }
+
+    /**
+     * Overloading the getParent function from League\html-to-markdown due to a bug when there are no more parents
+     * on the selected element.
+     *
+     * @return DOMElementInterface|null
+     */
+    public function getParent()
+    {
+        $node = $this->node->parentNode;
+        return ($node) ? new static($node) : null;
+    }
+
 }
