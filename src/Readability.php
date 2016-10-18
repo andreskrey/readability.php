@@ -4,16 +4,27 @@ namespace andreskrey\Readability;
 
 class Readability implements ReadabilityInterface
 {
+    /**
+     * @var int
+     */
     protected $score = 0;
 
+    /**
+     * @var null
+     */
     protected $node;
 
+    /**
+     * @var array
+     */
     private $regexps = [
         'positive' => '/article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story/i',
         'negative' => '/hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|foot|footer|footnote|masthead|media|meta|modal|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|tool|widget/i',
     ];
 
     /**
+     * Constructor
+     *
      * @param DOMElement $node
      */
     public function __construct($node)
@@ -21,6 +32,11 @@ class Readability implements ReadabilityInterface
         $this->node = $node;
     }
 
+    /**
+     * Initializer. Calculates the current score of the node and returns a full Readability object.
+     *
+     * @return Readability
+     */
     public function initializeNode()
     {
         switch ($this->node->getTagName()) {
@@ -61,6 +77,12 @@ class Readability implements ReadabilityInterface
         return $this;
     }
 
+    /**
+     * Calculates the weight of the class/id of the current element
+     *
+     * @todo check for flag that lets this function run or not
+     * @return int
+     */
     public function getClassWeight()
     {
         // if(!Config::FLAG_WEIGHT_CLASSES) return 0;
@@ -94,6 +116,11 @@ class Readability implements ReadabilityInterface
         return $weight;
     }
 
+    /**
+     * Returns the current score of the Readability object.
+     *
+     * @return int
+     */
     public function getScore()
     {
         return $this->score;

@@ -4,6 +4,15 @@ namespace andreskrey\Readability;
 
 use League\HTMLToMarkdown\Element;
 
+/**
+ * Class DOMElement
+ *
+ * This is a extension of the original Element class from League\HTMLToMarkdown\Element.
+ * This class adds functions specific to Readability.php and overloads some of them to fit the purpose of this project.
+ *
+ * @package andreskrey\Readability
+ */
+
 class DOMElement extends Element implements DOMElementInterface
 {
     /**
@@ -11,13 +20,20 @@ class DOMElement extends Element implements DOMElementInterface
      */
     protected $node;
 
+    /**
+     * Constructor
+     *
+     * @param \DOMNode $node Selected element from DOMDocument
+     */
     public function __construct(\DOMNode $node)
     {
         parent::__construct($node);
     }
 
     /**
-     * @param string $value
+     * Checks for the tag name. Case insensitive.
+     *
+     * @param string $value Name to compare to the current tag
      *
      * @return bool
      */
@@ -32,6 +48,9 @@ class DOMElement extends Element implements DOMElementInterface
     }
 
     /**
+     * Checks if the current node has a single child and if that child is a P node.
+     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
+     * tags are, in practice, paragraphs.
      *
      * @return bool
      */
@@ -51,7 +70,9 @@ class DOMElement extends Element implements DOMElementInterface
     }
 
     /**
-     * @param integer $maxLevel
+     * Get the ancestors of the current node.
+     *
+     * @param int $maxLevel Max amount of ancestors to get.
      * @return array
      */
     public function getNodeAncestors($maxLevel = 3)
@@ -74,7 +95,7 @@ class DOMElement extends Element implements DOMElementInterface
     }
 
     /**
-     * Overloading the getParent function from League\html-to-markdown due to a bug when there are no more parents
+     * Overloading the getParent function from League\HTMLToMarkdown\Element due to a bug when there are no more parents
      * on the selected element.
      *
      * @return DOMElementInterface|null
