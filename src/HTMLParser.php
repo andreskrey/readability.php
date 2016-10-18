@@ -5,10 +5,9 @@ namespace andreskrey\Readability;
 use DOMDocument;
 
 /**
- * Class HTMLParser
+ * Class HTMLParser.
  *
  * A helper class to parse HTML and get a Readability object.
- *
  */
 class HTMLParser
 {
@@ -46,12 +45,11 @@ class HTMLParser
         'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
         'whitespace' => '/^\s*$/',
-        'hasContent' => '/\S$/'
+        'hasContent' => '/\S$/',
     ];
 
     /**
-     * Constructor
-     *
+     * Constructor.
      */
     public function __construct()
     {
@@ -62,7 +60,7 @@ class HTMLParser
     }
 
     /**
-     * Parse the html. This is the main entry point of the HTMLParser
+     * Parse the html. This is the main entry point of the HTMLParser.
      *
      * @param string $html Full html of the website, page, etc.
      *
@@ -116,7 +114,7 @@ class HTMLParser
     }
 
     /**
-     * Tries to guess relevant info from metadata of the html
+     * Tries to guess relevant info from metadata of the html.
      *
      * @return array Metadata info. May have title, excerpt and or byline.
      */
@@ -124,7 +122,7 @@ class HTMLParser
     {
         $metadata = [];
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
-            /** @var DOMElement $meta */
+            /* @var DOMElement $meta */
             $name = $meta->getAttribute('name');
             $property = $meta->getAttribute('property');
 
@@ -241,7 +239,6 @@ class HTMLParser
                 $readability = new Readability($ancestor);
                 $candidates[] = $readability->initializeNode();
             }
-
         }
     }
 }
