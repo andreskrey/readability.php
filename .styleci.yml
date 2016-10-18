@@ -5,3 +5,5 @@ enabled:
 
 disabled:
   - concat_without_spaces
+  - no_useless_return
+  - no_multiline_whitespace_around_double_arrow
