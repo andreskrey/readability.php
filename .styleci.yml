@@ -2,8 +2,9 @@ preset: recommended
 
 enabled:
   - concat_with_spaces
+  - unalign_double_arrow
 
 disabled:
   - concat_without_spaces
-  - no_useless_return
-  - no_multiline_whitespace_around_double_arrow
+  - align_double_arrow
+  - phpdoc_no_empty_return
