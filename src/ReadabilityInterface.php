@@ -23,5 +23,4 @@ interface ReadabilityInterface
      * @return int
      */
     public function getClassWeight();
-
 }
