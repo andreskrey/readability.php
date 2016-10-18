@@ -5,14 +5,11 @@ namespace andreskrey\Readability;
 use League\HTMLToMarkdown\Element;
 
 /**
- * Class DOMElement
+ * Class DOMElement.
  *
  * This is a extension of the original Element class from League\HTMLToMarkdown\Element.
  * This class adds functions specific to Readability.php and overloads some of them to fit the purpose of this project.
- *
- * @package andreskrey\Readability
  */
-
 class DOMElement extends Element implements DOMElementInterface
 {
     /**
@@ -21,7 +18,7 @@ class DOMElement extends Element implements DOMElementInterface
     protected $node;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param \DOMNode $node Selected element from DOMDocument
      */
@@ -73,6 +70,7 @@ class DOMElement extends Element implements DOMElementInterface
      * Get the ancestors of the current node.
      *
      * @param int $maxLevel Max amount of ancestors to get.
+     *
      * @return array
      */
     public function getNodeAncestors($maxLevel = 3)
@@ -103,7 +101,7 @@ class DOMElement extends Element implements DOMElementInterface
     public function getParent()
     {
         $node = $this->node->parentNode;
+
         return ($node) ? new static($node) : null;
     }
-
 }
