@@ -19,7 +19,7 @@ interface DOMElementInterface extends ElementInterface
     public function hasSinglePNode();
 
     /**
-     * @return integer
+     * @return int
      */
     public function getNodeAncestors();
 }
