@@ -23,7 +23,7 @@ class Readability implements ReadabilityInterface
     ];
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param DOMElement $node
      */
@@ -78,9 +78,10 @@ class Readability implements ReadabilityInterface
     }
 
     /**
-     * Calculates the weight of the class/id of the current element
+     * Calculates the weight of the class/id of the current element.
      *
      * @todo check for flag that lets this function run or not
+     *
      * @return int
      */
     public function getClassWeight()

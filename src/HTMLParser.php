@@ -5,10 +5,9 @@ namespace andreskrey\Readability;
 use DOMDocument;
 
 /**
- * Class HTMLParser
+ * Class HTMLParser.
  *
  * A helper class to parse HTML and get a Readability object.
- *
  */
 class HTMLParser
 {
@@ -36,22 +35,21 @@ class HTMLParser
      * @var array
      */
     private $regexps = [
-        'unlikelyCandidates' => '/banner|combx|comment|community|disqus|extra|foot|header|menu|modal|related|remark|rss|share|shoutbox|sidebar|skyscraper|sponsor|ad-break|agegate|pagination|pager|popup/i',
+        'unlikelyCandidates'   => '/banner|combx|comment|community|disqus|extra|foot|header|menu|modal|related|remark|rss|share|shoutbox|sidebar|skyscraper|sponsor|ad-break|agegate|pagination|pager|popup/i',
         'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
-        'extraneous' => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
-        'byline' => '/byline|author|dateline|writtenby|p-author/i',
-        'replaceFonts' => '/<(\/?)font[^>]*>/gi',
-        'normalize' => '/\s{2,}/g',
-        'videos' => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
-        'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
-        'prevLink' => '/(prev|earl|old|new|<|«)/i',
-        'whitespace' => '/^\s*$/',
-        'hasContent' => '/\S$/'
+        'extraneous'           => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
+        'byline'               => '/byline|author|dateline|writtenby|p-author/i',
+        'replaceFonts'         => '/<(\/?)font[^>]*>/gi',
+        'normalize'            => '/\s{2,}/g',
+        'videos'               => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
+        'nextLink'             => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
+        'prevLink'             => '/(prev|earl|old|new|<|«)/i',
+        'whitespace'           => '/^\s*$/',
+        'hasContent'           => '/\S$/',
     ];
 
     /**
-     * Constructor
-     *
+     * Constructor.
      */
     public function __construct()
     {
@@ -62,7 +60,7 @@ class HTMLParser
     }
 
     /**
-     * Parse the html. This is the main entry point of the HTMLParser
+     * Parse the html. This is the main entry point of the HTMLParser.
      *
      * @param string $html Full html of the website, page, etc.
      *
@@ -116,7 +114,7 @@ class HTMLParser
     }
 
     /**
-     * Tries to guess relevant info from metadata of the html
+     * Tries to guess relevant info from metadata of the html.
      *
      * @return array Metadata info. May have title, excerpt and or byline.
      */
@@ -124,7 +122,7 @@ class HTMLParser
     {
         $metadata = [];
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
-            /** @var DOMElement $meta */
+            /* @var DOMElement $meta */
             $name = $meta->getAttribute('name');
             $property = $meta->getAttribute('property');
 
@@ -162,8 +160,6 @@ class HTMLParser
         if ($title) {
             return $title->item(0)->nodeValue;
         }
-
-        return null;
     }
 
     /**
@@ -173,7 +169,7 @@ class HTMLParser
      */
     private function getNodes(DOMElementInterface $node)
     {
-        $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
+        $matchString = $node->getAttribute('class').' '.$node->getAttribute('id');
 
         // Avoid elements that are unlikely to have any useful information.
         if (
@@ -241,7 +237,6 @@ class HTMLParser
                 $readability = new Readability($ancestor);
                 $candidates[] = $readability->initializeNode();
             }
-
         }
     }
 }
