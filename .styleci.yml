@@ -7,4 +7,3 @@ enabled:
 disabled:
   - concat_without_spaces
   - align_double_arrow
-  - phpdoc_no_empty_return
