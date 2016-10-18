@@ -14,13 +14,11 @@ interface DOMElementInterface extends ElementInterface
     public function tagNameEqualsTo($value);
 
     /**
-     *
      * @return bool
      */
     public function hasSinglePNode();
 
     /**
-     *
      * @return integer
      */
     public function getNodeAncestors();
