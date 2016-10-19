@@ -7,7 +7,7 @@ class Readability implements ReadabilityInterface
     /**
      * @var int
      */
-    protected $score = 0;
+    protected $contentScore = 0;
 
     /**
      * @var null
@@ -41,13 +41,13 @@ class Readability implements ReadabilityInterface
     {
         switch ($this->node->getTagName()) {
             case 'div':
-                $this->score += 5;
+                $this->contentScore += 5;
                 break;
 
             case 'pre':
             case 'td':
             case 'blockquote':
-                $this->score += 3;
+                $this->contentScore += 3;
                 break;
 
             case 'address':
@@ -58,7 +58,7 @@ class Readability implements ReadabilityInterface
             case 'dt':
             case 'li':
             case 'form':
-                $this->score -= 3;
+                $this->contentScore -= 3;
                 break;
 
             case 'h1':
@@ -68,11 +68,11 @@ class Readability implements ReadabilityInterface
             case 'h5':
             case 'h6':
             case 'th':
-                $this->score -= 5;
+                $this->contentScore -= 5;
                 break;
         }
 
-        $this->score += $this->getClassWeight();
+        $this->contentScore += $this->getClassWeight();
 
         return $this;
     }
@@ -122,8 +122,32 @@ class Readability implements ReadabilityInterface
      *
      * @return int
      */
-    public function getScore()
+    public function getContentScore()
     {
-        return $this->score;
+        return $this->contentScore;
+    }
+
+    /**
+     * Returns the current score of the Readability object.
+     *
+     * @param int $score
+     *
+     * @return int
+     */
+    public function setContentScore($score)
+    {
+        $this->contentScore = $score;
+
+        return $this->contentScore;
+    }
+
+    /**
+     * Returns the full text of the node.
+     *
+     * @return string
+     */
+    public function getTextContent()
+    {
+        return $this->node->getChildrenAsString();
     }
 }

@@ -12,7 +12,7 @@ interface ReadabilityInterface
     /**
      * @return int
      */
-    public function getScore();
+    public function getContentScore();
 
     /**
      * @return Readability
@@ -23,4 +23,11 @@ interface ReadabilityInterface
      * @return int
      */
     public function getClassWeight();
+
+    /**
+     * @param int $score
+     *
+     * @return int
+     */
+    public function setContentScore($score);
 }
