@@ -264,7 +264,7 @@ class HTMLParser
 
                 if ($level === 0) {
                     $scoreDivider = 1;
-                } else if ($level === 1) {
+                } elseif ($level === 1) {
                     $scoreDivider = 2;
                 } else {
                     $scoreDivider = $level * 3;
@@ -290,7 +290,6 @@ class HTMLParser
                  */
 
                 $candidate->setContentScore($candidate->getContentScore() * (1 - $this->getLinkDensity($candidate)));
-
             }
         }
     }
