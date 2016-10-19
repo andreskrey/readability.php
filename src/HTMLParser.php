@@ -146,6 +146,22 @@ class HTMLParser
     }
 
     /**
+     * Get the density of links as a percentage of the content
+     * This is the amount of text that is inside a link divided by the total text in the node.
+     *
+     * @param Readability $readability
+     *
+     * @return int
+     */
+    public function getLinkDensity($readability)
+    {
+        $text = $readability->getTextContent();
+
+
+        return 1;
+    }
+
+    /**
      * Returns the title of the html. Prioritizes the title from the metadata against the title tag.
      *
      * @return string|null
@@ -235,9 +251,46 @@ class HTMLParser
             $contentScore += min(floor(strlen($node->getValue()) / 100), 3);
 
             // Initialize and score ancestors.
-            foreach ($ancestors as $ancestor) {
+            foreach ($ancestors as $level => $ancestor) {
                 $readability = new Readability($ancestor);
-                $candidates[] = $readability->initializeNode();
+                $readability = $readability->initializeNode();
+
+                /*
+                 * Node score divider:
+                 *  - parent:             1 (no division)
+                 *  - grandparent:        2
+                 *  - great grandparent+: ancestor level * 3
+                 */
+
+                if ($level === 0) {
+                    $scoreDivider = 1;
+                } else if ($level === 1) {
+                    $scoreDivider = 2;
+                } else {
+                    $scoreDivider = $level * 3;
+                }
+
+                $currentScore = $readability->getContentScore();
+                $readability->setContentScore($currentScore + ($contentScore / $scoreDivider));
+
+                $candidates[] = $readability;
+            }
+
+            /*
+             * After we've calculated scores, loop through all of the possible
+             * candidate nodes we found and find the one with the highest score.
+             */
+
+            $topCandidates = [];
+            foreach ($candidates as $candidate) {
+                /*
+                 * Scale the final candidates score based on link density. Good content
+                 * should have a relatively small link density (5% or less) and be mostly
+                 * unaffected by this operation.
+                 */
+
+                $candidate->setContentScore($candidate->getContentScore() * (1 - $this->getLinkDensity($candidate)));
+
             }
         }
     }
