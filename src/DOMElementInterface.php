@@ -22,4 +22,9 @@ interface DOMElementInterface extends ElementInterface
      * @return int
      */
     public function getNodeAncestors();
+
+    /**
+     * @return DOMElement|null
+     */
+    public function getAllLinks();
 }

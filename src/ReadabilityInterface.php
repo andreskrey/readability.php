@@ -30,4 +30,9 @@ interface ReadabilityInterface
      * @return int
      */
     public function setContentScore($score);
+
+    /**
+     * @return DOMElement|null
+     */
+    public function getAllLinks();
 }
