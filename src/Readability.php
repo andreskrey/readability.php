@@ -150,4 +150,14 @@ class Readability implements ReadabilityInterface
     {
         return $this->node->getChildrenAsString();
     }
+
+    /**
+     * Returns all links from the current element.
+     *
+     * @return DOMElement|null
+     */
+    public function getAllLinks()
+    {
+        return $this->node->getAllLinks();
+    }
 }

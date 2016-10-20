@@ -155,10 +155,21 @@ class HTMLParser
      */
     public function getLinkDensity($readability)
     {
-        $text = $readability->getTextContent();
+        $linkLength = 0;
+        $textLength = strlen($readability->getTextContent());
 
+        if (!$textLength) {
+            return 0;
+        }
 
-        return 1;
+        $links = $readability->getAllLinks();
+
+        foreach ($links as $link) {
+            // TODO This is not very pretty, $link should be a Element type
+            $linkLength += strlen($link->C14N());
+        }
+
+        return $linkLength / $textLength;
     }
 
     /**

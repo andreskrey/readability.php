@@ -104,4 +104,14 @@ class DOMElement extends Element implements DOMElementInterface
 
         return ($node) ? new static($node) : null;
     }
+
+    /**
+     * Returns all links from the current element.
+     *
+     * @return DOMElement|null
+     */
+    public function getAllLinks()
+    {
+        return $this->node->getElementsByTagName('a');
+    }
 }
