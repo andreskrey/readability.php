@@ -89,7 +89,7 @@ class HTMLParser
             throw new \InvalidArgumentException('Invalid HTML was provided');
         }
 
-        $root = new DOMElement($root);
+        $root = new Readability($root);
 
         $this->getNodes($root);
 
@@ -139,7 +139,7 @@ class HTMLParser
     {
         $metadata = [];
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
-            /* @var DOMElement $meta */
+            /* @var Readability $meta */
             $name = $meta->getAttribute('name');
             $property = $meta->getAttribute('property');
 
@@ -213,9 +213,9 @@ class HTMLParser
     /**
      * Gets nodes from the root element.
      *
-     * @param $node DOMElementInterface
+     * @param $node ReadabilityInterface
      */
-    private function getNodes(DOMElementInterface $node)
+    private function getNodes(ReadabilityInterface $node)
     {
         $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
@@ -257,6 +257,7 @@ class HTMLParser
     {
         $candidates = [];
 
+        /** @var Readability $node */
         foreach ($nodes as $node) {
 
             // Discard nodes with less than 25 characters
@@ -281,9 +282,9 @@ class HTMLParser
             $contentScore += min(floor(strlen($node->getValue()) / 100), 3);
 
             // Initialize and score ancestors.
+            /** @var Readability $ancestor */
             foreach ($ancestors as $level => $ancestor) {
-                $readability = new Readability($ancestor);
-                $readability = $readability->initializeNode();
+                $readability = $ancestor->initializeNode();
 
                 /*
                  * Node score divider:
