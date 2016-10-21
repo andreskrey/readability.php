@@ -112,6 +112,6 @@ class DOMElement extends Element implements DOMElementInterface
      */
     public function getAllLinks()
     {
-        return $this->node->getElementsByTagName('a');
+        return ($this->isText()) ? null : $this->node->getElementsByTagName('a');
     }
 }
