@@ -49,17 +49,19 @@ class HTMLParser
     ];
 
     /**
-     * @var int
-     *
-     * @todo this should be inside a configuration class
-     */
-    private $maxTopCandidates = 5;
-
-    /**
      * Constructor.
+     * @param array $options Options to override the default ones
      */
-    public function __construct()
+    public function __construct(array $options = [])
     {
+        $defaults = array(
+            'maxTopCandidates' => 5, // Max amount of top level candidates
+        );
+
+        $this->environment = Environment::createDefaultEnvironment($defaults);
+
+        $this->environment->getConfig()->merge($options);
+
         $this->dom = new DOMDocument('1.0', 'utf-8');
 
         // To avoid having a gazillion of errors on malformed HTMLs
@@ -101,6 +103,14 @@ class HTMLParser
     {
         $this->dom->loadHTML($html);
         $this->dom->encoding = 'UTF-8';
+    }
+
+    /**
+     * @return Configuration
+     */
+    public function getConfig()
+    {
+        return $this->environment->getConfig();
     }
 
     /**
@@ -313,12 +323,12 @@ class HTMLParser
 
             $candidate->setContentScore($candidate->getContentScore() * (1 - $this->getLinkDensity($candidate)));
 
-            for ($i = 1; $i < $this->maxTopCandidates; $i++) {
+            for ($i = 1; $i < $this->getConfig()->getOption('maxTopCandidates'); $i++) {
                 $aTopCandidate = isset($topCandidates[$i]) ? $topCandidates[$i] : null;
 
                 if (!$aTopCandidate || $candidate->getContentScore() > $aTopCandidate->getContentScore()) {
                     array_splice($topCandidates, $i, 0, [$candidate]);
-                    if (count($topCandidates) > $this->maxTopCandidates) {
+                    if (count($topCandidates) > $this->getConfig()->getOption('maxTopCandidates')) {
                         array_pop($topCandidates);
                     }
                     break;
