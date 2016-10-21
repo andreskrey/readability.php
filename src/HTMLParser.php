@@ -50,6 +50,7 @@ class HTMLParser
 
     /**
      * @var int
+     *
      * @todo this should be inside a configuration class
      */
     private $maxTopCandidates = 5;
@@ -321,7 +322,6 @@ class HTMLParser
                         array_pop($topCandidates);
                     }
                     break;
-
                 }
             }
         }
@@ -329,5 +329,4 @@ class HTMLParser
         $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
         $neededToCreateTopCandidate = false;
     }
-
 }
