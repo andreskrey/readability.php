@@ -2,12 +2,31 @@
 
 namespace andreskrey\Readability;
 
-interface ReadabilityInterface
+use League\HTMLToMarkdown\ElementInterface;
+
+interface ReadabilityInterface extends ElementInterface
 {
     /**
-     * @param DOMElement $node
+     * @param string $value
+     *
+     * @return bool
      */
-    public function __construct($node);
+    public function tagNameEqualsTo($value);
+
+    /**
+     * @return bool
+     */
+    public function hasSinglePNode();
+
+    /**
+     * @return int
+     */
+    public function getNodeAncestors();
+
+    /**
+     * @return Readability|null
+     */
+    public function getAllLinks();
 
     /**
      * @return int
@@ -30,9 +49,4 @@ interface ReadabilityInterface
      * @return int
      */
     public function setContentScore($score);
-
-    /**
-     * @return DOMElement|null
-     */
-    public function getAllLinks();
 }
