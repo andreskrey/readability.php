@@ -49,6 +49,12 @@ class HTMLParser
     ];
 
     /**
+     * @var int
+     * @todo this should be inside a configuration class
+     */
+    private $maxTopCandidates = 5;
+
+    /**
      * Constructor.
      */
     public function __construct()
@@ -164,9 +170,11 @@ class HTMLParser
 
         $links = $readability->getAllLinks();
 
-        foreach ($links as $link) {
-            // TODO This is not very pretty, $link should be a Element type
-            $linkLength += strlen($link->C14N());
+        if ($links) {
+            foreach ($links as $link) {
+                // TODO This is not very pretty, $link should be a Element type
+                $linkLength += strlen($link->C14N());
+            }
         }
 
         return $linkLength / $textLength;
@@ -286,22 +294,40 @@ class HTMLParser
 
                 $candidates[] = $readability;
             }
+        }
+
+        /*
+         * After we've calculated scores, loop through all of the possible
+         * candidate nodes we found and find the one with the highest score.
+         */
+
+        $topCandidates = [];
+        foreach ($candidates as $candidate) {
 
             /*
-             * After we've calculated scores, loop through all of the possible
-             * candidate nodes we found and find the one with the highest score.
+             * Scale the final candidates score based on link density. Good content
+             * should have a relatively small link density (5% or less) and be mostly
+             * unaffected by this operation.
              */
 
-            $topCandidates = [];
-            foreach ($candidates as $candidate) {
-                /*
-                 * Scale the final candidates score based on link density. Good content
-                 * should have a relatively small link density (5% or less) and be mostly
-                 * unaffected by this operation.
-                 */
+            $candidate->setContentScore($candidate->getContentScore() * (1 - $this->getLinkDensity($candidate)));
 
-                $candidate->setContentScore($candidate->getContentScore() * (1 - $this->getLinkDensity($candidate)));
+            for ($i = 1; $i < $this->maxTopCandidates; $i++) {
+                $aTopCandidate = isset($topCandidates[$i]) ? $topCandidates[$i] : null;
+
+                if (!$aTopCandidate || $candidate->getContentScore() > $aTopCandidate->getContentScore()) {
+                    array_splice($topCandidates, $i, 0, [$candidate]);
+                    if (count($topCandidates) > $this->maxTopCandidates) {
+                        array_pop($topCandidates);
+                    }
+                    break;
+
+                }
             }
         }
+
+        $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
+        $neededToCreateTopCandidate = false;
     }
+
 }
