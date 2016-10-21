@@ -244,6 +244,6 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function getTextContent()
     {
-        return $this->node->getChildrenAsString();
+        return $this->getChildrenAsString();
     }
 }

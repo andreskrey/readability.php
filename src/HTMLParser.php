@@ -339,5 +339,54 @@ class HTMLParser
 
         $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
         $neededToCreateTopCandidate = false;
+
+        /*
+         * If we still have no top candidate, just use the body as a last resort.
+         * We also have to copy the body node so it is something we can modify.
+         */
+
+        if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
+            //TODO
+        } elseif ($topCandidate) {
+            /*
+             * Because of our bonus system, parents of candidates might have scores
+             * themselves. They get half of the node. There won't be nodes with higher
+             * scores than our topCandidate, but if we see the score going *up* in the first
+             * few steps up the tree, that's a decent sign that there might be more content
+             * lurking in other places that we want to unify in. The sibling stuff
+             * below does some of that - but only if we've looked high enough up the DOM
+             * tree.
+             */
+
+            $parentOfTopCandidate = $topCandidate->getParent();
+            $lastScore = $topCandidate->getContentScore();
+
+            // The scores shouldn't get too low.
+            $scoreThreshold = $lastScore / 3;
+
+            while ($parentOfTopCandidate) {
+                /** @var Readability $parentOfTopCandidate */
+                $parentScore = $parentOfTopCandidate->getContentScore();
+                if ($parentScore < $scoreThreshold) {
+                    break;
+                }
+
+                if ($parentScore > $lastScore) {
+                    // Alright! We found a better parent to use.
+                    $topCandidate = $parentOfTopCandidate;
+                    break;
+                }
+                $lastScore = $parentOfTopCandidate->getContentScore();
+                $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+            }
+        }
+
+        /*
+         * Now that we have the top candidate, look through its siblings for content
+         * that might also be related. Things like preambles, content split by ads
+         * that we removed, etc.
+         */
+
+
     }
 }
