@@ -387,6 +387,29 @@ class HTMLParser
          * that we removed, etc.
          */
 
+        $articleContent = new DOMDocument();
+        $articleContent->createElement('div');
 
+        $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
+        $siblings = $topCandidate->getChildren();
+
+        foreach ($siblings as $sibling) {
+            $append = false;
+
+            // TODO Check if this is working as expected
+            if ($sibling === $topCandidate) {
+                $append = true;
+            } else {
+                $contentBonus = 0;
+
+                // Give a bonus if sibling nodes and top candidates have the example same classname
+                if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
+                    $contentBonus += $topCandidate->getContentScore() * 0.2;
+                } elseif ($sibling->tagNameEqualsTo('p')) {
+
+                }
+            }
+        }
+        $test = 1;
     }
 }
