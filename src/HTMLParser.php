@@ -49,6 +49,18 @@ class HTMLParser
     ];
 
     /**
+     * @var array
+     */
+    private $alterToDIVExceptions = [
+        'div',
+        'article',
+        'section',
+        'p',
+        // TODO, check if this is correct, #text elements do not exist in js
+        '#text'
+    ];
+
+    /**
      * Constructor.
      * @param array $options Options to override the default ones
      */
@@ -173,7 +185,7 @@ class HTMLParser
     public function getLinkDensity($readability)
     {
         $linkLength = 0;
-        $textLength = strlen($readability->getTextContent());
+        $textLength = strlen($readability->getTextContent(true));
 
         if (!$textLength) {
             return 0;
@@ -182,9 +194,9 @@ class HTMLParser
         $links = $readability->getAllLinks();
 
         if ($links) {
+            /** @var Readability $link */
             foreach ($links as $link) {
-                // TODO This is not very pretty, $link should be a Element type
-                $linkLength += strlen($link->C14N());
+                $linkLength += strlen($link->getTextContent(true));
             }
         }
 
@@ -260,8 +272,8 @@ class HTMLParser
         /** @var Readability $node */
         foreach ($nodes as $node) {
 
-            // Discard nodes with less than 25 characters
-            if (strlen($node->getValue()) < 25) {
+            // Discard nodes with less than 25 characters, without blank space
+            if (strlen($node->getValue(true)) < 25) {
                 continue;
             }
 
@@ -276,10 +288,10 @@ class HTMLParser
             $contentScore = 1;
 
             // Add points for any commas within this paragraph.
-            $contentScore += count(explode(', ', $node->getValue()));
+            $contentScore += count(explode(', ', $node->getValue(true)));
 
             // For every 100 characters in this paragraph, add another point. Up to 3 points.
-            $contentScore += min(floor(strlen($node->getValue()) / 100), 3);
+            $contentScore += min(floor(strlen($node->getValue(true)) / 100), 3);
 
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
@@ -324,7 +336,7 @@ class HTMLParser
 
             $candidate->setContentScore($candidate->getContentScore() * (1 - $this->getLinkDensity($candidate)));
 
-            for ($i = 1; $i < $this->getConfig()->getOption('maxTopCandidates'); $i++) {
+            for ($i = 0; $i < $this->getConfig()->getOption('maxTopCandidates'); $i++) {
                 $aTopCandidate = isset($topCandidates[$i]) ? $topCandidates[$i] : null;
 
                 if (!$aTopCandidate || $candidate->getContentScore() > $aTopCandidate->getContentScore()) {
@@ -393,10 +405,11 @@ class HTMLParser
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
         $siblings = $topCandidate->getChildren();
 
+        /** @var Readability $sibling */
         foreach ($siblings as $sibling) {
             $append = false;
 
-            // TODO Check if this is working as expected
+            // TODO Check if this comparison working as expected
             if ($sibling === $topCandidate) {
                 $append = true;
             } else {
@@ -405,9 +418,35 @@ class HTMLParser
                 // Give a bonus if sibling nodes and top candidates have the example same classname
                 if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
                     $contentBonus += $topCandidate->getContentScore() * 0.2;
-                } elseif ($sibling->tagNameEqualsTo('p')) {
-
                 }
+                if ($sibling->getContentScore() + $contentBonus >= $siblingScoreThreshold) {
+                    $append = true;
+                } elseif ($sibling->tagNameEqualsTo('p')) {
+                    $linkDensity = $this->getLinkDensity($sibling);
+                    $nodeContent = $sibling->getTextContent(true);
+
+                    if (strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+                        $append = true;
+                        // TODO Check if pregmatch is working as expected
+                    } elseif ($nodeContent && strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('//\.( |$)/', $nodeContent)) {
+                        $append = true;
+                    }
+                }
+            }
+
+            if ($append) {
+                if (in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
+                    /*
+                     * We have a node that isn't a common block level element, like a form or td tag.
+                     * Turn it into a div so it doesn't get filtered out later by accident.
+                     */
+
+                    // TODO This is not working! Fix!
+//                    $sibling->setNodeName('div');
+                }
+
+                $import = $articleContent->importNode($sibling->getDOMNode());
+                $articleContent->appendChild($import);
             }
         }
         $test = 1;

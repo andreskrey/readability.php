@@ -121,11 +121,19 @@ class Readability extends Element implements ReadabilityInterface
     /**
      * Returns all links from the current element.
      *
-     * @return Readability|null
+     * @return array|null
      */
     public function getAllLinks()
     {
-        return ($this->isText()) ? null : $this->node->getElementsByTagName('a');
+        if (($this->isText())) {
+            return null;
+        } else {
+            $links = [];
+            foreach ($this->node->getElementsByTagName('a') as $link) {
+                $links[] = new Readability($link);
+            };
+            return $links;
+        }
     }
 
     /**
@@ -232,7 +240,8 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function setContentScore($score)
     {
-        $this->contentScore = $score;
+        // To prevent the -0 value
+        $this->contentScore = ($score === (double)-0) ? 0 : $score;
 
         return $this->contentScore;
     }
@@ -240,10 +249,36 @@ class Readability extends Element implements ReadabilityInterface
     /**
      * Returns the full text of the node.
      *
+     * @param bool $normalize Normalize white space?
+     *
      * @return string
      */
-    public function getTextContent()
+    public function getTextContent($normalize = false)
     {
-        return $this->getChildrenAsString();
+        $nodeValue = $this->node->nodeValue;
+        if ($normalize) {
+            $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
+        }
+        return $nodeValue;
+    }
+
+    /**
+     * Sets the node name
+     *
+     * @param string $value
+     */
+    public function setNodeName($value)
+    {
+        $this->node->nodeName = $value;
+    }
+
+    /**
+     * Returns the current DOMNode
+     *
+     * @return \DOMNode
+     */
+    public function getDOMNode()
+    {
+        return $this->node;
     }
 }
