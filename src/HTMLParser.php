@@ -68,6 +68,7 @@ class HTMLParser
     {
         $defaults = array(
             'maxTopCandidates' => 5, // Max amount of top level candidates
+            'articleByLine' => null,
         );
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -101,7 +102,10 @@ class HTMLParser
             throw new \InvalidArgumentException('Invalid HTML was provided');
         }
 
-        $root = new Readability($root);
+        // TODO: Check if this is correct. Originally the body was sent as root but this caused problems because
+        // the script wasn't able to find nextSiblings to scan the dom tree. Now we are sending the first child.
+        // Is this correct?
+        $root = new Readability($root->firstChild);
 
         $this->getNodes($root);
 
@@ -225,38 +229,46 @@ class HTMLParser
     /**
      * Gets nodes from the root element.
      *
-     * @param $node ReadabilityInterface
+     * @param $node Readability
      */
-    private function getNodes(ReadabilityInterface $node)
+    private function getNodes(Readability $node)
     {
-        $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
+        while ($node) {
 
-        // Avoid elements that are unlikely to have any useful information.
-        if (
-            preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
-            !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
-            !$node->tagNameEqualsTo('body') &&
-            !$node->tagNameEqualsTo('a')
-        ) {
-            return;
-        }
+            $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
-        // Loop over the element if it has children
-        if ($node->hasChildren()) {
-            foreach ($node->getChildren() as $child) {
-                $this->getNodes($child);
+            // Check to see if this node is a byline, and remove it if it is.
+            if ($this->checkByline($node, $matchString)) {
+                $node = $node->removeAndGetNext($node);
+                continue;
             }
-        }
 
-        // Check for nodes that have only on P node as a child and convert them to a single P node
-        if ($node->hasSinglePNode()) {
-            $pNode = $node->getChildren();
-            $node = $pNode[0];
-        }
 
-        // If there's any info on the node, add it to the elements to score in the next step.
-        if (trim($node->getValue())) {
-            $this->elementsToScore[] = $node;
+            // Avoid elements that are unlikely to have any useful information.
+            if (
+                preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
+                !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
+                !$node->tagNameEqualsTo('body') &&
+                !$node->tagNameEqualsTo('a')
+            ) {
+                $node = $node->removeAndGetNext($node);
+                continue;
+            }
+
+
+            // Check for nodes that have only on P node as a child and convert them to a single P node
+            if ($node->hasSinglePNode()) {
+                $pNode = $node->getChildren();
+                $node = $pNode[0];
+            }
+
+            // If there's any info on the node, add it to the elements to score in the next step.
+            if (trim($node->getValue())) {
+                $this->elementsToScore[] = $node;
+            }
+
+            // TODO Unfuck this:
+            $node = $node->removeAndGetNext($node);
         }
     }
 
@@ -370,6 +382,8 @@ class HTMLParser
              * tree.
              */
 
+            // TODO, while calling getParent, the new object should carry its own score.
+            // Should be calculated when gets created or we must nest all Readability objects to carry their own score?
             $parentOfTopCandidate = $topCandidate->getParent();
             $lastScore = $topCandidate->getContentScore();
 
@@ -450,5 +464,30 @@ class HTMLParser
             }
         }
         $test = 1;
+    }
+
+    private function checkByline($node, $matchString)
+    {
+        if (!$this->getConfig()->getOption('articleByLine')) {
+            return false;
+        }
+
+        $rel = $node->getAttribute('rel');
+
+        if ($rel === 'author' || preg_match($this->regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
+            $this->metadata['byline'] = trim($node->getTextContent());
+            return true;
+        }
+
+        return false;
+    }
+
+    private function isValidByline($text)
+    {
+        if (gettype($text) == 'string') {
+            $byline = trim($text);
+            return (strlen($byline) > 0) && (strlen($text) < 100);
+        }
+        return false;
     }
 }
