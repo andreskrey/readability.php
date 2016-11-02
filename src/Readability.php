@@ -281,4 +281,41 @@ class Readability extends Element implements ReadabilityInterface
     {
         return $this->node;
     }
+
+    public function removeAndGetNext($node)
+    {
+        $nextNode = $this->getNextNode($node, true);
+        $node->node->parentNode->removeChild($node);
+        return $nextNode;
+    }
+
+    private function getNextNode($originalNode, $ignoreSelfAndKids)
+    {
+        /**
+         * Traverse the DOM from node to node, starting at the node passed in.
+         * Pass true for the second parameter to indicate this node itself
+         * (and its kids) are going away, and we want the next node over.
+         *
+         * Calling this in a loop will traverse the DOM depth-first.
+         */
+
+        // First check for kids if those aren't being ignored
+        if (!$ignoreSelfAndKids && $originalNode->node->firstChild) {
+            return $originalNode->node->firstChild;
+        }
+
+        // Then for siblings...
+        if ($originalNode->node->nextSibling) {
+            return $originalNode->node->nextSibling;
+        }
+
+        // And finally, move up the parent chain *and* find a sibling
+        // (because this is depth-first traversal, we will have already
+        // seen the parent nodes themselves).
+        do {
+            $originalNode = $this->getParent();
+        } while ($originalNode && !$originalNode->node->nextSibling);
+
+        return $originalNode && $originalNode->node->nextSibling;
+    }
 }
