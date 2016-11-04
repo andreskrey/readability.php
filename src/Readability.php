@@ -146,8 +146,9 @@ class Readability extends Element implements ReadabilityInterface
         } else {
             $links = [];
             foreach ($this->node->getElementsByTagName('a') as $link) {
-                $links[] = new Readability($link);
-            };
+                $links[] = new self($link);
+            }
+
             return $links;
         }
     }
@@ -259,7 +260,7 @@ class Readability extends Element implements ReadabilityInterface
         if (get_class($this->node) !== 'DOMDocument') {
 
             // To prevent the -0 value
-            $this->contentScore = ($score === (double)-0) ? 0 : $score;
+            $this->contentScore = ($score === (float) -0) ? 0 : $score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('readability', $this->contentScore);
@@ -283,11 +284,12 @@ class Readability extends Element implements ReadabilityInterface
         if ($normalize) {
             $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
         }
+
         return $nodeValue;
     }
 
     /**
-     * Sets the node name
+     * Sets the node name.
      *
      * @param string $value
      */
@@ -297,7 +299,7 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Returns the current DOMNode
+     * Returns the current DOMNode.
      *
      * @return \DOMNode
      */
@@ -310,12 +312,13 @@ class Readability extends Element implements ReadabilityInterface
     {
         $nextNode = $this->getNextNode($node, true);
         $nextNode->node->parentNode->removeChild($node->node);
+
         return $nextNode;
     }
 
     public function getNextNode($originalNode, $ignoreSelfAndKids = false)
     {
-        /**
+        /*
          * Traverse the DOM from node to node, starting at the node passed in.
          * Pass true for the second parameter to indicate this node itself
          * (and its kids) are going away, and we want the next node over.

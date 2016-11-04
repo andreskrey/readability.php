@@ -69,19 +69,20 @@ class HTMLParser
         'section',
         'p',
         // TODO, check if this is correct, #text elements do not exist in js
-        '#text'
+        '#text',
     ];
 
     /**
      * Constructor.
+     *
      * @param array $options Options to override the default ones
      */
     public function __construct(array $options = [])
     {
-        $defaults = array(
+        $defaults = [
             'maxTopCandidates' => 5, // Max amount of top level candidates
             'articleByLine' => null,
-        );
+        ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
 
@@ -246,7 +247,6 @@ class HTMLParser
     private function getNodes(Readability $node)
     {
         while ($node) {
-
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
             // Check to see if this node is a byline, and remove it if it is.
@@ -405,7 +405,7 @@ class HTMLParser
             $scoreThreshold = $lastScore / 3;
 
             while ($parentOfTopCandidate) {
-                /** @var Readability $parentOfTopCandidate */
+                /* @var Readability $parentOfTopCandidate */
                 $parentScore = $parentOfTopCandidate->getContentScore();
                 if ($parentScore < $scoreThreshold) {
                     break;
@@ -491,6 +491,7 @@ class HTMLParser
 
         if ($rel === 'author' || preg_match($this->regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
             $this->metadata['byline'] = trim($node->getTextContent());
+
             return true;
         }
 
@@ -501,8 +502,10 @@ class HTMLParser
     {
         if (gettype($text) == 'string') {
             $byline = trim($text);
+
             return (strlen($byline) > 0) && (strlen($text) < 100);
         }
+
         return false;
     }
 

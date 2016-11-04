@@ -9,7 +9,7 @@ final class Environment
      */
     protected $config;
 
-    public function __construct(array $config = array())
+    public function __construct(array $config = [])
     {
         $this->config = new Configuration($config);
     }
@@ -27,7 +27,7 @@ final class Environment
      *
      * @return Environment
      */
-    public static function createDefaultEnvironment(array $config = array())
+    public static function createDefaultEnvironment(array $config = [])
     {
         $environment = new static($config);
 
