@@ -438,7 +438,8 @@ class HTMLParser
             $append = false;
 
             // TODO Check if this comparison working as expected
-            if ($sibling === $topCandidate) {
+            // On the original js project it was a simple $sibling == $topCandidate comparison.
+            if ($this->compareNodes($sibling, $topCandidate)) {
                 $append = true;
             } else {
                 $contentBonus = 0;
@@ -473,7 +474,7 @@ class HTMLParser
 //                    $sibling->setNodeName('div');
                 }
 
-                $import = $articleContent->importNode($sibling->getDOMNode());
+                $import = $articleContent->importNode($sibling->getDOMNode(), true);
                 $articleContent->appendChild($import);
             }
         }
@@ -503,5 +504,18 @@ class HTMLParser
             return (strlen($byline) > 0) && (strlen($text) < 100);
         }
         return false;
+    }
+
+    private function compareNodes($node1, $node2)
+    {
+        if ($node1->getTagName() !== $node2->getTagName()) {
+            return false;
+        }
+
+        if ($node1->getTextContent() !== $node2->getTextContent()) {
+            return false;
+        }
+
+        return true;
     }
 }
