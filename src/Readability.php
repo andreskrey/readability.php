@@ -38,6 +38,22 @@ class Readability extends Element implements ReadabilityInterface
     public function __construct(\DOMNode $node)
     {
         parent::__construct($node);
+
+        if (get_class($node) !== 'DOMText') {
+            /*
+             * Restore the score if the object has been already scored.
+             *
+             * And if must be added before calling the getAttribute function, because if we reacht eh DOMDocument
+             * by geting the node parents we'll get a undefined function fatal error
+             */
+            $score = 0;
+
+            if (get_class($node) !== 'DOMDocument') {
+                $score = $node->getAttribute('readability');
+            }
+
+            $this->setContentScore(($score) ? $score : 0);
+        }
     }
 
     /**
@@ -240,10 +256,18 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function setContentScore($score)
     {
-        // To prevent the -0 value
-        $this->contentScore = ($score === (double)-0) ? 0 : $score;
+        if (get_class($this->node) !== 'DOMDocument') {
 
-        return $this->contentScore;
+            // To prevent the -0 value
+            $this->contentScore = ($score === (double)-0) ? 0 : $score;
+
+            // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
+            $this->node->setAttribute('readability', $this->contentScore);
+
+            return $this->contentScore;
+        }
+
+        return 0;
     }
 
     /**
