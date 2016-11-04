@@ -9,7 +9,7 @@ class Configuration
     /**
      * @param array $config
      */
-    public function __construct(array $config = array())
+    public function __construct(array $config = [])
     {
         $this->config = $config;
     }
@@ -17,7 +17,7 @@ class Configuration
     /**
      * @param array $config
      */
-    public function merge(array $config = array())
+    public function merge(array $config = [])
     {
         $this->config = array_replace_recursive($this->config, $config);
     }
@@ -25,7 +25,7 @@ class Configuration
     /**
      * @param array $config
      */
-    public function replace(array $config = array())
+    public function replace(array $config = [])
     {
         $this->config = $config;
     }
