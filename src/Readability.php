@@ -261,7 +261,7 @@ class Readability extends Element implements ReadabilityInterface
 
             // To prevent the -0 value
             // TODO Might not be necessary now
-            $this->contentScore = ($score === (double)-0) ? 0 : $score;
+            $this->contentScore = ($score === (float) -0) ? 0 : $score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('readability', $this->contentScore);
