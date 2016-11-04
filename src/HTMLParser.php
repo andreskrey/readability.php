@@ -48,6 +48,18 @@ class HTMLParser
         'hasContent' => '/\S$/',
     ];
 
+    private $defaultTagsToScore = [
+        'section',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'p',
+        'td',
+        'pre',
+    ];
+
     /**
      * @var array
      */
@@ -243,7 +255,6 @@ class HTMLParser
                 continue;
             }
 
-
             // Avoid elements that are unlikely to have any useful information.
             if (
                 preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
@@ -255,20 +266,23 @@ class HTMLParser
                 continue;
             }
 
+            if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
+                $this->elementsToScore[] = $node;
+            }
 
             // Check for nodes that have only on P node as a child and convert them to a single P node
             if ($node->hasSinglePNode()) {
                 $pNode = $node->getChildren();
                 $node = $pNode[0];
-            }
 
-            // If there's any info on the node, add it to the elements to score in the next step.
-            if (trim($node->getValue())) {
-                $this->elementsToScore[] = $node;
+                // If there's any info on the node, add it to the elements to score in the next step.
+                if ($node->getValue(true)) {
+                    $this->elementsToScore[] = $node;
+                }
             }
 
             // TODO Unfuck this:
-            $node = $node->removeAndGetNext($node);
+            $node = $node->getNextNode($node);
         }
     }
 
