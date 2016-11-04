@@ -115,7 +115,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         $node = $this->node->parentNode;
 
-        return ($node) ? new static($node) : null;
+        return ($node) ? new self($node) : null;
     }
 
     /**
@@ -285,11 +285,11 @@ class Readability extends Element implements ReadabilityInterface
     public function removeAndGetNext($node)
     {
         $nextNode = $this->getNextNode($node, true);
-        $node->node->parentNode->removeChild($node);
+        $nextNode->node->parentNode->removeChild($node->node);
         return $nextNode;
     }
 
-    private function getNextNode($originalNode, $ignoreSelfAndKids)
+    public function getNextNode($originalNode, $ignoreSelfAndKids = false)
     {
         /**
          * Traverse the DOM from node to node, starting at the node passed in.
@@ -301,21 +301,21 @@ class Readability extends Element implements ReadabilityInterface
 
         // First check for kids if those aren't being ignored
         if (!$ignoreSelfAndKids && $originalNode->node->firstChild) {
-            return $originalNode->node->firstChild;
+            return new self($originalNode->node->firstChild);
         }
 
         // Then for siblings...
         if ($originalNode->node->nextSibling) {
-            return $originalNode->node->nextSibling;
+            return new self($originalNode->node->nextSibling);
         }
 
         // And finally, move up the parent chain *and* find a sibling
         // (because this is depth-first traversal, we will have already
         // seen the parent nodes themselves).
         do {
-            $originalNode = $this->getParent();
+            $originalNode = $originalNode->getParent();
         } while ($originalNode && !$originalNode->node->nextSibling);
 
-        return $originalNode && $originalNode->node->nextSibling;
+        return ($originalNode) ? new self($originalNode->node->nextSibling) : $originalNode;
     }
 }
