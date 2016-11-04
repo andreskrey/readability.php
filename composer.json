@@ -18,7 +18,7 @@
         }
     },
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=5.4.0",
         "ext-dom": "*",
         "ext-xml": "*",
         "league/html-to-markdown": "^4.2"
