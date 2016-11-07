@@ -1,7 +1,7 @@
 {
-    "name": "andreskrey/Readability",
+    "name": "andreskrey/readability.php",
     "type": "library",
-    "description": "A PHP port for Readability.js",
+    "description": "A PHP port of Readability.js",
     "keywords": ["readability", "html"],
     "homepage": "https://github.com/andreskrey/readability",
     "license": "MIT",
