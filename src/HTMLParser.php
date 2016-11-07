@@ -384,7 +384,10 @@ class HTMLParser
          */
 
         if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
-            //TODO
+            // Move all of the page's children into topCandidate
+            // TODO TEST THIS!
+            $topCandidate = new Readability($this->dom->getElementsByTagName('body')->item(0));
+            $topCandidate->initializeNode();
         } elseif ($topCandidate) {
             /*
              * Because of our bonus system, parents of candidates might have scores
