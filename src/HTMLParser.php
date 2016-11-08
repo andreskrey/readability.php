@@ -128,7 +128,7 @@ class HTMLParser
         return [
             'title' => $this->metadata['title'],
             'author' => $this->metadata['author'],
-            'article' => $result
+            'article' => $result,
         ];
     }
 
@@ -297,6 +297,7 @@ class HTMLParser
      * Assign scores to each node. This function will rate each node and return a Readability object for each one.
      *
      * @param array $nodes
+     *
      * @return DOMDocument
      */
     private function rateNodes($nodes)
