@@ -122,7 +122,14 @@ class HTMLParser
 
         $this->getNodes($root);
 
-        $this->rateNodes($this->elementsToScore);
+        $result = $this->rateNodes($this->elementsToScore);
+
+        // Todo, fix return, check for values, maybe create a function to create the return object
+        return [
+            'title' => $this->metadata['title'],
+            'author' => $this->metadata['author'],
+            'article' => $result
+        ];
     }
 
     /**
@@ -290,6 +297,7 @@ class HTMLParser
      * Assign scores to each node. This function will rate each node and return a Readability object for each one.
      *
      * @param array $nodes
+     * @return DOMDocument
      */
     private function rateNodes($nodes)
     {
@@ -481,7 +489,8 @@ class HTMLParser
                 $articleContent->appendChild($import);
             }
         }
-        $test = 1;
+
+        return $articleContent;
     }
 
     private function checkByline($node, $matchString)
