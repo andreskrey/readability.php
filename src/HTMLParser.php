@@ -288,7 +288,6 @@ class HTMLParser
                 }
             }
 
-            // TODO Unfuck this:
             $node = $node->getNextNode($node);
         }
     }
@@ -451,7 +450,7 @@ class HTMLParser
 
             // TODO Check if this comparison working as expected
             // On the original js project it was a simple $sibling == $topCandidate comparison.
-            if ($this->compareNodes($sibling, $topCandidate)) {
+            if ($sibling->compareNodes($sibling, $topCandidate)) {
                 $append = true;
             } else {
                 $contentBonus = 0;
@@ -494,6 +493,14 @@ class HTMLParser
         return $articleContent;
     }
 
+    /**
+     * Checks if the node is a byline.
+     *
+     * @param Readability $node
+     * @param string $matchString
+     *
+     * @return bool
+     */
     private function checkByline($node, $matchString)
     {
         if (!$this->getConfig()->getOption('articleByLine')) {
@@ -511,6 +518,13 @@ class HTMLParser
         return false;
     }
 
+    /**
+     * Checks the validity of a byLine. Based on string length.
+     *
+     * @param string $text
+     *
+     * @return bool
+     */
     private function isValidByline($text)
     {
         if (gettype($text) == 'string') {
@@ -520,18 +534,5 @@ class HTMLParser
         }
 
         return false;
-    }
-
-    private function compareNodes($node1, $node2)
-    {
-        if ($node1->getTagName() !== $node2->getTagName()) {
-            return false;
-        }
-
-        if ($node1->getTextContent() !== $node2->getTextContent()) {
-            return false;
-        }
-
-        return true;
     }
 }

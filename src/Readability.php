@@ -309,6 +309,13 @@ class Readability extends Element implements ReadabilityInterface
         return $this->node;
     }
 
+    /**
+     * Removes the current node and returns the next node to be parsed (child, sibling or parent)
+     *
+     * @param Readability $node
+     *
+     * @return Readability
+     */
     public function removeAndGetNext($node)
     {
         $nextNode = $this->getNextNode($node, true);
@@ -316,6 +323,16 @@ class Readability extends Element implements ReadabilityInterface
 
         return $nextNode;
     }
+
+    /**
+     * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
+     * for parents.
+     *
+     * @param Readability $originalNode
+     * @param bool $ignoreSelfAndKids
+     *
+     * @return Readability
+     */
 
     public function getNextNode($originalNode, $ignoreSelfAndKids = false)
     {
@@ -345,5 +362,33 @@ class Readability extends Element implements ReadabilityInterface
         } while ($originalNode && !$originalNode->node->nextSibling);
 
         return ($originalNode) ? new self($originalNode->node->nextSibling) : $originalNode;
+    }
+
+    /**
+     * Compares nodes. Checks for tag name and text content.
+     *
+     * It's a replacement of the original JS code, which looked like this:
+     *
+     * $node1 == $node2
+     *
+     * I'm not sure this works the same in PHP, so I created a mock function to check the actual content of the node.
+     * Should serve the same porpuse as the original comparison.
+     *
+     * @param Readability $node1
+     * @param Readability $node2
+     *
+     * @return bool
+     */
+    public function compareNodes($node1, $node2)
+    {
+        if ($node1->getTagName() !== $node2->getTagName()) {
+            return false;
+        }
+
+        if ($node1->getTextContent() !== $node2->getTextContent()) {
+            return false;
+        }
+
+        return true;
     }
 }
