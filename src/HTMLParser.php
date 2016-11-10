@@ -111,13 +111,11 @@ class HTMLParser
 
         $this->title = $this->getTitle();
 
+        // Checking for minimum HTML to work with.
         if (!($root = $this->dom->getElementsByTagName('body')->item(0))) {
-            throw new \InvalidArgumentException('Invalid HTML was provided');
+            return false;
         }
 
-        // TODO: Check if this is correct. Originally the body was sent as root but this caused problems because
-        // the script wasn't able to find nextSiblings to scan the dom tree. Now we are sending the first child.
-        // Is this correct?
         $root = new Readability($root->firstChild);
 
         $this->getNodes($root);
