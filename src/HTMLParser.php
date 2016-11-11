@@ -405,8 +405,6 @@ class HTMLParser
              * tree.
              */
 
-            // TODO, while calling getParent, the new object should carry its own score.
-            // Should be calculated when gets created or we must nest all Readability objects to carry their own score?
             $parentOfTopCandidate = $topCandidate->getParent();
             $lastScore = $topCandidate->getContentScore();
 
