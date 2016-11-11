@@ -404,6 +404,7 @@ class HTMLParser
                 $topCandidate->firstChild->appendChild($import);
             }
 
+            // Readability must be created using firstChild to grab de DOMElement instead of the DOMDocument.
             $topCandidate = new Readability($topCandidate->firstChild);
             $topCandidate->initializeNode();
 
