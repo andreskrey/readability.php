@@ -329,7 +329,7 @@ class HTMLParser
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
             foreach ($ancestors as $level => $ancestor) {
-                $readability = $ancestor->initializeNode();
+                $ancestor = $ancestor->initializeNode();
 
                 /*
                  * Node score divider:
@@ -346,10 +346,10 @@ class HTMLParser
                     $scoreDivider = $level * 3;
                 }
 
-                $currentScore = $readability->getContentScore();
-                $readability->setContentScore($currentScore + ($contentScore / $scoreDivider));
+                $currentScore = $ancestor->getContentScore();
+                $ancestor->setContentScore($currentScore + ($contentScore / $scoreDivider));
 
-                $candidates[] = $readability;
+                $candidates[] = $ancestor;
             }
         }
 
