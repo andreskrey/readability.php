@@ -149,17 +149,18 @@ class HTMLParser
 
     /**
      * Removes all the scripts of the html.
-     *
-     * @TODO is this really necessary? Readability.js uses it to chop any script that might interfere with their
-     * system. Is it necessary here?
      */
     private function removeScripts()
     {
-        while ($script = $this->dom->getElementsByTagName('script')) {
-            if ($script->item(0)) {
-                $script->item(0)->parentNode->removeChild($script->item(0));
-            } else {
-                break;
+        $toRemove = ['script', 'noscript'];
+
+        foreach($toRemove as $tag){
+            while ($script = $this->dom->getElementsByTagName($tag)) {
+                if ($script->item(0)) {
+                    $script->item(0)->parentNode->removeChild($script->item(0));
+                } else {
+                    break;
+                }
             }
         }
     }
@@ -389,11 +390,24 @@ class HTMLParser
          * We also have to copy the body node so it is something we can modify.
          */
 
+        $topCandidate = null;
         if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
             // Move all of the page's children into topCandidate
-            // TODO TEST THIS!
-            $topCandidate = new Readability($this->dom->getElementsByTagName('body')->item(0));
+            $neededToCreateTopCandidate = true;
+
+            $topCandidate = $this->dom->createElement('div');
+            $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
+
+            // Cannot be foreached, don't ask me why.
+            for ($i = 0; $i <= count($kids); $i++) {
+                $topCandidate->appendChild($kids->item(0));
+            }
+
+            $topCandidate = new Readability($topCandidate);
             $topCandidate->initializeNode();
+
+            //TODO on the original code, $topCandidate is added to the page variable, which holds the whole HTML
+            // Should be done this here also? (line 823 in readability.js)
         } elseif ($topCandidate) {
             /*
              * Because of our bonus system, parents of candidates might have scores

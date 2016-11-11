@@ -49,12 +49,7 @@ class Readability extends Element implements ReadabilityInterface
             $score = 0;
 
             if (!in_array(get_class($node), ['DOMDocument', 'DOMComment'])) {
-                try {
                     $score = $node->getAttribute('readability');
-
-                } catch (\Error $e) {
-                    $test=1;
-                }
             }
 
             $this->setContentScore(($score) ? $score : 0);
@@ -114,7 +109,7 @@ class Readability extends Element implements ReadabilityInterface
 
         $node = $this;
 
-        while ($node && $node->getParent()) {
+        while (($node) ? $node->getParent() : $node) {
             $ancestors[] = new static($node->node);
             $level++;
             if ($level >= $maxLevel) {
