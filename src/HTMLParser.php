@@ -404,7 +404,7 @@ class HTMLParser
                 $topCandidate->firstChild->appendChild($import);
             }
 
-            $topCandidate = new Readability($topCandidate);
+            $topCandidate = new Readability($topCandidate->firstChild);
             $topCandidate->initializeNode();
 
             //TODO on the original code, $topCandidate is added to the page variable, which holds the whole HTML
