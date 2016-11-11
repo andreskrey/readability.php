@@ -43,8 +43,8 @@ class Readability extends Element implements ReadabilityInterface
             /*
              * Restore the score if the object has been already scored.
              *
-             * And if must be added before calling the getAttribute function, because if we reacht eh DOMDocument
-             * by geting the node parents we'll get a undefined function fatal error
+             * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
+             * by getting the node parents we'll get a undefined function fatal error
              */
             $score = 0;
 
