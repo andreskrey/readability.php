@@ -48,8 +48,13 @@ class Readability extends Element implements ReadabilityInterface
              */
             $score = 0;
 
-            if (get_class($node) !== 'DOMDocument') {
-                $score = $node->getAttribute('readability');
+            if (!in_array(get_class($node), ['DOMDocument', 'DOMComment'])) {
+                try {
+                    $score = $node->getAttribute('readability');
+
+                } catch (\Error $e) {
+                    $test=1;
+                }
             }
 
             $this->setContentScore(($score) ? $score : 0);
@@ -257,11 +262,9 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function setContentScore($score)
     {
-        if (get_class($this->node) !== 'DOMDocument') {
+        if (!in_array(get_class($this->node), ['DOMDocument', 'DOMComment'])) {
 
-            // To prevent the -0 value
-            // TODO Might not be necessary now
-            $this->contentScore = ($score === (float) -0) ? 0 : $score;
+            $this->contentScore = $score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('readability', $this->contentScore);
@@ -319,7 +322,7 @@ class Readability extends Element implements ReadabilityInterface
     public function removeAndGetNext($node)
     {
         $nextNode = $this->getNextNode($node, true);
-        $nextNode->node->parentNode->removeChild($node->node);
+        $node->node->parentNode->removeChild($node->node);
 
         return $nextNode;
     }
