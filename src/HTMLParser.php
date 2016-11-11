@@ -154,7 +154,7 @@ class HTMLParser
     {
         $toRemove = ['script', 'noscript'];
 
-        foreach($toRemove as $tag){
+        foreach ($toRemove as $tag) {
             while ($script = $this->dom->getElementsByTagName($tag)) {
                 if ($script->item(0)) {
                     $script->item(0)->parentNode->removeChild($script->item(0));
@@ -394,12 +394,14 @@ class HTMLParser
             // Move all of the page's children into topCandidate
             $neededToCreateTopCandidate = true;
 
-            $topCandidate = $this->dom->createElement('div');
+            $topCandidate = new DOMDocument();
+            $topCandidate->appendChild($topCandidate->createElement('div', ''));
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
 
             // Cannot be foreached, don't ask me why.
             for ($i = 0; $i <= count($kids); $i++) {
-                $topCandidate->appendChild($kids->item(0));
+                $import = $topCandidate->importNode($kids->item($i), true);
+                $topCandidate->firstChild->appendChild($import);
             }
 
             $topCandidate = new Readability($topCandidate);
