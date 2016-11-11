@@ -390,7 +390,6 @@ class HTMLParser
          * We also have to copy the body node so it is something we can modify.
          */
 
-        $topCandidate = null;
         if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
             // Move all of the page's children into topCandidate
             $neededToCreateTopCandidate = true;
