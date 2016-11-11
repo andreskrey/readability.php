@@ -383,7 +383,7 @@ class Readability extends Element implements ReadabilityInterface
             return false;
         }
 
-        if ($node1->getTextContent() !== $node2->getTextContent()) {
+        if ($node1->getTextContent(true) !== $node2->getTextContent(true)) {
             return false;
         }
 
