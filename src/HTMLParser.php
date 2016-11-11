@@ -460,8 +460,6 @@ class HTMLParser
         foreach ($siblings as $sibling) {
             $append = false;
 
-            // TODO Check if this comparison working as expected
-            // On the original js project it was a simple $sibling == $topCandidate comparison.
             if ($sibling->compareNodes($sibling, $topCandidate)) {
                 $append = true;
             } else {
