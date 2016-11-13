@@ -192,6 +192,10 @@ class HTMLParser
             if ($item == 'author') {
                 $metadata['byline'] = $meta->getAttribute('content');
             }
+
+            if ($item == 'og:image' || $item == 'twitter:image') {
+                $metadata['image'] = $meta->getAttribute('content');
+            }
         }
 
         return $metadata;
