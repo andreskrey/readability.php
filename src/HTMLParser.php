@@ -126,7 +126,8 @@ class HTMLParser
         return [
             'title' => $this->metadata['title'],
             'author' => $this->metadata['author'],
-            'article' => $result,
+            'image' => $this->metadata['image'],
+            'article' => $result
         ];
     }
 
@@ -191,6 +192,10 @@ class HTMLParser
 
             if ($item == 'author') {
                 $metadata['byline'] = $meta->getAttribute('content');
+            }
+
+            if ($item == 'og:image' || $item == 'twitter:image') {
+                $metadata['image'] = $meta->getAttribute('content');
             }
         }
 
