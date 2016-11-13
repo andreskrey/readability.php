@@ -272,7 +272,7 @@ class Readability extends Element implements ReadabilityInterface
      *
      * @param string $value
      */
-    public function setNodeName($value)
+    public function setNodeTag($value)
     {
         $this->node->nodeName = $value;
     }
