@@ -49,7 +49,7 @@ class Readability extends Element implements ReadabilityInterface
             $score = 0;
 
             if (!in_array(get_class($node), ['DOMDocument', 'DOMComment'])) {
-                    $score = $node->getAttribute('readability');
+                $score = $node->getAttribute('readability');
             }
 
             $this->setContentScore(($score) ? $score : 0);
@@ -160,15 +160,17 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function initializeNode()
     {
+        $contentScore = 0;
+
         switch ($this->getTagName()) {
             case 'div':
-                $this->contentScore += 5;
+                $contentScore += 5;
                 break;
 
             case 'pre':
             case 'td':
             case 'blockquote':
-                $this->contentScore += 3;
+                $contentScore += 3;
                 break;
 
             case 'address':
@@ -179,7 +181,7 @@ class Readability extends Element implements ReadabilityInterface
             case 'dt':
             case 'li':
             case 'form':
-                $this->contentScore -= 3;
+                $contentScore -= 3;
                 break;
 
             case 'h1':
@@ -189,11 +191,11 @@ class Readability extends Element implements ReadabilityInterface
             case 'h5':
             case 'h6':
             case 'th':
-                $this->contentScore -= 5;
+                $contentScore -= 5;
                 break;
         }
 
-        $this->contentScore += $this->getClassWeight();
+        $this->setContentScore($contentScore + $this->getClassWeight());
 
         return $this;
     }
