@@ -127,7 +127,7 @@ class HTMLParser
             'title' => $this->metadata['title'],
             'author' => $this->metadata['author'],
             'image' => $this->metadata['image'],
-            'article' => $result
+            'article' => $result,
         ];
     }
 
@@ -512,7 +512,7 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string $matchString
+     * @param string      $matchString
      *
      * @return bool
      */
