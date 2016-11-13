@@ -14,11 +14,6 @@ interface ReadabilityInterface extends ElementInterface
     public function tagNameEqualsTo($value);
 
     /**
-     * @return bool
-     */
-    public function hasSinglePNode();
-
-    /**
      * @return int
      */
     public function getNodeAncestors();
