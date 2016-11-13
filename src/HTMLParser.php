@@ -322,11 +322,9 @@ class HTMLParser
                     $node->replaceChild($pNode);
                     $node = $pNode;
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
-
-                    // If there's any info on the node, add it to the elements to score in the next step.
-                    if ($node->getValue(true)) {
-                        $this->elementsToScore[] = $node;
-                    }
+                    // FIXME!!!
+                    $node->setNodeTag('p');
+                    $this->elementsToScore[] = $node;
                 }
             }
 
@@ -615,6 +613,15 @@ class HTMLParser
 
     private function hasSingleChildBlockElement(Readability $node)
     {
-        return (in_array($node->getTagName(), $this->divToPElements)) ? true : $this->hasSingleChildBlockElement($node);
+        /** @var Readability $child */
+        foreach ($node->getChildren() as $child) {
+            if (in_array($child->getTagName(), $this->divToPElements)) {
+                $this->hasSingleChildBlockElement($child);
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
