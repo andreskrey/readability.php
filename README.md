@@ -35,6 +35,7 @@ The `$result` variable now will hold the following information:
 $result = [
     'title' => 'Title of the article',
     'author' => 'Name of the author of the article',
+    'image' => 'Main image of the article',
     'article' => 'DOMDocument with the full article text, scored and parsed'
 ]
 ```
