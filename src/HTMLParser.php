@@ -126,7 +126,8 @@ class HTMLParser
         return [
             'title' => $this->metadata['title'],
             'author' => $this->metadata['author'],
-            'article' => $result,
+            'image' => $this->metadata['image'],
+            'article' => $result
         ];
     }
 
