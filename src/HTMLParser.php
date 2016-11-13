@@ -73,6 +73,23 @@ class HTMLParser
     ];
 
     /**
+     * @var array
+     */
+    private $divToPElements = [
+        'a',
+        'blockquote',
+        'dl',
+        'div',
+        'img',
+        'ol',
+        'p',
+        'pre',
+        'table',
+        'ul',
+        'select'
+    ];
+
+    /**
      * Constructor.
      *
      * @param array $options Options to override the default ones
@@ -82,6 +99,7 @@ class HTMLParser
         $defaults = [
             'maxTopCandidates' => 5, // Max amount of top level candidates
             'articleByLine' => null,
+            'stripUnlikelyCandidates' => true
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -257,6 +275,14 @@ class HTMLParser
      */
     private function getNodes(Readability $node)
     {
+        $stripUnlikelyCandidates = $this->getConfig()->getOption('stripUnlikelyCandidates');
+
+        /*
+         * First, node prepping. Trash nodes that look cruddy (like ones with the
+         * class name "comment", etc), and turn divs into P tags where they have been
+         * used inappropriately (as in, where they contain no other block level elements.)
+         */
+
         while ($node) {
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
@@ -266,29 +292,41 @@ class HTMLParser
                 continue;
             }
 
-            // Avoid elements that are unlikely to have any useful information.
-            if (
-                preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
-                !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
-                !$node->tagNameEqualsTo('body') &&
-                !$node->tagNameEqualsTo('a')
-            ) {
-                $node = $node->removeAndGetNext($node);
-                continue;
+            // Remove unlikely candidates
+            if ($stripUnlikelyCandidates) {
+                if (
+                    preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
+                    !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
+                    !$node->tagNameEqualsTo('body') &&
+                    !$node->tagNameEqualsTo('a')
+                ) {
+                    $node = $node->removeAndGetNext($node);
+                    continue;
+                }
             }
 
             if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
                 $this->elementsToScore[] = $node;
             }
 
-            // Check for nodes that have only on P node as a child and convert them to a single P node
-            if ($node->hasSinglePNode()) {
-                $pNode = $node->getChildren();
-                $node = $pNode[0];
+            // Turn all divs that don't have children block level elements into p's
+            if ($node->tagNameEqualsTo('div')) {
+                /*
+                 * Sites like http://mobile.slate.com encloses each paragraph with a DIV
+                 * element. DIVs with only a P element inside and no text content can be
+                 * safely converted into plain P elements to avoid confusing the scoring
+                 * algorithm with DIVs with are, in practice, paragraphs.
+                 */
+                if ($this->hasSinglePNode($node)) {
+                    $pNode = $node->getChildren()[0];
+                    $node->replaceChild($pNode);
+                    $node = $pNode;
+                } elseif (!$this->hasSingleChildBlockElement($node)) {
 
-                // If there's any info on the node, add it to the elements to score in the next step.
-                if ($node->getValue(true)) {
-                    $this->elementsToScore[] = $node;
+                    // If there's any info on the node, add it to the elements to score in the next step.
+                    if ($node->getValue(true)) {
+                        $this->elementsToScore[] = $node;
+                    }
                 }
             }
 
@@ -518,7 +556,7 @@ class HTMLParser
      */
     private function checkByline($node, $matchString)
     {
-        if (!$this->getConfig()->getOption('articleByLine')) {
+        if ($this->getConfig()->getOption('articleByLine')) {
             return false;
         }
 
@@ -549,5 +587,34 @@ class HTMLParser
         }
 
         return false;
+    }
+
+    /**
+     * Checks if the current node has a single child and if that child is a P node.
+     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
+     * tags are, in practice, paragraphs.
+     *
+     * @param Readability $node
+     * @return bool
+     */
+    private function hasSinglePNode(Readability $node)
+    {
+        // There should be exactly 1 element child which is a P:
+        if ($node->hasChildren()) {
+            $children = $node->getChildren();
+
+            if (count($children) === 1) {
+                if ($node->tagNameEqualsTo('p')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function hasSingleChildBlockElement(Readability $node)
+    {
+        return (in_array($node->getTagName(), $this->divToPElements)) ? true : $this->hasSingleChildBlockElement($node);
     }
 }

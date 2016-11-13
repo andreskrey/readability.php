@@ -74,28 +74,6 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Checks if the current node has a single child and if that child is a P node.
-     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
-     * tags are, in practice, paragraphs.
-     *
-     * @return bool
-     */
-    public function hasSinglePNode()
-    {
-        if ($this->hasChildren()) {
-            $children = $this->getChildren();
-
-            if (count($children) === 1) {
-                if (strtolower($children[0]->getTagName()) === 'p') {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Get the ancestors of the current node.
      *
      * @param int $maxLevel Max amount of ancestors to get.
@@ -390,5 +368,16 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         return true;
+    }
+
+    /**
+     * Replaces child node with a new one.
+     *
+     * @param Readability $newNode
+     *
+     */
+    public function replaceChild(Readability $newNode)
+    {
+        $this->node->parentNode->replaceChild($newNode->node, $this->node);
     }
 }
