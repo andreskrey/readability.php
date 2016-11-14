@@ -322,7 +322,6 @@ class HTMLParser
                     $node->replaceChild($pNode);
                     $node = $pNode;
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
-                    // FIXME!!!
                     $node->setNodeTag('p');
                     $this->elementsToScore[] = $node;
                 }
@@ -532,8 +531,8 @@ class HTMLParser
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
 
-                    // TODO This is not working! Fix!
-//                    $sibling->setNodeName('div');
+                    // TODO This is not working? Fix!
+                    $sibling->setNodeTag('div');
                 }
 
                 $import = $articleContent->importNode($sibling->getDOMNode(), true);

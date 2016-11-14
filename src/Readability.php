@@ -287,6 +287,8 @@ class Readability extends Element implements ReadabilityInterface
         // The import must be done on the firstChild of $new, since $new is a DOMDocument and not a DOMElement.
         $import = $this->node->ownerDocument->importNode($new->firstChild, true);
         $this->node->parentNode->replaceChild($import, $this->node);
+
+        $this->node = $import;
     }
 
     /**
