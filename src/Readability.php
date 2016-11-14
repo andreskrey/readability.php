@@ -204,7 +204,7 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         // Look for a special ID
-        $id = $this->getAttribute('class');
+        $id = $this->getAttribute('id');
         if (trim($id)) {
             if (preg_match($this->regexps['negative'], $id)) {
                 $weight -= 25;
