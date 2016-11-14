@@ -394,4 +394,22 @@ class Readability extends Element implements ReadabilityInterface
     {
         $this->node->parentNode->replaceChild($newNode->node, $this->node);
     }
+
+    /**
+     * Creates a new node based on the text content of the original node.
+     *
+     * @param Readability $originalNode
+     * @param string $tagName
+     *
+     * @return Readability
+     */
+    public function createNode(Readability $originalNode, $tagName)
+    {
+        $text = $originalNode->getTextContent();
+        $newnode = $originalNode->node->ownerDocument->createElement($tagName, $text);
+
+        $return = $originalNode->node->appendChild($newnode);
+
+        return new static($return);
+    }
 }
