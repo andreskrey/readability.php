@@ -324,6 +324,13 @@ class HTMLParser
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
                     $node->setNodeTag('p');
                     $this->elementsToScore[] = $node;
+                } else {
+                    // EXPERIMENTAL
+                    foreach($node->getChildren() as $child) {
+                        /** @var Readability $child */
+                        $newNode = $node->createNode($child, 'p');
+                        $child->replaceChild($newNode);
+                    }
                 }
             }
 
