@@ -268,13 +268,25 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Sets the node name.
+     * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
+     * element with the new tag name and importing it to the main DOMDocument
      *
      * @param string $value
      */
     public function setNodeTag($value)
     {
-        $this->node->nodeName = $value;
+        $new = new \DOMDocument();
+        $new->appendChild($new->createElement($value));
+
+        $childs = $this->node->childNodes;
+        for ($i = 0; $i < count($childs); $i++) {
+            $import = $new->importNode($childs->item($i), true);
+            $new->firstChild->appendChild($import);
+        }
+
+        // The import must be done on the firstChild of $new, since $new is a DOMDocument and not a DOMElement.
+        $import = $this->node->ownerDocument->importNode($new->firstChild, true);
+        $this->node->parentNode->replaceChild($import, $this->node);
     }
 
     /**
