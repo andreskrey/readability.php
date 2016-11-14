@@ -326,7 +326,7 @@ class HTMLParser
                     $this->elementsToScore[] = $node;
                 } else {
                     // EXPERIMENTAL
-                    foreach($node->getChildren() as $child) {
+                    foreach ($node->getChildren() as $child) {
                         /** @var Readability $child */
                         $newNode = $node->createNode($child, 'p');
                         $child->replaceChild($newNode);
@@ -351,7 +351,9 @@ class HTMLParser
 
         /** @var Readability $node */
         foreach ($nodes as $node) {
-
+            if (!$node->getParent()) {
+                continue;
+            }
             // Discard nodes with less than 25 characters, without blank space
             if (strlen($node->getValue(true)) < 25) {
                 continue;
