@@ -87,7 +87,7 @@ class Readability extends Element implements ReadabilityInterface
 
         $node = $this;
 
-        while (($node) ? $node->getParent() : $node) {
+        while ($node) {
             $ancestors[] = new static($node->node);
             $level++;
             if ($level >= $maxLevel) {
