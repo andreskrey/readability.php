@@ -85,7 +85,7 @@ class Readability extends Element implements ReadabilityInterface
         $ancestors = [];
         $level = 0;
 
-        $node = $this;
+        $node = $this->getParent();
 
         while ($node) {
             $ancestors[] = new static($node->node);
