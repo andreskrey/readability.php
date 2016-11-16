@@ -362,7 +362,7 @@ class HTMLParser
             $ancestors = $node->getNodeAncestors();
 
             // Exclude nodes with no ancestor
-            if ($ancestors === 0) {
+            if (count($ancestors) === 0) {
                 continue;
             }
 
@@ -526,8 +526,7 @@ class HTMLParser
 
                     if (strlen($nodeContent) > 80 && $linkDensity < 0.25) {
                         $append = true;
-                        // TODO Check if pregmatch is working as expected
-                    } elseif ($nodeContent && strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('//\.( |$)/', $nodeContent)) {
+                    } elseif ($nodeContent && strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
                         $append = true;
                     }
                 }
