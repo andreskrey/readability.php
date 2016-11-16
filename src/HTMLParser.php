@@ -610,7 +610,7 @@ class HTMLParser
             $children = $node->getChildren();
 
             if (count($children) === 1) {
-                if ($node->tagNameEqualsTo('p')) {
+                if ($children[0]->tagNameEqualsTo('p')) {
                     return true;
                 }
             }
