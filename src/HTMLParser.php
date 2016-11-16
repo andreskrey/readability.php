@@ -378,7 +378,7 @@ class HTMLParser
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
             foreach ($ancestors as $level => $ancestor) {
-                $ancestor = $ancestor->initializeNode();
+                // No need to initialize the ancestor since getNodeAncestors() already initializes them.
 
                 /*
                  * Node score divider:
