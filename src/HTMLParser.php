@@ -231,7 +231,7 @@ class HTMLParser
     public function getLinkDensity($readability)
     {
         $linkLength = 0;
-        $textLength = strlen($readability->getTextContent(true));
+        $textLength = mb_strlen($readability->getTextContent(true));
 
         if (!$textLength) {
             return 0;
