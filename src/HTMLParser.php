@@ -145,7 +145,8 @@ class HTMLParser
             'title' => $this->metadata['title'],
             'author' => $this->metadata['author'],
             'image' => $this->metadata['image'],
-            'article' => $result
+            'article' => $result,
+            'html' => $result->C14N()
         ];
     }
 
@@ -505,7 +506,7 @@ class HTMLParser
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
-        $siblings = $topCandidate->getChildren();
+        $siblings = $topCandidate->getParent()->getChildren();
 
         /** @var Readability $sibling */
         foreach ($siblings as $sibling) {
@@ -535,7 +536,7 @@ class HTMLParser
             }
 
             if ($append) {
-                if (in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
+                if (!in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
                     /*
                      * We have a node that isn't a common block level element, like a form or td tag.
                      * Turn it into a div so it doesn't get filtered out later by accident.
