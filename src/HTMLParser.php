@@ -327,9 +327,11 @@ class HTMLParser
                 } else {
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
-                        /** @var Readability $child */
-                        $newNode = $node->createNode($child, 'p');
-                        $child->replaceChild($newNode);
+                        if ($child->isText()) {
+                            /** @var Readability $child */
+                            $newNode = $node->createNode($child, 'p');
+                            $child->replaceChild($newNode);
+                        }
                     }
                 }
             }
