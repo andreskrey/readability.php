@@ -23,6 +23,11 @@ class Readability extends Element implements ReadabilityInterface
     protected $contentScore = 0;
 
     /**
+     * @var int
+     */
+    protected $initialized = false;
+
+    /**
      * @var array
      */
     private $regexps = [
@@ -88,7 +93,7 @@ class Readability extends Element implements ReadabilityInterface
         $node = $this->getParent();
 
         while ($node) {
-            $ancestors[] = $node;
+            $ancestors[] = $node->initializeNode();
             $level++;
             if ($level >= $maxLevel) {
                 break;
@@ -138,42 +143,46 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function initializeNode()
     {
-        $contentScore = 0;
+        if (!$this->initialized) {
+            $contentScore = 0;
 
-        switch ($this->getTagName()) {
-            case 'div':
-                $contentScore += 5;
-                break;
+            switch ($this->getTagName()) {
+                case 'div':
+                    $contentScore += 5;
+                    break;
 
-            case 'pre':
-            case 'td':
-            case 'blockquote':
-                $contentScore += 3;
-                break;
+                case 'pre':
+                case 'td':
+                case 'blockquote':
+                    $contentScore += 3;
+                    break;
 
-            case 'address':
-            case 'ol':
-            case 'ul':
-            case 'dl':
-            case 'dd':
-            case 'dt':
-            case 'li':
-            case 'form':
-                $contentScore -= 3;
-                break;
+                case 'address':
+                case 'ol':
+                case 'ul':
+                case 'dl':
+                case 'dd':
+                case 'dt':
+                case 'li':
+                case 'form':
+                    $contentScore -= 3;
+                    break;
 
-            case 'h1':
-            case 'h2':
-            case 'h3':
-            case 'h4':
-            case 'h5':
-            case 'h6':
-            case 'th':
-                $contentScore -= 5;
-                break;
+                case 'h1':
+                case 'h2':
+                case 'h3':
+                case 'h4':
+                case 'h5':
+                case 'h6':
+                case 'th':
+                    $contentScore -= 5;
+                    break;
+            }
+
+            $this->setContentScore($contentScore + $this->getClassWeight());
+
+            $this->initialized = true;
         }
-
-        $this->setContentScore($contentScore + $this->getClassWeight());
 
         return $this;
     }
@@ -411,5 +420,15 @@ class Readability extends Element implements ReadabilityInterface
         $return = $originalNode->node->appendChild($newnode);
 
         return new static($return);
+    }
+
+    /**
+     * Checks if the object is initialized.
+     *
+     * @return bool
+     */
+    public function isInitialized()
+    {
+        return $this->initialized;
     }
 }
