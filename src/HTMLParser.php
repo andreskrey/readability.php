@@ -242,7 +242,7 @@ class HTMLParser
         if ($links) {
             /** @var Readability $link */
             foreach ($links as $link) {
-                $linkLength += strlen($link->getTextContent(true));
+                $linkLength += mb_strlen($link->getTextContent(true));
             }
         }
 
@@ -355,7 +355,7 @@ class HTMLParser
                 continue;
             }
             // Discard nodes with less than 25 characters, without blank space
-            if (strlen($node->getValue(true)) < 25) {
+            if (mb_strlen($node->getValue(true)) < 25) {
                 continue;
             }
 
@@ -373,7 +373,7 @@ class HTMLParser
             $contentScore += count(explode(',', $node->getValue(true)));
 
             // For every 100 characters in this paragraph, add another point. Up to 3 points.
-            $contentScore += min(floor(strlen($node->getValue(true)) / 100), 3);
+            $contentScore += min(floor(mb_strlen($node->getValue(true)) / 100), 3);
 
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
@@ -524,9 +524,9 @@ class HTMLParser
                     $linkDensity = $this->getLinkDensity($sibling);
                     $nodeContent = $sibling->getTextContent(true);
 
-                    if (strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+                    if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
                         $append = true;
-                    } elseif ($nodeContent && strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
+                    } elseif ($nodeContent && mb_strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
                         $append = true;
                     }
                 }
@@ -588,7 +588,7 @@ class HTMLParser
         if (gettype($text) == 'string') {
             $byline = trim($text);
 
-            return (strlen($byline) > 0) && (strlen($text) < 100);
+            return (mb_strlen($byline) > 0) && (mb_strlen($text) < 100);
         }
 
         return false;
