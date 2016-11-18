@@ -54,10 +54,18 @@ class Readability extends Element implements ReadabilityInterface
             $score = 0;
 
             if (!in_array(get_class($node), ['DOMDocument', 'DOMComment'])) {
-                $score = $node->getAttribute('readability');
+                $hasScore = $node->getAttribute('readability');
+                if ($hasScore !== '') {
+                    // Node was initialized previously. Restoring score and setting flag.
+                    $this->initialized = true;
+                    $score = $hasScore;
+                } else {
+                    // Fresh, uninitialized node.
+                    $score = 0;
+                }
             }
 
-            $this->setContentScore(($score) ? $score : 0);
+            $this->setContentScore($score);
         }
     }
 
@@ -248,7 +256,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         if (!in_array(get_class($this->node), ['DOMDocument', 'DOMComment'])) {
 
-            $this->contentScore = $score;
+            $this->contentScore = (float)$score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('readability', $this->contentScore);
