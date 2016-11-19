@@ -296,7 +296,7 @@ class Readability extends Element implements ReadabilityInterface
         $new->appendChild($new->createElement($value));
 
         $childs = $this->node->childNodes;
-        for ($i = 0; $i < count($childs); $i++) {
+        for ($i = 0; $i < $childs->length; $i++) {
             $import = $new->importNode($childs->item($i), true);
             $new->firstChild->appendChild($import);
         }
