@@ -451,7 +451,7 @@ class HTMLParser
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
 
             // Cannot be foreached, don't ask me why.
-            for ($i = 0; $i <= count($kids); $i++) {
+            for ($i = 0; $i < $kids->length; $i++) {
                 $import = $topCandidate->importNode($kids->item($i), true);
                 $topCandidate->firstChild->appendChild($import);
             }
@@ -548,6 +548,12 @@ class HTMLParser
 
                 $import = $articleContent->importNode($sibling->getDOMNode(), true);
                 $articleContent->appendChild($import);
+
+                // TODO Check node shifting!
+                // siblings is a reference to the children array, and
+                // sibling is removed from the array when we call appendChild().
+                // As a result, we must revisit this index since the nodes
+                // have been shifted.
             }
         }
 
