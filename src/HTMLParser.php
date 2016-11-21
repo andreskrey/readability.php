@@ -549,11 +549,13 @@ class HTMLParser
                 $import = $articleContent->importNode($sibling->getDOMNode(), true);
                 $articleContent->appendChild($import);
 
-                // TODO Check node shifting!
-                // siblings is a reference to the children array, and
-                // sibling is removed from the array when we call appendChild().
-                // As a result, we must revisit this index since the nodes
-                // have been shifted.
+                /*
+                 * No node shifting needs to be check because when calling getChildren, an array is made with the
+                 * children of the parent node, instead of using the DOMElement childNodes function, which, when used
+                 * along with appendChild, would shift the nodes position and the current foreach will behave in
+                 * unpredictable ways.
+                 */
+
             }
         }
 
