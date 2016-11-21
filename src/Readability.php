@@ -53,7 +53,8 @@ class Readability extends Element implements ReadabilityInterface
              */
             $score = 0;
 
-            if (!in_array(get_class($node), ['DOMDocument', 'DOMComment'])) {
+            // Check if the getAttribute is callable, as some elements lack of it (and calling it anyway throws an exception)
+            if (is_callable('getAttribute', false, $node)) {
                 $hasScore = $node->getAttribute('data-readability');
                 if ($hasScore !== '') {
                     // Node was initialized previously. Restoring score and setting flag.
@@ -254,8 +255,8 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function setContentScore($score)
     {
-        if (!in_array(get_class($this->node), ['DOMDocument', 'DOMComment'])) {
-
+        // Check if the getAttribute is callable, as some elements lack of it (and calling it anyway throws an exception)
+        if (is_callable('getAttribute', false, $node)) {
             $this->contentScore = (float)$score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
