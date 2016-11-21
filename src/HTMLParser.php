@@ -542,7 +542,6 @@ class HTMLParser
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
 
-                    // TODO This is not working? Fix!
                     $sibling->setNodeTag('div');
                 }
 
