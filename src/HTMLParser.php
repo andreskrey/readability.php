@@ -29,11 +29,6 @@ class HTMLParser
     /**
      * @var array
      */
-    private $elementsToScore = [];
-
-    /**
-     * @var array
-     */
     private $regexps = [
         'unlikelyCandidates' => '/banner|combx|comment|community|disqus|extra|foot|header|menu|modal|related|remark|rss|share|shoutbox|sidebar|skyscraper|sponsor|ad-break|agegate|pagination|pager|popup/i',
         'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
@@ -136,9 +131,9 @@ class HTMLParser
 
         $root = new Readability($root->firstChild);
 
-        $this->getNodes($root);
+        $elementsToScore = $this->getNodes($root);
 
-        $result = $this->rateNodes($this->elementsToScore);
+        $result = $this->rateNodes($elementsToScore);
 
         // Todo, fix return, check for values, maybe create a function to create the return object
         return [
@@ -278,6 +273,8 @@ class HTMLParser
     {
         $stripUnlikelyCandidates = $this->getConfig()->getOption('stripUnlikelyCandidates');
 
+        $elementsToScore = [];
+
         /*
          * First, node prepping. Trash nodes that look cruddy (like ones with the
          * class name "comment", etc), and turn divs into P tags where they have been
@@ -307,7 +304,7 @@ class HTMLParser
             }
 
             if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
-                $this->elementsToScore[] = $node;
+                $elementsToScore[] = $node;
             }
 
             // Turn all divs that don't have children block level elements into p's
@@ -324,7 +321,7 @@ class HTMLParser
                     $node = $pNode;
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
                     $node->setNodeTag('p');
-                    $this->elementsToScore[] = $node;
+                    $elementsToScore[] = $node;
                 } else {
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
@@ -339,6 +336,8 @@ class HTMLParser
 
             $node = $node->getNextNode($node);
         }
+
+        return $elementsToScore;
     }
 
     /**
@@ -381,7 +380,10 @@ class HTMLParser
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
             foreach ($ancestors as $level => $ancestor) {
-                // No need to initialize the ancestor since getNodeAncestors() already initializes them.
+                if (!$ancestor->isInitialized()) {
+                    $ancestor->initializeNode();
+                    $candidates[] = $ancestor;
+                }
 
                 /*
                  * Node score divider:
@@ -400,8 +402,6 @@ class HTMLParser
 
                 $currentScore = $ancestor->getContentScore();
                 $ancestor->setContentScore($currentScore + ($contentScore / $scoreDivider));
-
-                $candidates[] = $ancestor;
             }
         }
 
