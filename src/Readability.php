@@ -44,30 +44,27 @@ class Readability extends Element implements ReadabilityInterface
     {
         parent::__construct($node);
 
-        if (get_class($node) !== 'DOMText') {
-            /*
-             * Restore the score if the object has been already scored.
-             *
-             * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
-             * by getting the node parents we'll get a undefined function fatal error
-             */
-            $score = 0;
+        /*
+         * Restore the score if the object has been already scored.
+         *
+         * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
+         * by getting the node parents we'll get a undefined function fatal error
+         */
+        $score = 0;
 
-            // Check if the getAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
-            if (method_exists($node, 'getAttribute')) {
-                $hasScore = $node->getAttribute('data-readability');
-                if ($hasScore !== '') {
-                    // Node was initialized previously. Restoring score and setting flag.
-                    $this->initialized = true;
-                    $score = $hasScore;
-                } else {
-                    // Fresh, uninitialized node.
-                    $score = 0;
-                }
+        // Check if the getAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
+        if (method_exists($node, 'getAttribute')) {
+            if ($node->hasAttribute('data-readability')) {
+                // Node was initialized previously. Restoring score and setting flag.
+                $this->initialized = true;
+                $score = $node->getAttribute('data-readability');
+            } else {
+                // Fresh, uninitialized node.
+                $score = 0;
             }
-
-            $this->setContentScore($score);
         }
+
+        $this->setContentScore($score);
     }
 
     /**
@@ -102,7 +99,7 @@ class Readability extends Element implements ReadabilityInterface
         $node = $this->getParent();
 
         while ($node) {
-            $ancestors[] = $node->initializeNode();
+            $ancestors[] = $node;
             $level++;
             if ($level >= $maxLevel) {
                 break;
