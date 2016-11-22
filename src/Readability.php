@@ -58,13 +58,9 @@ class Readability extends Element implements ReadabilityInterface
                 // Node was initialized previously. Restoring score and setting flag.
                 $this->initialized = true;
                 $score = $node->getAttribute('data-readability');
-            } else {
-                // Fresh, uninitialized node.
-                $score = 0;
+                $this->setContentScore($score);
             }
         }
-
-        $this->setContentScore($score);
     }
 
     /**
