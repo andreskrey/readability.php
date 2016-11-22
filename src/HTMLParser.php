@@ -346,7 +346,7 @@ class HTMLParser
      *
      * @param array $nodes
      *
-     * @return DOMDocument
+     * @return DOMDocument|bool
      */
     private function rateNodes($nodes)
     {
@@ -508,6 +508,8 @@ class HTMLParser
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
         $siblings = $topCandidate->getParent()->getChildren();
 
+        $hasContent = false;
+
         /** @var Readability $sibling */
         foreach ($siblings as $sibling) {
             $append = false;
@@ -536,6 +538,8 @@ class HTMLParser
             }
 
             if ($append) {
+                $hasContent = true;
+
                 if (!in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
                     /*
                      * We have a node that isn't a common block level element, like a form or td tag.
@@ -558,7 +562,11 @@ class HTMLParser
             }
         }
 
-        return $articleContent;
+        if ($hasContent) {
+            return $articleContent;
+        } else {
+            return false;
+        }
     }
 
     /**
