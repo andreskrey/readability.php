@@ -433,4 +433,24 @@ class Readability extends Element implements ReadabilityInterface
     {
         return $this->initialized;
     }
+
+    /**
+     * Reloads the score stores in the data-readability tag.
+     *
+     * @return int|bool
+     */
+    public function reloadScore()
+    {
+        if (method_exists($this->node, 'getAttribute')) {
+            if ($this->node->hasAttribute('data-readability')) {
+                $this->initialized = true;
+                $score = $this->node->getAttribute('data-readability');
+                $this->setContentScore($score);
+
+                return $score;
+            }
+        }
+
+        return false;
+    }
 }
