@@ -406,6 +406,18 @@ class HTMLParser
         }
 
         /*
+         * TODO This is an horrible hack because I don't know how to properly pass by reference.
+         * When candidates are added to the $candidates array, they lose the reference to the original object
+         * and on each loop, the object inside $candidates doesn't get updated. This function restores the score
+         * by getting it of the data-readability tag. This should be fixed using proper references and good coding
+         * practices (which I lack)
+         */
+
+        foreach ($candidates as $candidate) {
+            $candidate->reloadScore();
+        }
+
+        /*
          * After we've calculated scores, loop through all of the possible
          * candidate nodes we found and find the one with the highest score.
          */
