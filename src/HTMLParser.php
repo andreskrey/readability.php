@@ -599,6 +599,15 @@ class HTMLParser
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
 
+        // If there is only one h2, they are probably using it as a header
+        // and not a subheader, so remove it since we already have a header.
+        if ($article->getElementsByTagName('h2')->length === 1){
+            $this->_clean($article, 'h2');
+        }
+
+        $this->_clean($article, 'iframe');
+
+
         return $article;
     }
 
@@ -617,7 +626,6 @@ class HTMLParser
         foreach ($article->getElementsByTagName($tag) as $item) {
             // Allow youtube and vimeo videos through as people usually want to see those.
             if ($isEmbed) {
-
                 $attributeValues = [];
                 foreach ($item->attributes as $name => $value) {
                     $attributeValues[] = $value;
@@ -635,6 +643,28 @@ class HTMLParser
                 }
             }
             $this->removeNode($item);
+        }
+    }
+
+    /**
+     * Clean out spurious headers from an Element. Checks things like classnames and link density.
+     *
+     * @param Element
+     * @return void
+     **/
+//    public function _cleanHeaders($article) {
+//    for`` (var headerIndex = 1; headerIndex < 3; headerIndex += 1) {
+//        this._removeNodes(e.getElementsByTagName('h' + headerIndex), function (header) {
+//            return this._getClassWeight(header) < 0;
+//        });
+//    }
+//    }
+
+    public function removeNode(\DOMNode $node)
+    {
+        $parent = $node->parentNode;
+        if ($parent) {
+            $parent->removeChild($node);
         }
     }
 
