@@ -574,10 +574,67 @@ class HTMLParser
             }
         }
 
+        $articleContent = $this->prepArticle($articleContent);
+
         if ($hasContent) {
             return $articleContent;
         } else {
             return false;
+        }
+    }
+
+    /**
+     * TODO
+     *
+     * @param DOMDocument $article
+     *
+     * @return DOMDocument
+     */
+    public function prepArticle(DOMDocument $article)
+    {
+        // TODO CleanConditionaly
+        // Clean out junk from the article content
+        $this->_clean($article, 'object');
+        $this->_clean($article, 'embed');
+        $this->_clean($article, 'h1');
+        $this->_clean($article, 'footer');
+
+        return $article;
+    }
+
+    /**
+     * Clean a node of all elements of type "tag".
+     * (Unless it's a youtube/vimeo video. People love movies.)
+     *
+     * @param Element
+     * @param string tag to clean
+     * @return void
+     **/
+    public function _clean(DOMDocument $article, $tag)
+    {
+        $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
+
+        foreach ($article->getElementsByTagName($tag) as $item) {
+            // Allow youtube and vimeo videos through as people usually want to see those.
+            if ($isEmbed) {
+
+                $attributeValues = [];
+                foreach ($item->attributes as $name => $value) {
+                    $attributeValues[] = $value;
+                }
+                $attributeValues = implode('|', $attributeValues);
+
+                // First, check the elements attributes to see if any of them contain youtube or vimeo
+                if (preg_match($this->regexps['videos'], $attributeValues)) {
+                    continue;
+                }
+
+                // Then check the elements inside this element for the same.
+                if (preg_match($this->regexps['videos'], $item->C14N())) {
+                    continue;
+                }
+            }
+            $this->removeNode($item);
         }
     }
 
