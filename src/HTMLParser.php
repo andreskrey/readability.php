@@ -601,12 +601,12 @@ class HTMLParser
 
         // If there is only one h2, they are probably using it as a header
         // and not a subheader, so remove it since we already have a header.
-        if ($article->getElementsByTagName('h2')->length === 1){
+        if ($article->getElementsByTagName('h2')->length === 1) {
             $this->_clean($article, 'h2');
         }
 
         $this->_clean($article, 'iframe');
-
+        $this->_cleanHeaders($article);
 
         return $article;
     }
@@ -652,13 +652,18 @@ class HTMLParser
      * @param Element
      * @return void
      **/
-//    public function _cleanHeaders($article) {
-//    for`` (var headerIndex = 1; headerIndex < 3; headerIndex += 1) {
-//        this._removeNodes(e.getElementsByTagName('h' + headerIndex), function (header) {
-//            return this._getClassWeight(header) < 0;
-//        });
-//    }
-//    }
+    public function _cleanHeaders(DOMDocument $article)
+    {
+        for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
+            $headers = $article->getElementsByTagName('h' . $headerIndex);
+            foreach($headers as $header){
+                $header = new Readability($header);
+                if($header->getClassWeight() < 0){
+                    $this->removeNode($header->getDOMNode());
+                }
+            }
+        }
+    }
 
     public function removeNode(\DOMNode $node)
     {

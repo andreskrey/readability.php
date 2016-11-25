@@ -48,15 +48,36 @@ Of course the main limitation is PHP. Websites that load the content through laz
 
 ## Known Issues
 
-None so far.
+DOMDocument has some issues while parsing javascript with unescaped HTML on strings. Consider the following code:
+
+```html
+<div> <!-- Offending div without closing tag -->
+<script type="text/javascript">
+       var test = '</div>';
+       // I should not appear on the result
+</script>
+```
+
+If you would like to remove the scripts of the HTML (like readability does), you would expect ending up with just one div and one comment on the final HTML. The problem is that libxml takes that closing div tag inside the javascript string as a HTML tag, effectively closing the unclosed tag and leaving the rest of the javascript as a string withing a P tag. If you save that node, the final HTML will end up like this:
+
+```html
+<div> <!-- Offending div without closing tag -->
+<p>';
+       // I should not appear on the result
+</p></div>
+```
+
+This is a libxml issue and not a Readability.php bug.
+
+## Dependencies
+
+Readability uses the Element interface and class from *The PHP League's* **[html-to-markdown](https://github.com/thephpleague/html-to-markdown/)**. The Readability object is an extension of the Element class. It overrides some methods but relies on it for basic DOMElement parsing.
 
 ## To-do
 
 100% of the original readability code was ported, at least until the last commit when I started this project ([13 Aug 2016](https://github.com/mozilla/readability/commit/71aa562387fa507b0bac30ae7144e1df7ba8a356)). There are a lot of `TODO`s around the code, which are the part that need to be finished.
 
-## Dependencies
-
-Readability uses the Element interface and class from *The PHP League's* **[html-to-markdown](https://github.com/thephpleague/html-to-markdown/)**. The Readability object is an extension of the Element class. It overrides some methods but relies on it for basic DOMElement parsing.
+- Right now the Readability object is an extension of the Element object of html-to-markdown. This is a problem because: 1) you lose the scoring when creating a new Readability object. The DOMDocument object is consistent across the same document. You change one value here and that will update all other nodes in other variables. By using the element interface you lose that reference and the score must be restored manually. Ideally, the Readability object should be an extension of the DOMDocument or DOMElement objects, the score should be saved within that object and no restoration or recalculation would be needed.
 
 ## How it works
 
