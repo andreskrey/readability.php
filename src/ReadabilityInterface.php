@@ -14,11 +14,6 @@ interface ReadabilityInterface extends ElementInterface
     public function tagNameEqualsTo($value);
 
     /**
-     * @return bool
-     */
-    public function hasSinglePNode();
-
-    /**
      * @return int
      */
     public function getNodeAncestors();
@@ -49,4 +44,49 @@ interface ReadabilityInterface extends ElementInterface
      * @return int
      */
     public function setContentScore($score);
+
+    /**
+     * @param bool $normalize Normalize white space?
+     * @return string
+     */
+    public function getTextContent($normalize);
+
+    /**
+     * @param string $value
+     */
+    public function setNodeTag($value);
+
+    /**
+     * @return \DOMNode
+     */
+    public function getDOMNode();
+
+    /**
+     * @param Readability $node
+     *
+     * @return Readability
+     */
+    public function removeAndGetNext($node);
+
+    /**
+     * @param Readability $originalNode
+     * @param bool $ignoreSelfAndKids
+     *
+     * @return Readability
+     */
+
+    public function getNextNode($originalNode, $ignoreSelfAndKids = false);
+
+    /**
+     * @param Readability $node1
+     * @param Readability $node2
+     *
+     * @return bool
+     */
+    public function compareNodes($node1, $node2);
+
+    /**
+     * @param Readability $newNode
+     */
+    public function replaceChild(Readability $newNode);
 }
