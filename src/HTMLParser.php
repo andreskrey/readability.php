@@ -29,11 +29,6 @@ class HTMLParser
     /**
      * @var array
      */
-    private $elementsToScore = [];
-
-    /**
-     * @var array
-     */
     private $regexps = [
         'unlikelyCandidates' => '/banner|combx|comment|community|disqus|extra|foot|header|menu|modal|related|remark|rss|share|shoutbox|sidebar|skyscraper|sponsor|ad-break|agegate|pagination|pager|popup/i',
         'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
@@ -73,6 +68,23 @@ class HTMLParser
     ];
 
     /**
+     * @var array
+     */
+    private $divToPElements = [
+        'a',
+        'blockquote',
+        'dl',
+        'div',
+        'img',
+        'ol',
+        'p',
+        'pre',
+        'table',
+        'ul',
+        'select'
+    ];
+
+    /**
      * Constructor.
      *
      * @param array $options Options to override the default ones
@@ -82,6 +94,7 @@ class HTMLParser
         $defaults = [
             'maxTopCandidates' => 5, // Max amount of top level candidates
             'articleByLine' => null,
+            'stripUnlikelyCandidates' => true
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -118,16 +131,17 @@ class HTMLParser
 
         $root = new Readability($root->firstChild);
 
-        $this->getNodes($root);
+        $elementsToScore = $this->getNodes($root);
 
-        $result = $this->rateNodes($this->elementsToScore);
+        $result = $this->rateNodes($elementsToScore);
 
         // Todo, fix return, check for values, maybe create a function to create the return object
         return [
             'title' => $this->metadata['title'],
             'author' => $this->metadata['author'],
             'image' => $this->metadata['image'],
-            'article' => $result
+            'article' => $result,
+            'html' => $result->C14N()
         ];
     }
 
@@ -213,7 +227,7 @@ class HTMLParser
     public function getLinkDensity($readability)
     {
         $linkLength = 0;
-        $textLength = strlen($readability->getTextContent(true));
+        $textLength = mb_strlen($readability->getTextContent(true));
 
         if (!$textLength) {
             return 0;
@@ -224,7 +238,7 @@ class HTMLParser
         if ($links) {
             /** @var Readability $link */
             foreach ($links as $link) {
-                $linkLength += strlen($link->getTextContent(true));
+                $linkLength += mb_strlen($link->getTextContent(true));
             }
         }
 
@@ -257,6 +271,16 @@ class HTMLParser
      */
     private function getNodes(Readability $node)
     {
+        $stripUnlikelyCandidates = $this->getConfig()->getOption('stripUnlikelyCandidates');
+
+        $elementsToScore = [];
+
+        /*
+         * First, node prepping. Trash nodes that look cruddy (like ones with the
+         * class name "comment", etc), and turn divs into P tags where they have been
+         * used inappropriately (as in, where they contain no other block level elements.)
+         */
+
         while ($node) {
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
@@ -266,34 +290,54 @@ class HTMLParser
                 continue;
             }
 
-            // Avoid elements that are unlikely to have any useful information.
-            if (
-                preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
-                !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
-                !$node->tagNameEqualsTo('body') &&
-                !$node->tagNameEqualsTo('a')
-            ) {
-                $node = $node->removeAndGetNext($node);
-                continue;
+            // Remove unlikely candidates
+            if ($stripUnlikelyCandidates) {
+                if (
+                    preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
+                    !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
+                    !$node->tagNameEqualsTo('body') &&
+                    !$node->tagNameEqualsTo('a')
+                ) {
+                    $node = $node->removeAndGetNext($node);
+                    continue;
+                }
             }
 
             if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
-                $this->elementsToScore[] = $node;
+                $elementsToScore[] = $node;
             }
 
-            // Check for nodes that have only on P node as a child and convert them to a single P node
-            if ($node->hasSinglePNode()) {
-                $pNode = $node->getChildren();
-                $node = $pNode[0];
-
-                // If there's any info on the node, add it to the elements to score in the next step.
-                if ($node->getValue(true)) {
-                    $this->elementsToScore[] = $node;
+            // Turn all divs that don't have children block level elements into p's
+            if ($node->tagNameEqualsTo('div')) {
+                /*
+                 * Sites like http://mobile.slate.com encloses each paragraph with a DIV
+                 * element. DIVs with only a P element inside and no text content can be
+                 * safely converted into plain P elements to avoid confusing the scoring
+                 * algorithm with DIVs with are, in practice, paragraphs.
+                 */
+                if ($this->hasSinglePNode($node)) {
+                    $pNode = $node->getChildren()[0];
+                    $node->replaceChild($pNode);
+                    $node = $pNode;
+                } elseif (!$this->hasSingleChildBlockElement($node)) {
+                    $node->setNodeTag('p');
+                    $elementsToScore[] = $node;
+                } else {
+                    // EXPERIMENTAL
+                    foreach ($node->getChildren() as $child) {
+                        if ($child->isText()) {
+                            /** @var Readability $child */
+                            $newNode = $node->createNode($child, 'p');
+                            $child->replaceChild($newNode);
+                        }
+                    }
                 }
             }
 
             $node = $node->getNextNode($node);
         }
+
+        return $elementsToScore;
     }
 
     /**
@@ -301,7 +345,7 @@ class HTMLParser
      *
      * @param array $nodes
      *
-     * @return DOMDocument
+     * @return DOMDocument|bool
      */
     private function rateNodes($nodes)
     {
@@ -309,16 +353,18 @@ class HTMLParser
 
         /** @var Readability $node */
         foreach ($nodes as $node) {
-
+            if (!$node->getParent()) {
+                continue;
+            }
             // Discard nodes with less than 25 characters, without blank space
-            if (strlen($node->getValue(true)) < 25) {
+            if (mb_strlen($node->getValue(true)) < 25) {
                 continue;
             }
 
             $ancestors = $node->getNodeAncestors();
 
             // Exclude nodes with no ancestor
-            if ($ancestors === 0) {
+            if (count($ancestors) === 0) {
                 continue;
             }
 
@@ -329,12 +375,15 @@ class HTMLParser
             $contentScore += count(explode(',', $node->getValue(true)));
 
             // For every 100 characters in this paragraph, add another point. Up to 3 points.
-            $contentScore += min(floor(strlen($node->getValue(true)) / 100), 3);
+            $contentScore += min(floor(mb_strlen($node->getValue(true)) / 100), 3);
 
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
             foreach ($ancestors as $level => $ancestor) {
-                $ancestor = $ancestor->initializeNode();
+                if (!$ancestor->isInitialized()) {
+                    $ancestor->initializeNode();
+                    $candidates[] = $ancestor;
+                }
 
                 /*
                  * Node score divider:
@@ -353,9 +402,19 @@ class HTMLParser
 
                 $currentScore = $ancestor->getContentScore();
                 $ancestor->setContentScore($currentScore + ($contentScore / $scoreDivider));
-
-                $candidates[] = $ancestor;
             }
+        }
+
+        /*
+         * TODO This is an horrible hack because I don't know how to properly pass by reference.
+         * When candidates are added to the $candidates array, they lose the reference to the original object
+         * and on each loop, the object inside $candidates doesn't get updated. This function restores the score
+         * by getting it of the data-readability tag. This should be fixed using proper references and good coding
+         * practices (which I lack)
+         */
+
+        foreach ($candidates as $candidate) {
+            $candidate->reloadScore();
         }
 
         /*
@@ -404,7 +463,7 @@ class HTMLParser
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
 
             // Cannot be foreached, don't ask me why.
-            for ($i = 0; $i <= count($kids); $i++) {
+            for ($i = 0; $i < $kids->length; $i++) {
                 $import = $topCandidate->importNode($kids->item($i), true);
                 $topCandidate->firstChild->appendChild($import);
             }
@@ -459,7 +518,9 @@ class HTMLParser
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
-        $siblings = $topCandidate->getChildren();
+        $siblings = $topCandidate->getParent()->getChildren();
+
+        $hasContent = false;
 
         /** @var Readability $sibling */
         foreach ($siblings as $sibling) {
@@ -480,32 +541,136 @@ class HTMLParser
                     $linkDensity = $this->getLinkDensity($sibling);
                     $nodeContent = $sibling->getTextContent(true);
 
-                    if (strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+                    if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
                         $append = true;
-                        // TODO Check if pregmatch is working as expected
-                    } elseif ($nodeContent && strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('//\.( |$)/', $nodeContent)) {
+                    } elseif ($nodeContent && mb_strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
                         $append = true;
                     }
                 }
             }
 
             if ($append) {
-                if (in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
+                $hasContent = true;
+
+                if (!in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
                     /*
                      * We have a node that isn't a common block level element, like a form or td tag.
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
 
-                    // TODO This is not working! Fix!
-//                    $sibling->setNodeName('div');
+                    $sibling->setNodeTag('div');
                 }
 
                 $import = $articleContent->importNode($sibling->getDOMNode(), true);
                 $articleContent->appendChild($import);
+
+                /*
+                 * No node shifting needs to be check because when calling getChildren, an array is made with the
+                 * children of the parent node, instead of using the DOMElement childNodes function, which, when used
+                 * along with appendChild, would shift the nodes position and the current foreach will behave in
+                 * unpredictable ways.
+                 */
+
             }
         }
 
-        return $articleContent;
+        $articleContent = $this->prepArticle($articleContent);
+
+        if ($hasContent) {
+            return $articleContent;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * TODO
+     *
+     * @param DOMDocument $article
+     *
+     * @return DOMDocument
+     */
+    public function prepArticle(DOMDocument $article)
+    {
+        // TODO CleanConditionaly
+        // Clean out junk from the article content
+        $this->_clean($article, 'object');
+        $this->_clean($article, 'embed');
+        $this->_clean($article, 'h1');
+        $this->_clean($article, 'footer');
+
+        // If there is only one h2, they are probably using it as a header
+        // and not a subheader, so remove it since we already have a header.
+        if ($article->getElementsByTagName('h2')->length === 1) {
+            $this->_clean($article, 'h2');
+        }
+
+        $this->_clean($article, 'iframe');
+        $this->_cleanHeaders($article);
+
+        return $article;
+    }
+
+    /**
+     * Clean a node of all elements of type "tag".
+     * (Unless it's a youtube/vimeo video. People love movies.)
+     *
+     * @param Element
+     * @param string tag to clean
+     * @return void
+     **/
+    public function _clean(DOMDocument $article, $tag)
+    {
+        $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
+
+        foreach ($article->getElementsByTagName($tag) as $item) {
+            // Allow youtube and vimeo videos through as people usually want to see those.
+            if ($isEmbed) {
+                $attributeValues = [];
+                foreach ($item->attributes as $name => $value) {
+                    $attributeValues[] = $value;
+                }
+                $attributeValues = implode('|', $attributeValues);
+
+                // First, check the elements attributes to see if any of them contain youtube or vimeo
+                if (preg_match($this->regexps['videos'], $attributeValues)) {
+                    continue;
+                }
+
+                // Then check the elements inside this element for the same.
+                if (preg_match($this->regexps['videos'], $item->C14N())) {
+                    continue;
+                }
+            }
+            $this->removeNode($item);
+        }
+    }
+
+    /**
+     * Clean out spurious headers from an Element. Checks things like classnames and link density.
+     *
+     * @param Element
+     * @return void
+     **/
+    public function _cleanHeaders(DOMDocument $article)
+    {
+        for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
+            $headers = $article->getElementsByTagName('h' . $headerIndex);
+            foreach($headers as $header){
+                $header = new Readability($header);
+                if($header->getClassWeight() < 0){
+                    $this->removeNode($header->getDOMNode());
+                }
+            }
+        }
+    }
+
+    public function removeNode(\DOMNode $node)
+    {
+        $parent = $node->parentNode;
+        if ($parent) {
+            $parent->removeChild($node);
+        }
     }
 
     /**
@@ -518,7 +683,7 @@ class HTMLParser
      */
     private function checkByline($node, $matchString)
     {
-        if (!$this->getConfig()->getOption('articleByLine')) {
+        if ($this->getConfig()->getOption('articleByLine')) {
             return false;
         }
 
@@ -545,9 +710,47 @@ class HTMLParser
         if (gettype($text) == 'string') {
             $byline = trim($text);
 
-            return (strlen($byline) > 0) && (strlen($text) < 100);
+            return (mb_strlen($byline) > 0) && (mb_strlen($text) < 100);
         }
 
         return false;
+    }
+
+    /**
+     * Checks if the current node has a single child and if that child is a P node.
+     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
+     * tags are, in practice, paragraphs.
+     *
+     * @param Readability $node
+     * @return bool
+     */
+    private function hasSinglePNode(Readability $node)
+    {
+        // There should be exactly 1 element child which is a P:
+        if ($node->hasChildren()) {
+            $children = $node->getChildren();
+
+            if (count($children) === 1) {
+                if ($children[0]->tagNameEqualsTo('p')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function hasSingleChildBlockElement(Readability $node)
+    {
+        /** @var Readability $child */
+        foreach ($node->getChildren() as $child) {
+            if (in_array($child->getTagName(), $this->divToPElements)) {
+                $this->hasSingleChildBlockElement($child);
+            } else {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

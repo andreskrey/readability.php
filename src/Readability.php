@@ -23,6 +23,11 @@ class Readability extends Element implements ReadabilityInterface
     protected $contentScore = 0;
 
     /**
+     * @var int
+     */
+    protected $initialized = false;
+
+    /**
      * @var array
      */
     private $regexps = [
@@ -39,20 +44,22 @@ class Readability extends Element implements ReadabilityInterface
     {
         parent::__construct($node);
 
-        if (get_class($node) !== 'DOMText') {
-            /*
-             * Restore the score if the object has been already scored.
-             *
-             * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
-             * by getting the node parents we'll get a undefined function fatal error
-             */
-            $score = 0;
+        /*
+         * Restore the score if the object has been already scored.
+         *
+         * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
+         * by getting the node parents we'll get a undefined function fatal error
+         */
+        $score = 0;
 
-            if (!in_array(get_class($node), ['DOMDocument', 'DOMComment'])) {
-                    $score = $node->getAttribute('readability');
+        // Check if the getAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
+        if (method_exists($node, 'getAttribute')) {
+            if ($node->hasAttribute('data-readability')) {
+                // Node was initialized previously. Restoring score and setting flag.
+                $this->initialized = true;
+                $score = $node->getAttribute('data-readability');
+                $this->setContentScore($score);
             }
-
-            $this->setContentScore(($score) ? $score : 0);
         }
     }
 
@@ -74,28 +81,6 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Checks if the current node has a single child and if that child is a P node.
-     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
-     * tags are, in practice, paragraphs.
-     *
-     * @return bool
-     */
-    public function hasSinglePNode()
-    {
-        if ($this->hasChildren()) {
-            $children = $this->getChildren();
-
-            if (count($children) === 1) {
-                if (strtolower($children[0]->getTagName()) === 'p') {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Get the ancestors of the current node.
      *
      * @param int $maxLevel Max amount of ancestors to get.
@@ -107,10 +92,10 @@ class Readability extends Element implements ReadabilityInterface
         $ancestors = [];
         $level = 0;
 
-        $node = $this;
+        $node = $this->getParent();
 
-        while (($node) ? $node->getParent() : $node) {
-            $ancestors[] = new static($node->node);
+        while ($node) {
+            $ancestors[] = $node;
             $level++;
             if ($level >= $maxLevel) {
                 break;
@@ -160,40 +145,46 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function initializeNode()
     {
-        switch ($this->getTagName()) {
-            case 'div':
-                $this->contentScore += 5;
-                break;
+        if (!$this->initialized) {
+            $contentScore = 0;
 
-            case 'pre':
-            case 'td':
-            case 'blockquote':
-                $this->contentScore += 3;
-                break;
+            switch ($this->getTagName()) {
+                case 'div':
+                    $contentScore += 5;
+                    break;
 
-            case 'address':
-            case 'ol':
-            case 'ul':
-            case 'dl':
-            case 'dd':
-            case 'dt':
-            case 'li':
-            case 'form':
-                $this->contentScore -= 3;
-                break;
+                case 'pre':
+                case 'td':
+                case 'blockquote':
+                    $contentScore += 3;
+                    break;
 
-            case 'h1':
-            case 'h2':
-            case 'h3':
-            case 'h4':
-            case 'h5':
-            case 'h6':
-            case 'th':
-                $this->contentScore -= 5;
-                break;
+                case 'address':
+                case 'ol':
+                case 'ul':
+                case 'dl':
+                case 'dd':
+                case 'dt':
+                case 'li':
+                case 'form':
+                    $contentScore -= 3;
+                    break;
+
+                case 'h1':
+                case 'h2':
+                case 'h3':
+                case 'h4':
+                case 'h5':
+                case 'h6':
+                case 'th':
+                    $contentScore -= 5;
+                    break;
+            }
+
+            $this->setContentScore($contentScore + $this->getClassWeight());
+
+            $this->initialized = true;
         }
-
-        $this->contentScore += $this->getClassWeight();
 
         return $this;
     }
@@ -224,7 +215,7 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         // Look for a special ID
-        $id = $this->getAttribute('class');
+        $id = $this->getAttribute('id');
         if (trim($id)) {
             if (preg_match($this->regexps['negative'], $id)) {
                 $weight -= 25;
@@ -257,12 +248,12 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function setContentScore($score)
     {
-        if (!in_array(get_class($this->node), ['DOMDocument', 'DOMComment'])) {
-
-            $this->contentScore = $score;
+        // Check if the setAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
+        if (method_exists($this->node, 'setAttribute')) {
+            $this->contentScore = (float)$score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
-            $this->node->setAttribute('readability', $this->contentScore);
+            $this->node->setAttribute('data-readability', $this->contentScore);
 
             return $this->contentScore;
         }
@@ -288,13 +279,27 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Sets the node name.
+     * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
+     * element with the new tag name and importing it to the main DOMDocument
      *
      * @param string $value
      */
-    public function setNodeName($value)
+    public function setNodeTag($value)
     {
-        $this->node->nodeName = $value;
+        $new = new \DOMDocument();
+        $new->appendChild($new->createElement($value));
+
+        $childs = $this->node->childNodes;
+        for ($i = 0; $i < $childs->length; $i++) {
+            $import = $new->importNode($childs->item($i), true);
+            $new->firstChild->appendChild($import);
+        }
+
+        // The import must be done on the firstChild of $new, since $new is a DOMDocument and not a DOMElement.
+        $import = $this->node->ownerDocument->importNode($new->firstChild, true);
+        $this->node->parentNode->replaceChild($import, $this->node);
+
+        $this->node = $import;
     }
 
     /**
@@ -388,5 +393,64 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         return true;
+    }
+
+    /**
+     * Replaces child node with a new one.
+     *
+     * @param Readability $newNode
+     *
+     */
+    public function replaceChild(Readability $newNode)
+    {
+        $this->node->parentNode->replaceChild($newNode->node, $this->node);
+    }
+
+    /**
+     * Creates a new node based on the text content of the original node.
+     *
+     * @param Readability $originalNode
+     * @param string $tagName
+     *
+     * @return Readability
+     */
+    public function createNode(Readability $originalNode, $tagName)
+    {
+        $text = $originalNode->getTextContent();
+        $newnode = $originalNode->node->ownerDocument->createElement($tagName, $text);
+
+        $return = $originalNode->node->appendChild($newnode);
+
+        return new static($return);
+    }
+
+    /**
+     * Checks if the object is initialized.
+     *
+     * @return bool
+     */
+    public function isInitialized()
+    {
+        return $this->initialized;
+    }
+
+    /**
+     * Reloads the score stores in the data-readability tag.
+     *
+     * @return int|bool
+     */
+    public function reloadScore()
+    {
+        if (method_exists($this->node, 'getAttribute')) {
+            if ($this->node->hasAttribute('data-readability')) {
+                $this->initialized = true;
+                $score = $this->node->getAttribute('data-readability');
+                $this->setContentScore($score);
+
+                return $score;
+            }
+        }
+
+        return false;
     }
 }
