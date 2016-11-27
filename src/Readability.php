@@ -453,4 +453,29 @@ class Readability extends Element implements ReadabilityInterface
 
         return false;
     }
+
+    /**
+     * Check if a given node has one of its ancestor tag name matching the
+     * provided one.
+     *
+     * @param Readability $node
+     * @param string $tagName
+     * @param int $maxDepth
+     * @return bool
+     */
+    public function hasAncestorTag(Readability $node, $tagName, $maxDepth = 3)
+    {
+        $depth = 0;
+        while ($node->getParent()) {
+            if ($depth > $maxDepth) {
+                return false;
+            }
+            if ($node->getParent()->tagNameEqualsTo($tagName)) {
+                return true;
+            }
+            $node = $node->getParent();
+            $depth++;
+        }
+        return false;
+    }
 }

@@ -94,7 +94,8 @@ class HTMLParser
         $defaults = [
             'maxTopCandidates' => 5, // Max amount of top level candidates
             'articleByLine' => null,
-            'stripUnlikelyCandidates' => true
+            'stripUnlikelyCandidates' => true,
+            'cleanConditionally' => true
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -584,7 +585,7 @@ class HTMLParser
     }
 
     /**
-     * TODO
+     * TODO To be moved to Readability
      *
      * @param DOMDocument $article
      *
@@ -592,8 +593,8 @@ class HTMLParser
      */
     public function prepArticle(DOMDocument $article)
     {
-        // TODO CleanConditionaly
         // Clean out junk from the article content
+        $this->_cleanConditionally($article, 'form');
         $this->_clean($article, 'object');
         $this->_clean($article, 'embed');
         $this->_clean($article, 'h1');
@@ -608,12 +609,93 @@ class HTMLParser
         $this->_clean($article, 'iframe');
         $this->_cleanHeaders($article);
 
+        // Do these last as the previous stuff may have removed junk
+        // that will affect these
+        $this->_cleanConditionally($article, 'table');
+        $this->_cleanConditionally($article, 'ul');
+        $this->_cleanConditionally($article, 'div');
+
         return $article;
+    }
+
+    /**
+     * TODO To be moved to Readability
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanConditionally(DOMDocument $article, $tag)
+    {
+        if (!$this->getConfig()->getOption('cleanConditionally')) {
+            return;
+        }
+
+        $isList = in_array($tag, ['ul', 'ol']);
+
+        /*
+         * Gather counts for other typical elements embedded within.
+         * Traverse backwards so we can remove nodes at the same time
+         * without effecting the traversal.
+         */
+
+        foreach ($article->getElementsByTagName($tag) as $node) {
+            $node = new Readability($node);
+            $weight = $node->getClassWeight();
+
+            if ($weight < 0) {
+                $this->removeNode($node->getDOMNode());
+                continue;
+            }
+
+            if (substr_count($node->getTextContent(), ',' < 10)) {
+                /*
+                 * If there are not very many commas, and the number of
+                 * non-paragraph elements is more than paragraphs or other
+                 * ominous signs, remove the element.
+                 */
+
+                // TODO Horrible hack, must be removed once this function is inside Readability
+                $p = $node->getDOMNode()->getElementsByTagName('p')->length;
+                $img = $node->getDOMNode()->getElementsByTagName('img')->length;
+                $li = $node->getDOMNode()->getElementsByTagName('li')->length - 100;
+                $input = $node->getDOMNode()->getElementsByTagName('input')->length;
+
+                $embedCount = 0;
+                $embeds = $node->getDOMNode()->getElementsByTagName('embed');
+
+                foreach ($embeds as $embedNode) {
+                    if (preg_match($this->regexps['videos'], $embedNode->C14N())) {
+                        $embedCount++;
+                    }
+                }
+
+                $linkDensity = $this->getLinkDensity($node);
+                $contentLength = mb_strlen($node->getTextContent(true));
+
+                $haveToRemove =
+                    // Make an exception for elements with no p's and exactly 1 img.
+                    ($img > $p && $node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $li > $p) ||
+                    ($input > floor($p / 3)) ||
+                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2)) ||
+                    (!$isList && $weight < 25 && $linkDensity > 0.2) ||
+                    ($weight >= 25 && $linkDensity > 0.5) ||
+                    (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
+
+                if ($haveToRemove) {
+                    $this->removeNode($node->getDOMNode());
+                }
+            }
+        }
+
     }
 
     /**
      * Clean a node of all elements of type "tag".
      * (Unless it's a youtube/vimeo video. People love movies.)
+     *
+     * TODO To be moved to Readability
      *
      * @param Element
      * @param string tag to clean
@@ -649,22 +731,32 @@ class HTMLParser
     /**
      * Clean out spurious headers from an Element. Checks things like classnames and link density.
      *
-     * @param Element
+     * TODO To be moved to Readability
+     *
+     * @param DOMDocument $article
      * @return void
      **/
     public function _cleanHeaders(DOMDocument $article)
     {
         for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
             $headers = $article->getElementsByTagName('h' . $headerIndex);
-            foreach($headers as $header){
+            foreach ($headers as $header) {
                 $header = new Readability($header);
-                if($header->getClassWeight() < 0){
+                if ($header->getClassWeight() < 0) {
                     $this->removeNode($header->getDOMNode());
                 }
             }
         }
     }
 
+    /**
+     * Remove the passed node
+     *
+     * TODO To be moved to Readability
+     *
+     * @param \DOMNode $node
+     * @return void
+     **/
     public function removeNode(\DOMNode $node)
     {
         $parent = $node->parentNode;
