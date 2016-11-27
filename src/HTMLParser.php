@@ -615,7 +615,36 @@ class HTMLParser
         $this->_cleanConditionally($article, 'ul');
         $this->_cleanConditionally($article, 'div');
 
+        $this->_cleanExtraParagraphs($article);
+
+        // TODO Remove extra BR nodes that have a P sibling.
+
         return $article;
+    }
+
+    /**
+     * TODO To be moved to Readability
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanExtraParagraphs(DOMDocument $article)
+    {
+        foreach($article->getElementsByTagName('p') as $paragraph){
+            $imgCount = $paragraph->getElementsByTagName('img')->length;
+            $embedCount = $paragraph->getElementsByTagName('embed')->length;
+            $objectCount = $paragraph->getElementsByTagName('object')->length;
+            // At this point, nasty iframes have been removed, only remain embedded video ones.
+            $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
+            $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
+
+            if($totalCount === 0 && !trim($paragraph->textContent)){
+                // TODO must be done via readability
+                $paragraph->parentNode->removeChild($paragraph);
+            }
+
+        }
     }
 
     /**
@@ -639,6 +668,7 @@ class HTMLParser
          * without effecting the traversal.
          */
 
+        // TODO Check for node shifting and if the removal function is working as expected
         foreach ($article->getElementsByTagName($tag) as $node) {
             $node = new Readability($node);
             $weight = $node->getClassWeight();
@@ -648,7 +678,7 @@ class HTMLParser
                 continue;
             }
 
-            if (substr_count($node->getTextContent(), ',' < 10)) {
+            if (substr_count($node->getTextContent(), ',') < 10) {
                 /*
                  * If there are not very many commas, and the number of
                  * non-paragraph elements is more than paragraphs or other
