@@ -631,7 +631,7 @@ class HTMLParser
      */
     public function _cleanExtraParagraphs(DOMDocument $article)
     {
-        foreach($article->getElementsByTagName('p') as $paragraph){
+        foreach ($article->getElementsByTagName('p') as $paragraph) {
             $imgCount = $paragraph->getElementsByTagName('img')->length;
             $embedCount = $paragraph->getElementsByTagName('embed')->length;
             $objectCount = $paragraph->getElementsByTagName('object')->length;
@@ -639,7 +639,7 @@ class HTMLParser
             $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
             $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
 
-            if($totalCount === 0 && !trim($paragraph->textContent)){
+            if ($totalCount === 0 && !trim($paragraph->textContent)) {
                 // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
@@ -668,8 +668,12 @@ class HTMLParser
          * without effecting the traversal.
          */
 
-        // TODO Check for node shifting and if the removal function is working as expected
-        foreach ($article->getElementsByTagName($tag) as $node) {
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+
+            $node = $DOMNodeList->item($length - 1 - $i);
+
             $node = new Readability($node);
             $weight = $node->getClassWeight();
 
