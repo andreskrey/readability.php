@@ -138,9 +138,9 @@ class HTMLParser
 
         // Todo, fix return, check for values, maybe create a function to create the return object
         return [
-            'title' => $this->metadata['title'],
-            'author' => $this->metadata['author'],
-            'image' => $this->metadata['image'],
+            'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
+            'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
+            'image' => isset($this->metadata['image']) ?$this->metadata['image'] : null,
             'article' => $result,
             'html' => $result->C14N()
         ];
