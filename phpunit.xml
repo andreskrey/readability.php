@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit colors="true"
+         stopOnFailure="false"
+         stopOnError="false">
+    <testsuites>
+        <testsuite name="Readability.php Test Suite">
+            <directory>./test/</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
