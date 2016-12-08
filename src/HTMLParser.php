@@ -95,7 +95,8 @@ class HTMLParser
             'maxTopCandidates' => 5, // Max amount of top level candidates
             'articleByLine' => null,
             'stripUnlikelyCandidates' => true,
-            'cleanConditionally' => true
+            'cleanConditionally' => true,
+            'removeReadabilityTags' => true
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -140,7 +141,7 @@ class HTMLParser
         return [
             'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
             'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
-            'image' => isset($this->metadata['image']) ?$this->metadata['image'] : null,
+            'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
             'article' => $result,
             'html' => $result->C14N()
         ];
@@ -617,9 +618,29 @@ class HTMLParser
 
         $this->_cleanExtraParagraphs($article);
 
+        $this->_cleanReadabilityTags($article);
+
         // TODO Remove extra BR nodes that have a P sibling.
 
         return $article;
+    }
+
+    /**
+     * TODO To be moved to Readability
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanReadabilityTags(DOMDocument $article)
+    {
+        if ($this->getConfig()->getOption('removeReadabilityTags')) {
+            foreach ($article->getElementsByTagName('*') as $tag) {
+                if ($tag->hasAttribute('data-readability')) {
+                    $tag->removeAttribute('data-readability');
+                }
+            }
+        }
     }
 
     /**
@@ -744,7 +765,7 @@ class HTMLParser
             if ($isEmbed) {
                 $attributeValues = [];
                 foreach ($item->attributes as $name => $value) {
-                    $attributeValues[] = $value;
+                    $attributeValues[] = $value->nodeValue;
                 }
                 $attributeValues = implode('|', $attributeValues);
 
