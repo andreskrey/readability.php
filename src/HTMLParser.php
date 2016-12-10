@@ -889,12 +889,14 @@ class HTMLParser
 
     private function hasSingleChildBlockElement(Readability $node)
     {
-        /** @var Readability $child */
-        foreach ($node->getChildren() as $child) {
-            if (in_array($child->getTagName(), $this->divToPElements)) {
-                $this->hasSingleChildBlockElement($child);
-            } else {
-                return false;
+        if ($node->hasChildren()) {
+            /** @var Readability $child */
+            foreach ($node->getChildren() as $child) {
+                if (in_array($child->getTagName(), $this->divToPElements)) {
+                    return true;
+                } else {
+                    return $this->hasSingleChildBlockElement($child);
+                }
             }
         }
 

@@ -417,11 +417,9 @@ class Readability extends Element implements ReadabilityInterface
     public function createNode(Readability $originalNode, $tagName)
     {
         $text = $originalNode->getTextContent();
-        $newnode = $originalNode->node->ownerDocument->createElement($tagName, $text);
+        $newNode = $originalNode->node->ownerDocument->createElement($tagName, $text);
 
-        $return = $originalNode->node->appendChild($newnode);
-
-        return new static($return);
+        return new static($newNode);
     }
 
     /**
