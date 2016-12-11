@@ -17,6 +17,11 @@ class HTMLParser
     private $dom = null;
 
     /**
+     * @var DOMDocument
+     */
+    private $backupdom = null;
+
+    /**
      * @var array
      */
     private $metadata = [];
@@ -154,6 +159,9 @@ class HTMLParser
     {
         $this->dom->loadHTML($html);
         $this->dom->encoding = 'UTF-8';
+
+        // In case we need the original HTML to create a fake top candidate
+        $this->backupdom = clone $this->dom;
     }
 
     /**
@@ -465,7 +473,7 @@ class HTMLParser
 
             $topCandidate = new DOMDocument();
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
-            $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
+            $kids = $this->backupdom->getElementsByTagName('body')->item(0)->childNodes;
 
             // Cannot be foreached, don't ask me why.
             for ($i = 0; $i < $kids->length; $i++) {
@@ -473,7 +481,7 @@ class HTMLParser
                 $topCandidate->firstChild->appendChild($import);
             }
 
-            // Readability must be created using firstChild to grab de DOMElement instead of the DOMDocument.
+            // Readability must be created using firstChild to grab the DOMElement instead of the DOMDocument.
             $topCandidate = new Readability($topCandidate->firstChild);
             $topCandidate->initializeNode();
 
