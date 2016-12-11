@@ -329,8 +329,8 @@ class HTMLParser
                     foreach ($node->getChildren() as $child) {
                         if ($child->isText()) {
                             /** @var Readability $child */
-                            // Check if there's actual content on the node but leave crlfs.
-                            if (trim($child->getTextContent(), " \t\0\x0B")) {
+                            // Check if there's actual content on the node.
+                            if (trim($child->getTextContent())) {
                                 $newNode = $node->createNode($child, 'p');
                                 $child->replaceChild($newNode);
                             }
