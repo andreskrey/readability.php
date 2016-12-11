@@ -318,7 +318,7 @@ class HTMLParser
                  * algorithm with DIVs with are, in practice, paragraphs.
                  */
                 if ($this->hasSinglePNode($node)) {
-                    $pNode = $node->getChildren()[0];
+                    $pNode = $node->getChildren(true)[0];
                     $node->replaceChild($pNode);
                     $node = $pNode;
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
@@ -877,17 +877,12 @@ class HTMLParser
     private function hasSinglePNode(Readability $node)
     {
         // There should be exactly 1 element child which is a P:
-        if ($node->hasChildren()) {
-            $children = $node->getChildren();
-
-            if (count($children) === 1) {
-                if ($children[0]->tagNameEqualsTo('p')) {
-                    return true;
-                }
-            }
+        // And there should be no text nodes with real content (param true on ->getChildren)
+        if (count($children = $node->getChildren(true)) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     private function hasSingleChildBlockElement(Readability $node)

@@ -476,4 +476,23 @@ class Readability extends Element implements ReadabilityInterface
         }
         return false;
     }
+
+    /**
+     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
+     * @return array
+     */
+    public function getChildren($filterEmptyDOMText = false)
+    {
+        $ret = array();
+        /** @var \DOMNode $node */
+        foreach ($this->node->childNodes as $node) {
+            if ($filterEmptyDOMText && $node->nodeName === '#text' && !trim($node->nodeValue)) {
+                continue;
+            }
+
+            $ret[] = new static($node);
+        }
+
+        return $ret;
+    }
 }
