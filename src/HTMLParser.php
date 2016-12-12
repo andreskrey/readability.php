@@ -101,6 +101,7 @@ class HTMLParser
             'articleByLine' => null,
             'stripUnlikelyCandidates' => true,
             'cleanConditionally' => true,
+            'weightClasses' => true,
             'removeReadabilityTags' => true
         ];
 
@@ -136,11 +137,40 @@ class HTMLParser
             return false;
         }
 
-        $root = new Readability($root->firstChild);
+        while (true) {
+            $root = new Readability($root->firstChild);
 
-        $elementsToScore = $this->getNodes($root);
+            $elementsToScore = $this->getNodes($root);
 
-        $result = $this->rateNodes($elementsToScore);
+            $result = $this->rateNodes($elementsToScore);
+
+            /*
+             * Now that we've gone through the full algorithm, check to see if
+             * we got any meaningful content. If we didn't, we may need to re-run
+             * grabArticle with different flags set. This gives us a higher likelihood of
+             * finding the content, and the sieve approach gives us a higher likelihood of
+             * finding the -right- content.
+             */
+
+            // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
+            // that doesn't really count to the quality of the result.
+            if ($result && mb_strlen($result->textContent) < 500) {
+                $root = $this->backupdom->getElementsByTagName('body')->item(0);
+
+                if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
+                    $this->getConfig()->setOption('stripUnlikelyCandidates', false);
+                } elseif ($this->getConfig()->getOption('weightClasses')) {
+                    $this->getConfig()->setOption('weightClasses', false);
+                } elseif ($this->getConfig()->getOption('cleanConditionally')) {
+                    $this->getConfig()->setOption('cleanConditionally', false);
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
 
         // Todo, fix return, check for values, maybe create a function to create the return object
         return [
@@ -473,7 +503,7 @@ class HTMLParser
 
             $topCandidate = new DOMDocument();
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
-            $kids = $this->backupdom->getElementsByTagName('body')->item(0)->childNodes;
+            $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
 
             // Cannot be foreached, don't ask me why.
             for ($i = 0; $i < $kids->length; $i++) {

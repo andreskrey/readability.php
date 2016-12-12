@@ -198,8 +198,11 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function getClassWeight()
     {
-        // if(!Config::FLAG_WEIGHT_CLASSES) return 0;
-
+//        TODO To implement. How to get config from html parser from readability
+//        if ($this->getConfig()->getOption('weightClasses')) {
+//            return 0;
+//        }
+//
         $weight = 0;
 
         // Look for a special classname
