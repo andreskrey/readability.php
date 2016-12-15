@@ -128,6 +128,9 @@ class HTMLParser
 
         $this->removeScripts();
 
+        // In case we need the original HTML to create a fake top candidate
+        $this->backupdom = clone $this->dom;
+
         $this->metadata = $this->getMetadata();
 
         $this->title = $this->getTitle();
@@ -190,9 +193,6 @@ class HTMLParser
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
         $this->dom->loadHTML('<?xml encoding="UTF-8">' . $html);
         $this->dom->encoding = 'UTF-8';
-
-        // In case we need the original HTML to create a fake top candidate
-        $this->backupdom = clone $this->dom;
     }
 
     /**
