@@ -187,7 +187,8 @@ class HTMLParser
      */
     private function loadHTML($html)
     {
-        $this->dom->loadHTML($html);
+        // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
+        $this->dom->loadHTML('<?xml encoding="UTF-8">' . $html);
         $this->dom->encoding = 'UTF-8';
 
         // In case we need the original HTML to create a fake top candidate
@@ -501,7 +502,8 @@ class HTMLParser
             // Move all of the page's children into topCandidate
             $neededToCreateTopCandidate = true;
 
-            $topCandidate = new DOMDocument();
+            $topCandidate = new DOMDocument('1.0', 'utf-8');
+            $topCandidate->encoding = 'UTF-8';
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
 
@@ -557,7 +559,7 @@ class HTMLParser
          * that we removed, etc.
          */
 
-        $articleContent = new DOMDocument();
+        $articleContent = new DOMDocument('1.0', 'utf-8');
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
