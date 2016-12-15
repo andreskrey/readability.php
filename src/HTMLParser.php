@@ -128,6 +128,8 @@ class HTMLParser
 
         $this->removeScripts();
 
+        $this->prepDocument();
+
         // In case we need the original HTML to create a fake top candidate
         $this->backupdom = clone $this->dom;
 
@@ -219,6 +221,74 @@ class HTMLParser
                 }
             }
         }
+    }
+
+    /*
+     * Prepares the document for parsing
+     */
+    private function prepDocument()
+    {
+        foreach ($this->dom->getElementsByTagName('br') as $br) {
+            /** @var \DOMNode $br */
+            $next = $br->nextSibling;
+
+            /*
+             * Whether 2 or more <br> elements have been found and replaced with a
+             * <p> block.
+             */
+            $replaced = false;
+
+            /*
+             * If we find a <br> chain, remove the <br>s until we hit another element
+             * or non-whitespace. This leaves behind the first <br> in the chain
+             * (which will be replaced with a <p> later).
+             */
+            while (($next = $this->nextElement($next)) && ($next->nodeName === 'br')) {
+                $replaced = true;
+                $brSibling = $next->nextSibling;
+                $next->parentNode->removeChild($next);
+                $next = $brSibling;
+            }
+
+            /*
+             * If we removed a <br> chain, replace the remaining <br> with a <p>. Add
+             * all sibling nodes as children of the <p> until we hit another <br>
+             * chain.
+             */
+
+            if ($replaced) {
+                $p = $this->dom->createElement('p');
+                $br->parentNode->replaceChild($p, $br);
+
+                $next = $p->nextSibling;
+                while ($next) {
+                    // If we've hit another <br><br>, we're done adding children to this <p>.
+                    if ($next->nodeName === 'br') {
+                        $nextElem = $this->nextElement($next);
+                        if ($nextElem && $nextElem->nodeName === 'br') {
+                            break;
+                        }
+                    }
+
+                    // Otherwise, make this node a child of the new <p>.
+                    $sibling = $next->nextSibling;
+                    $p->appendChild($next);
+                    $next = $sibling;
+                }
+            }
+        }
+    }
+
+    private function nextElement($node)
+    {
+        $next = $node;
+        while ($next
+            && $next->nodeName !== '#text'
+            && trim($next->textContent)) {
+            $next = $next->nextSibling;
+        }
+
+        return $next;
     }
 
     /**
@@ -366,8 +436,8 @@ class HTMLParser
                 } else {
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
+                        /** @var Readability $child */
                         if ($child->isText()) {
-                            /** @var Readability $child */
                             // Check if there's actual content on the node.
                             if (trim($child->getTextContent())) {
                                 $newNode = $node->createNode($child, 'p');
