@@ -368,7 +368,7 @@ class HTMLParser
         }
 
         $title = $this->dom->getElementsByTagName('title');
-        if ($title) {
+        if ($title->length > 0) {
             return $title->item(0)->nodeValue;
         }
 
