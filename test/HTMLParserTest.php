@@ -2,7 +2,6 @@
 
 namespace andreskrey\Readability\Test;
 
-
 use andreskrey\Readability\HTMLParser;
 
 class HTMLParserTest extends \PHPUnit_Framework_TestCase
