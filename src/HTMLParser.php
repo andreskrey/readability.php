@@ -228,8 +228,11 @@ class HTMLParser
      */
     private function prepDocument()
     {
-        foreach ($this->dom->getElementsByTagName('br') as $br) {
+        $brs = $this->dom->getElementsByTagName('br');
+        $length = $brs->length;
+        for ($i = 0; $i < $length; $i++) {
             /** @var \DOMNode $br */
+            $br = $brs->item($length - 1 - $i);
             $next = $br->nextSibling;
 
             /*
@@ -733,7 +736,15 @@ class HTMLParser
 
         $this->_cleanReadabilityTags($article);
 
-        // TODO Remove extra BR nodes that have a P sibling.
+        $brs = $article->getElementsByTagName('br');
+        $length = $brs->length;
+        for ($i = 0; $i < $length; $i++) {
+            $node = $brs->item($length - 1 - $i);
+            $next = $node->nextSibling;
+            if ($next && $next->nodeName === 'p') {
+                $node->parentNode->removeChild($node);
+            }
+        }
 
         return $article;
     }
