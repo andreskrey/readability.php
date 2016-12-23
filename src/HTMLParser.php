@@ -98,12 +98,12 @@ class HTMLParser
     {
         $defaults = [
             'maxTopCandidates' => 5, // Max amount of top level candidates
-            'articleByLine' => null,
+            'articleByLine' => false,
             'stripUnlikelyCandidates' => true,
             'cleanConditionally' => true,
             'weightClasses' => true,
             'removeReadabilityTags' => true,
-            'fixRelativeURLs' => true,
+            'fixRelativeURLs' => false,
             'originalURL' => 'http://fakehost'
         ];
 
@@ -144,6 +144,7 @@ class HTMLParser
             return false;
         }
 
+        $parseSuccessful = true;
         while (true) {
             $root = new Readability($root->firstChild);
 
@@ -171,11 +172,16 @@ class HTMLParser
                 } elseif ($this->getConfig()->getOption('cleanConditionally')) {
                     $this->getConfig()->setOption('cleanConditionally', false);
                 } else {
+                    $parseSuccessful = false;
                     break;
                 }
             } else {
                 break;
             }
+        }
+
+        if (!$parseSuccessful) {
+            return false;
         }
 
         $result = $this->postProcessContent($result);
