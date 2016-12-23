@@ -12,7 +12,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
     public function testHTMLParserParsesHTML($html, $expectedResult, $expectedMetadata)
     {
         $readability = new HTMLParser([
-            'originalURL' => 'http://fakehost/test/test.html'
+            'originalURL' => 'http://fakehost/test/test.html',
         ]);
         $result = $readability->parse($html);
 

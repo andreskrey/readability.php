@@ -47,6 +47,7 @@ interface ReadabilityInterface extends ElementInterface
 
     /**
      * @param bool $normalize Normalize white space?
+     *
      * @return string
      */
     public function getTextContent($normalize);
@@ -70,11 +71,10 @@ interface ReadabilityInterface extends ElementInterface
 
     /**
      * @param Readability $originalNode
-     * @param bool $ignoreSelfAndKids
+     * @param bool        $ignoreSelfAndKids
      *
      * @return Readability
      */
-
     public function getNextNode($originalNode, $ignoreSelfAndKids = false);
 
     /**
