@@ -102,7 +102,9 @@ class HTMLParser
             'stripUnlikelyCandidates' => true,
             'cleanConditionally' => true,
             'weightClasses' => true,
-            'removeReadabilityTags' => true
+            'removeReadabilityTags' => true,
+            'fixRelativeURLs' => true,
+            'originalURL' => 'http://fakehost'
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -176,6 +178,7 @@ class HTMLParser
             }
         }
 
+        $result = $this->postProcessContent($result);
 
         // Todo, fix return, check for values, maybe create a function to create the return object
         return [
@@ -281,6 +284,74 @@ class HTMLParser
             }
         }
     }
+
+    public function postProcessContent(DOMDocument $article)
+    {
+        $url = $this->getConfig()->getOption('originalURL');
+        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+
+        // Readability cannot open relative uris so we convert them to absolute uris.
+        if ($this->getConfig()->getOption('fixRelativeURLs')) {
+            foreach ($article->getElementsByTagName('a') as $link) {
+                /** @var \DOMElement $link */
+                $href = $link->getAttribute('href');
+                if ($href) {
+                    // Replace links with javascript: URIs with text content, since
+                    // they won't work after scripts have been removed from the page.
+                    if (strpos($href, 'javascript:' === 0)) {
+                        $text = $article->ownerDocument->createTextNode($link->textContent);
+                        $link->parentNode->replaceChild($text, $link);
+                    } else {
+                        $link->setAttribute('href', $this->toAbsoluteURI($href, $pathBase, $scheme, $prePath));
+                    }
+                }
+            }
+
+            foreach ($article->getElementsByTagName('img') as $img) {
+                /** @var \DOMElement $img */
+                $src = $img->getAttribute('src');
+                if ($src) {
+                    $img->setAttribute('src', $this->toAbsoluteURI($src, $pathBase, $scheme, $prePath));
+                }
+            }
+        }
+
+        return $article;
+    }
+
+    private function toAbsoluteURI($uri, $pathBase, $scheme, $prePath)
+    {
+        // If this is already an absolute URI, return it.
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
+            return $uri;
+        }
+
+        // Scheme-rooted relative URI.
+        if (substr($uri, 0, 2) === '//') {
+            return $scheme . '://' . substr($uri, 2);
+        }
+
+        // Prepath-rooted relative URI.
+        if (substr($uri, 0, 1) === '/') {
+            return $prePath . $uri;
+        }
+
+        // Dotslash relative URI.
+        if (strpos($uri, './') === 0) {
+            return $pathBase . substr($uri, 2);
+        }
+        // Ignore hash URIs:
+        if (substr($uri, 0, 1) === '#') {
+            return $uri;
+        }
+
+        // Standard relative URI; add entire path. pathBase already includes a
+        // trailing "/".
+        return $pathBase . $uri;
+    }
+
 
     private function nextElement($node)
     {
