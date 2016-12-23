@@ -300,8 +300,8 @@ class HTMLParser
                 if ($href) {
                     // Replace links with javascript: URIs with text content, since
                     // they won't work after scripts have been removed from the page.
-                    if (strpos($href, 'javascript:' === 0)) {
-                        $text = $article->ownerDocument->createTextNode($link->textContent);
+                    if (strpos($href, 'javascript:') === 0) {
+                        $text = $article->createTextNode($link->textContent);
                         $link->parentNode->replaceChild($text, $link);
                     } else {
                         $link->setAttribute('href', $this->toAbsoluteURI($href, $pathBase, $scheme, $prePath));
