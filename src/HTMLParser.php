@@ -86,7 +86,7 @@ class HTMLParser
         'pre',
         'table',
         'ul',
-        'select'
+        'select',
     ];
 
     /**
@@ -104,7 +104,7 @@ class HTMLParser
             'weightClasses' => true,
             'removeReadabilityTags' => true,
             'fixRelativeURLs' => false,
-            'originalURL' => 'http://fakehost'
+            'originalURL' => 'http://fakehost',
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -192,7 +192,7 @@ class HTMLParser
             'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
             'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
             'article' => $result,
-            'html' => $result->C14N()
+            'html' => $result->C14N(),
         ];
     }
 
@@ -357,7 +357,6 @@ class HTMLParser
         // trailing "/".
         return $pathBase . $uri;
     }
-
 
     private function nextElement($node)
     {
@@ -765,7 +764,6 @@ class HTMLParser
                  * along with appendChild, would shift the nodes position and the current foreach will behave in
                  * unpredictable ways.
                  */
-
             }
         }
 
@@ -779,7 +777,7 @@ class HTMLParser
     }
 
     /**
-     * TODO To be moved to Readability
+     * TODO To be moved to Readability.
      *
      * @param DOMDocument $article
      *
@@ -827,7 +825,7 @@ class HTMLParser
     }
 
     /**
-     * TODO To be moved to Readability
+     * TODO To be moved to Readability.
      *
      * @param DOMDocument $article
      *
@@ -845,7 +843,7 @@ class HTMLParser
     }
 
     /**
-     * TODO To be moved to Readability
+     * TODO To be moved to Readability.
      *
      * @param DOMDocument $article
      *
@@ -865,12 +863,11 @@ class HTMLParser
                 // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
-
         }
     }
 
     /**
-     * TODO To be moved to Readability
+     * TODO To be moved to Readability.
      *
      * @param DOMDocument $article
      *
@@ -893,7 +890,6 @@ class HTMLParser
         $DOMNodeList = $article->getElementsByTagName($tag);
         $length = $DOMNodeList->length;
         for ($i = 0; $i < $length; $i++) {
-
             $node = $DOMNodeList->item($length - 1 - $i);
 
             $node = new Readability($node);
@@ -944,17 +940,17 @@ class HTMLParser
                 }
             }
         }
-
     }
 
     /**
      * Clean a node of all elements of type "tag".
-     * (Unless it's a youtube/vimeo video. People love movies.)
+     * (Unless it's a youtube/vimeo video. People love movies.).
      *
      * TODO To be moved to Readability
      *
      * @param Element
      * @param string tag to clean
+     *
      * @return void
      **/
     public function _clean(DOMDocument $article, $tag)
@@ -990,6 +986,7 @@ class HTMLParser
      * TODO To be moved to Readability
      *
      * @param DOMDocument $article
+     *
      * @return void
      **/
     public function _cleanHeaders(DOMDocument $article)
@@ -1006,11 +1003,12 @@ class HTMLParser
     }
 
     /**
-     * Remove the passed node
+     * Remove the passed node.
      *
      * TODO To be moved to Readability
      *
      * @param \DOMNode $node
+     *
      * @return void
      **/
     public function removeNode(\DOMNode $node)
@@ -1025,7 +1023,7 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string $matchString
+     * @param string      $matchString
      *
      * @return bool
      */
@@ -1070,6 +1068,7 @@ class HTMLParser
      * tags are, in practice, paragraphs.
      *
      * @param Readability $node
+     *
      * @return bool
      */
     private function hasSinglePNode(Readability $node)
