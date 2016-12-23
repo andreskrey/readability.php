@@ -3,7 +3,7 @@
 
 PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and tries to return title, byline and text content. Analizes each text node, gives an score and orders them based on this calculation.
 
-**Requires**: PHP 5.4+
+**Requires**: PHP 5.4+ & DOMDocument (libxml)
 
 **Lead Developer**: Andres Rey
 
@@ -40,7 +40,18 @@ $result = [
 ]
 ```
 
+If the parsing process was unsuccessful the HTMLParser will return `false`
+
 ## Options
+
+- **maxTopCandidates**: default value `5`, max amount of top level candidates.
+- **articleByLine**: default value `false`, search for the article byline. 
+- **stripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
+- **cleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
+- **weightClasses**: default value `true`, weight classes during the rating phase. 
+- **removeReadabilityTags**: default value `true`, remove the data-readability tags inside the nodes that are added during the rating phase. 
+- **fixRelativeURLs**: default value `false`, convert relative URLs to absolute. Like `/test` to `http://host/test`. 
+- **originalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs. 
 
 ## Limitations
 
@@ -78,6 +89,7 @@ Readability uses the Element interface and class from *The PHP League's* **[html
 100% of the original readability code was ported, at least until the last commit when I started this project ([13 Aug 2016](https://github.com/mozilla/readability/commit/71aa562387fa507b0bac30ae7144e1df7ba8a356)). There are a lot of `TODO`s around the code, which are the part that need to be finished.
 
 - Right now the Readability object is an extension of the Element object of html-to-markdown. This is a problem because you lose context. The scoring when creating a new Readability object must be reloaded manually. The DOMDocument object is consistent across the same document. You change one value here and that will update all other nodes in other variables. By using the element interface you lose that reference and the score must be restored manually. Ideally, the Readability object should be an extension of the DOMDocument or DOMElement objects, the score should be saved within that object and no restoration or recalculation would be needed.
+- There are a lot of problems with responsabilities. Right now there are two classes: HTMLParser and Readability. HTMLParser does a lot of things that should be a responsibility of Readability. It also does a lot of things that should be part of another class, specially when building the final article DOMDocument.
 
 ## How it works
 
