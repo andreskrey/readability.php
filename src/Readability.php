@@ -198,8 +198,11 @@ class Readability extends Element implements ReadabilityInterface
      */
     public function getClassWeight()
     {
-        // if(!Config::FLAG_WEIGHT_CLASSES) return 0;
-
+        //        TODO To implement. How to get config from html parser from readability
+//        if ($this->getConfig()->getOption('weightClasses')) {
+//            return 0;
+//        }
+//
         $weight = 0;
 
         // Look for a special classname
@@ -250,7 +253,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         // Check if the setAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
         if (method_exists($this->node, 'setAttribute')) {
-            $this->contentScore = (float)$score;
+            $this->contentScore = (float) $score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('data-readability', $this->contentScore);
@@ -280,7 +283,7 @@ class Readability extends Element implements ReadabilityInterface
 
     /**
      * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
-     * element with the new tag name and importing it to the main DOMDocument
+     * element with the new tag name and importing it to the main DOMDocument.
      *
      * @param string $value
      */
@@ -313,7 +316,7 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Removes the current node and returns the next node to be parsed (child, sibling or parent)
+     * Removes the current node and returns the next node to be parsed (child, sibling or parent).
      *
      * @param Readability $node
      *
@@ -332,11 +335,10 @@ class Readability extends Element implements ReadabilityInterface
      * for parents.
      *
      * @param Readability $originalNode
-     * @param bool $ignoreSelfAndKids
+     * @param bool        $ignoreSelfAndKids
      *
      * @return Readability
      */
-
     public function getNextNode($originalNode, $ignoreSelfAndKids = false)
     {
         /*
@@ -399,7 +401,6 @@ class Readability extends Element implements ReadabilityInterface
      * Replaces child node with a new one.
      *
      * @param Readability $newNode
-     *
      */
     public function replaceChild(Readability $newNode)
     {
@@ -410,18 +411,16 @@ class Readability extends Element implements ReadabilityInterface
      * Creates a new node based on the text content of the original node.
      *
      * @param Readability $originalNode
-     * @param string $tagName
+     * @param string      $tagName
      *
      * @return Readability
      */
     public function createNode(Readability $originalNode, $tagName)
     {
         $text = $originalNode->getTextContent();
-        $newnode = $originalNode->node->ownerDocument->createElement($tagName, $text);
+        $newNode = $originalNode->node->ownerDocument->createElement($tagName, $text);
 
-        $return = $originalNode->node->appendChild($newnode);
-
-        return new static($return);
+        return new static($newNode);
     }
 
     /**
@@ -452,5 +451,52 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         return false;
+    }
+
+    /**
+     * Check if a given node has one of its ancestor tag name matching the
+     * provided one.
+     *
+     * @param Readability $node
+     * @param string      $tagName
+     * @param int         $maxDepth
+     *
+     * @return bool
+     */
+    public function hasAncestorTag(Readability $node, $tagName, $maxDepth = 3)
+    {
+        $depth = 0;
+        while ($node->getParent()) {
+            if ($depth > $maxDepth) {
+                return false;
+            }
+            if ($node->getParent()->tagNameEqualsTo($tagName)) {
+                return true;
+            }
+            $node = $node->getParent();
+            $depth++;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
+     *
+     * @return array
+     */
+    public function getChildren($filterEmptyDOMText = false)
+    {
+        $ret = [];
+        /** @var \DOMNode $node */
+        foreach ($this->node->childNodes as $node) {
+            if ($filterEmptyDOMText && $node->nodeName === '#text' && !trim($node->nodeValue)) {
+                continue;
+            }
+
+            $ret[] = new static($node);
+        }
+
+        return $ret;
     }
 }
