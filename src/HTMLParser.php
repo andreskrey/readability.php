@@ -17,6 +17,11 @@ class HTMLParser
     private $dom = null;
 
     /**
+     * @var DOMDocument
+     */
+    private $backupdom = null;
+
+    /**
      * @var array
      */
     private $metadata = [];
@@ -81,7 +86,7 @@ class HTMLParser
         'pre',
         'table',
         'ul',
-        'select'
+        'select',
     ];
 
     /**
@@ -93,8 +98,13 @@ class HTMLParser
     {
         $defaults = [
             'maxTopCandidates' => 5, // Max amount of top level candidates
-            'articleByLine' => null,
-            'stripUnlikelyCandidates' => true
+            'articleByLine' => false,
+            'stripUnlikelyCandidates' => true,
+            'cleanConditionally' => true,
+            'weightClasses' => true,
+            'removeReadabilityTags' => true,
+            'fixRelativeURLs' => false,
+            'originalURL' => 'http://fakehost',
         ];
 
         $this->environment = Environment::createDefaultEnvironment($defaults);
@@ -120,6 +130,11 @@ class HTMLParser
 
         $this->removeScripts();
 
+        $this->prepDocument();
+
+        // In case we need the original HTML to create a fake top candidate
+        $this->backupdom = clone $this->dom;
+
         $this->metadata = $this->getMetadata();
 
         $this->title = $this->getTitle();
@@ -129,19 +144,55 @@ class HTMLParser
             return false;
         }
 
-        $root = new Readability($root->firstChild);
+        $parseSuccessful = true;
+        while (true) {
+            $root = new Readability($root->firstChild);
 
-        $elementsToScore = $this->getNodes($root);
+            $elementsToScore = $this->getNodes($root);
 
-        $result = $this->rateNodes($elementsToScore);
+            $result = $this->rateNodes($elementsToScore);
+
+            /*
+             * Now that we've gone through the full algorithm, check to see if
+             * we got any meaningful content. If we didn't, we may need to re-run
+             * grabArticle with different flags set. This gives us a higher likelihood of
+             * finding the content, and the sieve approach gives us a higher likelihood of
+             * finding the -right- content.
+             */
+
+            // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
+            // that doesn't really count to the quality of the result.
+            if ($result && mb_strlen($result->textContent) < 500) {
+                $root = $this->backupdom->getElementsByTagName('body')->item(0);
+
+                if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
+                    $this->getConfig()->setOption('stripUnlikelyCandidates', false);
+                } elseif ($this->getConfig()->getOption('weightClasses')) {
+                    $this->getConfig()->setOption('weightClasses', false);
+                } elseif ($this->getConfig()->getOption('cleanConditionally')) {
+                    $this->getConfig()->setOption('cleanConditionally', false);
+                } else {
+                    $parseSuccessful = false;
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (!$parseSuccessful) {
+            return false;
+        }
+
+        $result = $this->postProcessContent($result);
 
         // Todo, fix return, check for values, maybe create a function to create the return object
         return [
-            'title' => $this->metadata['title'],
-            'author' => $this->metadata['author'],
-            'image' => $this->metadata['image'],
+            'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
+            'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
+            'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
             'article' => $result,
-            'html' => $result->C14N()
+            'html' => $result->C14N(),
         ];
     }
 
@@ -150,7 +201,8 @@ class HTMLParser
      */
     private function loadHTML($html)
     {
-        $this->dom->loadHTML($html);
+        // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
+        $this->dom->loadHTML('<?xml encoding="UTF-8">' . $html);
         $this->dom->encoding = 'UTF-8';
     }
 
@@ -178,6 +230,144 @@ class HTMLParser
                 }
             }
         }
+    }
+
+    /*
+     * Prepares the document for parsing
+     */
+    private function prepDocument()
+    {
+        $brs = $this->dom->getElementsByTagName('br');
+        $length = $brs->length;
+        for ($i = 0; $i < $length; $i++) {
+            /** @var \DOMNode $br */
+            $br = $brs->item($length - 1 - $i);
+            $next = $br->nextSibling;
+
+            /*
+             * Whether 2 or more <br> elements have been found and replaced with a
+             * <p> block.
+             */
+            $replaced = false;
+
+            /*
+             * If we find a <br> chain, remove the <br>s until we hit another element
+             * or non-whitespace. This leaves behind the first <br> in the chain
+             * (which will be replaced with a <p> later).
+             */
+            while (($next = $this->nextElement($next)) && ($next->nodeName === 'br')) {
+                $replaced = true;
+                $brSibling = $next->nextSibling;
+                $next->parentNode->removeChild($next);
+                $next = $brSibling;
+            }
+
+            /*
+             * If we removed a <br> chain, replace the remaining <br> with a <p>. Add
+             * all sibling nodes as children of the <p> until we hit another <br>
+             * chain.
+             */
+
+            if ($replaced) {
+                $p = $this->dom->createElement('p');
+                $br->parentNode->replaceChild($p, $br);
+
+                $next = $p->nextSibling;
+                while ($next) {
+                    // If we've hit another <br><br>, we're done adding children to this <p>.
+                    if ($next->nodeName === 'br') {
+                        $nextElem = $this->nextElement($next);
+                        if ($nextElem && $nextElem->nodeName === 'br') {
+                            break;
+                        }
+                    }
+
+                    // Otherwise, make this node a child of the new <p>.
+                    $sibling = $next->nextSibling;
+                    $p->appendChild($next);
+                    $next = $sibling;
+                }
+            }
+        }
+    }
+
+    public function postProcessContent(DOMDocument $article)
+    {
+        $url = $this->getConfig()->getOption('originalURL');
+        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+
+        // Readability cannot open relative uris so we convert them to absolute uris.
+        if ($this->getConfig()->getOption('fixRelativeURLs')) {
+            foreach ($article->getElementsByTagName('a') as $link) {
+                /** @var \DOMElement $link */
+                $href = $link->getAttribute('href');
+                if ($href) {
+                    // Replace links with javascript: URIs with text content, since
+                    // they won't work after scripts have been removed from the page.
+                    if (strpos($href, 'javascript:') === 0) {
+                        $text = $article->createTextNode($link->textContent);
+                        $link->parentNode->replaceChild($text, $link);
+                    } else {
+                        $link->setAttribute('href', $this->toAbsoluteURI($href, $pathBase, $scheme, $prePath));
+                    }
+                }
+            }
+
+            foreach ($article->getElementsByTagName('img') as $img) {
+                /** @var \DOMElement $img */
+                $src = $img->getAttribute('src');
+                if ($src) {
+                    $img->setAttribute('src', $this->toAbsoluteURI($src, $pathBase, $scheme, $prePath));
+                }
+            }
+        }
+
+        return $article;
+    }
+
+    private function toAbsoluteURI($uri, $pathBase, $scheme, $prePath)
+    {
+        // If this is already an absolute URI, return it.
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
+            return $uri;
+        }
+
+        // Scheme-rooted relative URI.
+        if (substr($uri, 0, 2) === '//') {
+            return $scheme . '://' . substr($uri, 2);
+        }
+
+        // Prepath-rooted relative URI.
+        if (substr($uri, 0, 1) === '/') {
+            return $prePath . $uri;
+        }
+
+        // Dotslash relative URI.
+        if (strpos($uri, './') === 0) {
+            return $pathBase . substr($uri, 2);
+        }
+        // Ignore hash URIs:
+        if (substr($uri, 0, 1) === '#') {
+            return $uri;
+        }
+
+        // Standard relative URI; add entire path. pathBase already includes a
+        // trailing "/".
+        return $pathBase . $uri;
+    }
+
+    private function nextElement($node)
+    {
+        $next = $node;
+        while ($next
+            && $next->nodeName !== '#text'
+            && trim($next->textContent)) {
+            $next = $next->nextSibling;
+        }
+
+        return $next;
     }
 
     /**
@@ -257,7 +447,7 @@ class HTMLParser
         }
 
         $title = $this->dom->getElementsByTagName('title');
-        if ($title) {
+        if ($title->length > 0) {
             return $title->item(0)->nodeValue;
         }
 
@@ -316,7 +506,7 @@ class HTMLParser
                  * algorithm with DIVs with are, in practice, paragraphs.
                  */
                 if ($this->hasSinglePNode($node)) {
-                    $pNode = $node->getChildren()[0];
+                    $pNode = $node->getChildren(true)[0];
                     $node->replaceChild($pNode);
                     $node = $pNode;
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
@@ -325,10 +515,13 @@ class HTMLParser
                 } else {
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
+                        /** @var Readability $child */
                         if ($child->isText()) {
-                            /** @var Readability $child */
-                            $newNode = $node->createNode($child, 'p');
-                            $child->replaceChild($newNode);
+                            // Check if there's actual content on the node.
+                            if (trim($child->getTextContent())) {
+                                $newNode = $node->createNode($child, 'p');
+                                $child->replaceChild($newNode);
+                            }
                         }
                     }
                 }
@@ -458,7 +651,8 @@ class HTMLParser
             // Move all of the page's children into topCandidate
             $neededToCreateTopCandidate = true;
 
-            $topCandidate = new DOMDocument();
+            $topCandidate = new DOMDocument('1.0', 'utf-8');
+            $topCandidate->encoding = 'UTF-8';
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
 
@@ -468,7 +662,7 @@ class HTMLParser
                 $topCandidate->firstChild->appendChild($import);
             }
 
-            // Readability must be created using firstChild to grab de DOMElement instead of the DOMDocument.
+            // Readability must be created using firstChild to grab the DOMElement instead of the DOMDocument.
             $topCandidate = new Readability($topCandidate->firstChild);
             $topCandidate->initializeNode();
 
@@ -514,7 +708,7 @@ class HTMLParser
          * that we removed, etc.
          */
 
-        $articleContent = new DOMDocument();
+        $articleContent = new DOMDocument('1.0', 'utf-8');
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
@@ -570,7 +764,6 @@ class HTMLParser
                  * along with appendChild, would shift the nodes position and the current foreach will behave in
                  * unpredictable ways.
                  */
-
             }
         }
 
@@ -584,7 +777,7 @@ class HTMLParser
     }
 
     /**
-     * TODO
+     * TODO To be moved to Readability.
      *
      * @param DOMDocument $article
      *
@@ -592,8 +785,8 @@ class HTMLParser
      */
     public function prepArticle(DOMDocument $article)
     {
-        // TODO CleanConditionaly
         // Clean out junk from the article content
+        $this->_cleanConditionally($article, 'form');
         $this->_clean($article, 'object');
         $this->_clean($article, 'embed');
         $this->_clean($article, 'h1');
@@ -608,15 +801,156 @@ class HTMLParser
         $this->_clean($article, 'iframe');
         $this->_cleanHeaders($article);
 
+        // Do these last as the previous stuff may have removed junk
+        // that will affect these
+        $this->_cleanConditionally($article, 'table');
+        $this->_cleanConditionally($article, 'ul');
+        $this->_cleanConditionally($article, 'div');
+
+        $this->_cleanExtraParagraphs($article);
+
+        $this->_cleanReadabilityTags($article);
+
+        $brs = $article->getElementsByTagName('br');
+        $length = $brs->length;
+        for ($i = 0; $i < $length; $i++) {
+            $node = $brs->item($length - 1 - $i);
+            $next = $node->nextSibling;
+            if ($next && $next->nodeName === 'p') {
+                $node->parentNode->removeChild($node);
+            }
+        }
+
         return $article;
     }
 
     /**
+     * TODO To be moved to Readability.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanReadabilityTags(DOMDocument $article)
+    {
+        if ($this->getConfig()->getOption('removeReadabilityTags')) {
+            foreach ($article->getElementsByTagName('*') as $tag) {
+                if ($tag->hasAttribute('data-readability')) {
+                    $tag->removeAttribute('data-readability');
+                }
+            }
+        }
+    }
+
+    /**
+     * TODO To be moved to Readability.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanExtraParagraphs(DOMDocument $article)
+    {
+        foreach ($article->getElementsByTagName('p') as $paragraph) {
+            $imgCount = $paragraph->getElementsByTagName('img')->length;
+            $embedCount = $paragraph->getElementsByTagName('embed')->length;
+            $objectCount = $paragraph->getElementsByTagName('object')->length;
+            // At this point, nasty iframes have been removed, only remain embedded video ones.
+            $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
+            $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
+
+            if ($totalCount === 0 && !trim($paragraph->textContent)) {
+                // TODO must be done via readability
+                $paragraph->parentNode->removeChild($paragraph);
+            }
+        }
+    }
+
+    /**
+     * TODO To be moved to Readability.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanConditionally(DOMDocument $article, $tag)
+    {
+        if (!$this->getConfig()->getOption('cleanConditionally')) {
+            return;
+        }
+
+        $isList = in_array($tag, ['ul', 'ol']);
+
+        /*
+         * Gather counts for other typical elements embedded within.
+         * Traverse backwards so we can remove nodes at the same time
+         * without effecting the traversal.
+         */
+
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+            $node = $DOMNodeList->item($length - 1 - $i);
+
+            $node = new Readability($node);
+            $weight = $node->getClassWeight();
+
+            if ($weight < 0) {
+                $this->removeNode($node->getDOMNode());
+                continue;
+            }
+
+            if (substr_count($node->getTextContent(), ',') < 10) {
+                /*
+                 * If there are not very many commas, and the number of
+                 * non-paragraph elements is more than paragraphs or other
+                 * ominous signs, remove the element.
+                 */
+
+                // TODO Horrible hack, must be removed once this function is inside Readability
+                $p = $node->getDOMNode()->getElementsByTagName('p')->length;
+                $img = $node->getDOMNode()->getElementsByTagName('img')->length;
+                $li = $node->getDOMNode()->getElementsByTagName('li')->length - 100;
+                $input = $node->getDOMNode()->getElementsByTagName('input')->length;
+
+                $embedCount = 0;
+                $embeds = $node->getDOMNode()->getElementsByTagName('embed');
+
+                foreach ($embeds as $embedNode) {
+                    if (preg_match($this->regexps['videos'], $embedNode->C14N())) {
+                        $embedCount++;
+                    }
+                }
+
+                $linkDensity = $this->getLinkDensity($node);
+                $contentLength = mb_strlen($node->getTextContent(true));
+
+                $haveToRemove =
+                    // Make an exception for elements with no p's and exactly 1 img.
+                    ($img > $p && $node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $li > $p) ||
+                    ($input > floor($p / 3)) ||
+                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2)) ||
+                    (!$isList && $weight < 25 && $linkDensity > 0.2) ||
+                    ($weight >= 25 && $linkDensity > 0.5) ||
+                    (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
+
+                if ($haveToRemove) {
+                    $this->removeNode($node->getDOMNode());
+                }
+            }
+        }
+    }
+
+    /**
      * Clean a node of all elements of type "tag".
-     * (Unless it's a youtube/vimeo video. People love movies.)
+     * (Unless it's a youtube/vimeo video. People love movies.).
+     *
+     * TODO To be moved to Readability
      *
      * @param Element
      * @param string tag to clean
+     *
      * @return void
      **/
     public function _clean(DOMDocument $article, $tag)
@@ -628,7 +962,7 @@ class HTMLParser
             if ($isEmbed) {
                 $attributeValues = [];
                 foreach ($item->attributes as $name => $value) {
-                    $attributeValues[] = $value;
+                    $attributeValues[] = $value->nodeValue;
                 }
                 $attributeValues = implode('|', $attributeValues);
 
@@ -649,22 +983,34 @@ class HTMLParser
     /**
      * Clean out spurious headers from an Element. Checks things like classnames and link density.
      *
-     * @param Element
+     * TODO To be moved to Readability
+     *
+     * @param DOMDocument $article
+     *
      * @return void
      **/
     public function _cleanHeaders(DOMDocument $article)
     {
         for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
             $headers = $article->getElementsByTagName('h' . $headerIndex);
-            foreach($headers as $header){
+            foreach ($headers as $header) {
                 $header = new Readability($header);
-                if($header->getClassWeight() < 0){
+                if ($header->getClassWeight() < 0) {
                     $this->removeNode($header->getDOMNode());
                 }
             }
         }
     }
 
+    /**
+     * Remove the passed node.
+     *
+     * TODO To be moved to Readability
+     *
+     * @param \DOMNode $node
+     *
+     * @return void
+     **/
     public function removeNode(\DOMNode $node)
     {
         $parent = $node->parentNode;
@@ -677,7 +1023,7 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string $matchString
+     * @param string      $matchString
      *
      * @return bool
      */
@@ -722,35 +1068,35 @@ class HTMLParser
      * tags are, in practice, paragraphs.
      *
      * @param Readability $node
+     *
      * @return bool
      */
     private function hasSinglePNode(Readability $node)
     {
         // There should be exactly 1 element child which is a P:
-        if ($node->hasChildren()) {
-            $children = $node->getChildren();
-
-            if (count($children) === 1) {
-                if ($children[0]->tagNameEqualsTo('p')) {
-                    return true;
-                }
-            }
+        // And there should be no text nodes with real content (param true on ->getChildren)
+        if (count($children = $node->getChildren(true)) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     private function hasSingleChildBlockElement(Readability $node)
     {
-        /** @var Readability $child */
-        foreach ($node->getChildren() as $child) {
-            if (in_array($child->getTagName(), $this->divToPElements)) {
-                $this->hasSingleChildBlockElement($child);
-            } else {
-                return false;
+        $result = false;
+        if ($node->hasChildren()) {
+            /** @var Readability $child */
+            foreach ($node->getChildren() as $child) {
+                if (in_array($child->getTagName(), $this->divToPElements)) {
+                    $result = true;
+                } else {
+                    // If any of the hasSingleChildBlockElement calls return true, return true then.
+                    $result = ($result || $this->hasSingleChildBlockElement($child));
+                }
             }
         }
 
-        return true;
+        return $result;
     }
 }
