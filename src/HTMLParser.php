@@ -380,10 +380,10 @@ class HTMLParser
         $metadata = $values = [];
         // Match "description", or Twitter's "twitter:description" (Cards)
         // in name attribute.
-        $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title)\s*$/i';
+        $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title|image)\s*$/i';
 
         // Match Facebook's Open Graph title & description properties.
-        $propertyPattern = '/^\s*og\s*:\s*(description|title)\s*$/i';
+        $propertyPattern = '/^\s*og\s*:\s*(description|title|image)\s*$/i';
 
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
             /* @var Readability $meta */
