@@ -792,6 +792,9 @@ class HTMLParser
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
 
+        // Readability.js cleans styles on prepDocument but we do it here.
+        $this->_clean($article, 'style');
+
         // If there is only one h2, they are probably using it as a header
         // and not a subheader, so remove it since we already have a header.
         if ($article->getElementsByTagName('h2')->length === 1) {
@@ -957,7 +960,11 @@ class HTMLParser
     {
         $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
 
-        foreach ($article->getElementsByTagName($tag) as $item) {
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+            $item = $DOMNodeList->item($length - 1 - $i);
+
             // Allow youtube and vimeo videos through as people usually want to see those.
             if ($isEmbed) {
                 $attributeValues = [];
