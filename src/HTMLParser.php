@@ -430,6 +430,10 @@ class HTMLParser
             $metadata['title'] = $values['twitter:title'];
         }
 
+        if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
+            $metadata['image'] = ($values['og:image']) ? $values['og:image'] : $values['twitter:image'];
+        }
+
         return $metadata;
     }
 
