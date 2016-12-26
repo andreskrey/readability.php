@@ -377,30 +377,57 @@ class HTMLParser
      */
     private function getMetadata()
     {
-        $metadata = [];
+        $metadata = $values = [];
+        // Match "description", or Twitter's "twitter:description" (Cards)
+        // in name attribute.
+        $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title)\s*$/i';
+
+        // Match Facebook's Open Graph title & description properties.
+        $propertyPattern = '/^\s*og\s*:\s*(description|title)\s*$/i';
+
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
             /* @var Readability $meta */
-            $name = $meta->getAttribute('name');
-            $property = $meta->getAttribute('property');
+            $elementName = $meta->getAttribute('name');
+            $elementProperty = $meta->getAttribute('property');
 
-            // Select either name or property
-            $item = ($name ? $name : $property);
-
-            if ($item == 'og:title' || $item == 'twitter:title') {
-                $metadata['title'] = $meta->getAttribute('content');
-            }
-
-            if ($item == 'og:description' || $item == 'twitter:description') {
-                $metadata['excerpt'] = $meta->getAttribute('content');
-            }
-
-            if ($item == 'author') {
+            if (in_array('author', [$elementName, $elementProperty])) {
                 $metadata['byline'] = $meta->getAttribute('content');
+                continue;
             }
 
-            if ($item == 'og:image' || $item == 'twitter:image') {
-                $metadata['image'] = $meta->getAttribute('content');
+            $name = null;
+            if (preg_match($namePattern, $elementName)) {
+                $name = $elementName;
+            } elseif (preg_match($propertyPattern, $elementProperty)) {
+                $name = $elementProperty;
             }
+
+            if ($name) {
+                $content = $meta->getAttribute('content');
+                if ($content) {
+                    // Convert to lowercase and remove any whitespace
+                    // so we can match below.
+                    $name = preg_replace('/\s/', '', strtolower($name));
+                    $values[$name] = trim($content);
+                }
+            }
+        }
+        if (array_key_exists('description', $values)) {
+            $metadata['excerpt'] = $values['description'];
+        } elseif (array_key_exists('og:description', $values)) {
+            // Use facebook open graph description.
+            $metadata['excerpt'] = $values['og:description'];
+        } elseif (array_key_exists('twitter:description', $values)) {
+            // Use twitter cards description.
+            $metadata['excerpt'] = $values['twitter:description'];
+        }
+
+        if (array_key_exists('og:title', $values)) {
+            // Use facebook open graph title.
+            $metadata['title'] = $values['og:title'];
+        } elseif (array_key_exists('twitter:title', $values)) {
+            // Use twitter cards title.
+            $metadata['title'] = $values['twitter:title'];
         }
 
         return $metadata;
@@ -458,6 +485,7 @@ class HTMLParser
      * Gets nodes from the root element.
      *
      * @param $node Readability
+     * @return array
      */
     private function getNodes(Readability $node)
     {
@@ -1030,7 +1058,7 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string      $matchString
+     * @param string $matchString
      *
      * @return bool
      */
