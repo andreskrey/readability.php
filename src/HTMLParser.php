@@ -29,11 +29,6 @@ class HTMLParser
     /**
      * @var array
      */
-    private $title = [];
-
-    /**
-     * @var array
-     */
     private $regexps = [
         'unlikelyCandidates' => '/banner|combx|comment|community|disqus|extra|foot|header|menu|modal|related|remark|rss|share|shoutbox|sidebar|skyscraper|sponsor|ad-break|agegate|pagination|pager|popup/i',
         'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
@@ -137,7 +132,7 @@ class HTMLParser
 
         $this->metadata = $this->getMetadata();
 
-        $this->title = $this->getTitle();
+        $this->metadata['title'] = $this->getTitle();
 
         // Checking for minimum HTML to work with.
         if (!($root = $this->dom->getElementsByTagName('body')->item(0))) {
@@ -162,7 +157,11 @@ class HTMLParser
 
             // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
             // that doesn't really count to the quality of the result.
-            if ($result && mb_strlen($result->textContent) < 500) {
+            $length = 0;
+            foreach($result->getElementsByTagName('p') as $p){
+                $length += mb_strlen($p->textContent);
+            }
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
                 $root = $this->backupdom->getElementsByTagName('body')->item(0);
 
                 if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
