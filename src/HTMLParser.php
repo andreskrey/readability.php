@@ -132,6 +132,8 @@ class HTMLParser
 
         $this->metadata = $this->getMetadata();
 
+        $this->metadata['image'] = $this->getMainImage();
+
         $this->metadata['title'] = $this->getTitle();
 
         // Checking for minimum HTML to work with.
@@ -158,7 +160,7 @@ class HTMLParser
             // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
             // that doesn't really count to the quality of the result.
             $length = 0;
-            foreach($result->getElementsByTagName('p') as $p){
+            foreach ($result->getElementsByTagName('p') as $p) {
                 $length += mb_strlen($p->textContent);
             }
             if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
@@ -431,9 +433,37 @@ class HTMLParser
 
         if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
             $metadata['image'] = ($values['og:image']) ? $values['og:image'] : $values['twitter:image'];
+        } else {
+            $metadata['image'] = null;
         }
 
         return $metadata;
+    }
+
+    /**
+     * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
+     * find a correct image.
+     *
+     * @return bool|string URL of the top image or false if unsuccessful.
+     */
+    public function getMainImage()
+    {
+        if ($this->metadata['image'] !== null) {
+            return $this->metadata['image'];
+        }
+
+        foreach ($this->dom->getElementsByTagName('link') as $link) {
+            /** @var \DOMElement $link */
+            /*
+             * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
+             * finally check for the existence of the href attribute, which should hold the image url.
+             */
+            if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')){
+                return $link->getAttribute('href');
+            }
+        }
+
+        return false;
     }
 
     /**
