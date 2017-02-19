@@ -13,6 +13,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
     {
         $readability = new HTMLParser([
             'originalURL' => 'http://fakehost/test/test.html',
+            'fixRelativeURLs' => true
         ]);
         $result = $readability->parse($html);
 
