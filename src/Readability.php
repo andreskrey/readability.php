@@ -253,7 +253,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         // Check if the setAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
         if (method_exists($this->node, 'setAttribute')) {
-            $this->contentScore = (float) $score;
+            $this->contentScore = (float)$score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('data-readability', $this->contentScore);
@@ -286,8 +286,9 @@ class Readability extends Element implements ReadabilityInterface
      * element with the new tag name and importing it to the main DOMDocument.
      *
      * @param string $value
+     * @param bool $importAttributes
      */
-    public function setNodeTag($value)
+    public function setNodeTag($value, $importAttributes = false)
     {
         $new = new \DOMDocument();
         $new->appendChild($new->createElement($value));
@@ -296,6 +297,13 @@ class Readability extends Element implements ReadabilityInterface
         for ($i = 0; $i < $childs->length; $i++) {
             $import = $new->importNode($childs->item($i), true);
             $new->firstChild->appendChild($import);
+        }
+
+        if ($importAttributes) {
+            // Import attributes from the original node.
+            foreach ($this->node->attributes as $attribute) {
+                $new->firstChild->setAttribute($attribute->nodeName, $attribute->nodeValue);
+            }
         }
 
         // The import must be done on the firstChild of $new, since $new is a DOMDocument and not a DOMElement.
@@ -335,7 +343,7 @@ class Readability extends Element implements ReadabilityInterface
      * for parents.
      *
      * @param Readability $originalNode
-     * @param bool        $ignoreSelfAndKids
+     * @param bool $ignoreSelfAndKids
      *
      * @return Readability
      */
@@ -411,7 +419,7 @@ class Readability extends Element implements ReadabilityInterface
      * Creates a new node based on the text content of the original node.
      *
      * @param Readability $originalNode
-     * @param string      $tagName
+     * @param string $tagName
      *
      * @return Readability
      */
@@ -458,8 +466,8 @@ class Readability extends Element implements ReadabilityInterface
      * provided one.
      *
      * @param Readability $node
-     * @param string      $tagName
-     * @param int         $maxDepth
+     * @param string $tagName
+     * @param int $maxDepth
      *
      * @return bool
      */

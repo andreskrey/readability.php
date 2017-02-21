@@ -290,6 +290,15 @@ class HTMLParser
                 }
             }
         }
+
+        // Replace font tags with span
+        $fonts = $this->dom->getElementsByTagName('font');
+        $length = $fonts->length;
+        for ($i = 0; $i < $length; $i++) {
+            $font = $fonts->item($length - 1 - $i);
+            $span = new Readability($font);
+            $span->setNodeTag('span', true);
+        }
     }
 
     public function postProcessContent(DOMDocument $article)
@@ -458,7 +467,7 @@ class HTMLParser
              * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
              * finally check for the existence of the href attribute, which should hold the image url.
              */
-            if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')){
+            if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
                 return $link->getAttribute('href');
             }
         }
