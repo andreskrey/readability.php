@@ -35,7 +35,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
             $expectedHTML = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected.html');
             $expectedMetadata = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json');
 
-            $pages[] = [$source, $expectedHTML, $expectedMetadata];
+            $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata];
         }
 
         return $pages;
