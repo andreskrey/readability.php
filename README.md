@@ -51,7 +51,9 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 - **weightClasses**: default value `true`, weight classes during the rating phase. 
 - **removeReadabilityTags**: default value `true`, remove the data-readability tags inside the nodes that are added during the rating phase. 
 - **fixRelativeURLs**: default value `false`, convert relative URLs to absolute. Like `/test` to `http://host/test`. 
-- **originalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs. 
+- **normalizeSpaces**: default value `false`, normalize all spaces. Changes all consecutive spaces to one space. 
+- **substituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&acute;` to á.
+- **originalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
 
 ## Limitations
 
