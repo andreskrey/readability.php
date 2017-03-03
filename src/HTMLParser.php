@@ -35,7 +35,7 @@ class HTMLParser
         'extraneous' => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
         'byline' => '/byline|author|dateline|writtenby|p-author/i',
         'replaceFonts' => '/<(\/?)font[^>]*>/gi',
-        'normalize' => '/\s{2,}/g',
+        'normalize' => '/\s{2,}/',
         'videos' => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
         'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
@@ -99,6 +99,8 @@ class HTMLParser
             'weightClasses' => true,
             'removeReadabilityTags' => true,
             'fixRelativeURLs' => false,
+            'normalizeSpaces' => false,
+            'substituteEntities' => true,
             'originalURL' => 'http://fakehost',
         ];
 
@@ -202,6 +204,11 @@ class HTMLParser
      */
     private function loadHTML($html)
     {
+        if (!$this->getConfig()->getOption('substituteEntities')) {
+            // Keep the original HTML entities
+            $this->dom->substituteEntities = false;
+        }
+
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
         $this->dom->loadHTML('<?xml encoding="UTF-8">' . $html);
         $this->dom->encoding = 'UTF-8';
@@ -331,6 +338,12 @@ class HTMLParser
                 if ($src) {
                     $img->setAttribute('src', $this->toAbsoluteURI($src, $pathBase, $scheme, $prePath));
                 }
+            }
+        }
+
+        if ($this->getConfig()->getOption('normalizeSpaces')) {
+            foreach ($article->getElementsByTagName('p') as $node) {
+                $node->nodeValue = preg_replace($this->regexps['normalize'], ' ', $node->nodeValue);
             }
         }
 

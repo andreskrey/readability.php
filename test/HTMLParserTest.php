@@ -9,12 +9,19 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getSamplePages
      */
-    public function testHTMLParserParsesHTML($html, $expectedResult, $expectedMetadata)
+    public function testHTMLParserParsesHTML($html, $expectedResult, $expectedMetadata, $config)
     {
-        $readability = new HTMLParser([
-            'originalURL' => 'http://fakehost/test/test.html',
-            'fixRelativeURLs' => true
-        ]);
+        $options = ['originalURL' => 'http://fakehost/test/test.html',
+            'fixRelativeURLs' => true,
+            'normalizeSpaces' => false,
+            'substituteEntities' => true
+        ];
+
+        if ($config) {
+            $options = $config;
+        }
+
+        $readability = new HTMLParser($options);
         $result = $readability->parse($html);
 
         $this->assertEquals($expectedResult, $result['html']);
@@ -34,8 +41,12 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
             $source = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'source.html');
             $expectedHTML = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected.html');
             $expectedMetadata = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json');
+            $config = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json');
+            if ($config) {
+                $config = json_decode($config);
+            }
 
-            $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata];
+            $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata, $config];
         }
 
         return $pages;
