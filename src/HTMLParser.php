@@ -99,7 +99,6 @@ class HTMLParser
             'weightClasses' => true,
             'removeReadabilityTags' => true,
             'fixRelativeURLs' => false,
-            'normalizeSpaces' => false,
             'substituteEntities' => true,
             'originalURL' => 'http://fakehost',
         ];
@@ -338,12 +337,6 @@ class HTMLParser
                 if ($src) {
                     $img->setAttribute('src', $this->toAbsoluteURI($src, $pathBase, $scheme, $prePath));
                 }
-            }
-        }
-
-        if ($this->getConfig()->getOption('normalizeSpaces')) {
-            foreach ($article->getElementsByTagName('p') as $node) {
-                $node->nodeValue = preg_replace($this->regexps['normalize'], ' ', $node->nodeValue);
             }
         }
 
