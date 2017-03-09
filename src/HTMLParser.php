@@ -1112,7 +1112,14 @@ class HTMLParser
      */
     private function checkByline($node, $matchString)
     {
-        if ($this->getConfig()->getOption('articleByLine')) {
+        if (!$this->getConfig()->getOption('articleByLine')) {
+            return false;
+        }
+
+        /*
+         * Check if the byline is already set
+         */
+        if (isset($this->metadata['byline'])) {
             return false;
         }
 
