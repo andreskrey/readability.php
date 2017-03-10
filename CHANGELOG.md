@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.2.0](https://github.com/andreskrey/readability.php/releases/tag/v0.2.0)
 
-We ARE a 100% complete por of Readability.js!
+We ARE a 100% complete port of Readability.js!
 - Every test unit passes
 - Readability.php produces the same exact output as Readability.js
 - I'm happy :)
