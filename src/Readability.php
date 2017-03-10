@@ -286,8 +286,9 @@ class Readability extends Element implements ReadabilityInterface
      * element with the new tag name and importing it to the main DOMDocument.
      *
      * @param string $value
+     * @param bool   $importAttributes
      */
-    public function setNodeTag($value)
+    public function setNodeTag($value, $importAttributes = false)
     {
         $new = new \DOMDocument();
         $new->appendChild($new->createElement($value));
@@ -296,6 +297,13 @@ class Readability extends Element implements ReadabilityInterface
         for ($i = 0; $i < $childs->length; $i++) {
             $import = $new->importNode($childs->item($i), true);
             $new->firstChild->appendChild($import);
+        }
+
+        if ($importAttributes) {
+            // Import attributes from the original node.
+            foreach ($this->node->attributes as $attribute) {
+                $new->firstChild->setAttribute($attribute->nodeName, $attribute->nodeValue);
+            }
         }
 
         // The import must be done on the firstChild of $new, since $new is a DOMDocument and not a DOMElement.
