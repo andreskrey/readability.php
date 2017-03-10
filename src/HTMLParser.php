@@ -533,6 +533,7 @@ class HTMLParser
      * Gets nodes from the root element.
      *
      * @param $node Readability
+     *
      * @return array
      */
     private function getNodes(Readability $node)
@@ -1106,7 +1107,7 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string $matchString
+     * @param string      $matchString
      *
      * @return bool
      */
