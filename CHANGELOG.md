@@ -3,6 +3,25 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v0.2.0](https://github.com/andreskrey/readability.php/releases/tag/v0.2.0)
+
+We ARE a 100% complete por of Readability.js!
+- Every test unit passes
+- Readability.php produces the same exact output as Readability.js
+- I'm happy :)
+
+### Fixed
+- Lots of bugs
+- Merged PR by DavidFricker to avoid exceptions while grabbing the document content
+
+### Added
+- substituteEntities flag, to avoid replacing especial characters with HTML entities. There's nothing we can do about `&nbsp;`, that entity is replaced by libxml and there's no way to disable it.
+- Named data sets so it's easier to detect which test case is failing.
+
+### Removed
+
+- Couple of test cases that involved broken JS. There's nothing we can do about JS spilling onto the text.
+
 ## [0.0.3-alpha](https://github.com/andreskrey/readability.php/releases/tag/v0.0.3v-alpha)
 
 We are getting closer to be a 100% complete port of Readability.js!
