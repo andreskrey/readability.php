@@ -185,7 +185,7 @@ class HTMLParser
         if (!$parseSuccessful) {
             return false;
         }
-        
+
         if (!$result) {
             return false;
         }
