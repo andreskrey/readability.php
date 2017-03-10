@@ -626,7 +626,7 @@ class HTMLParser
                 continue;
             }
             // Discard nodes with less than 25 characters, without blank space
-            if (mb_strlen($node->getValue(true)) < 25) {
+            if (mb_strlen($node->getTextContent(true)) < 25) {
                 continue;
             }
 
@@ -641,10 +641,10 @@ class HTMLParser
             $contentScore = 1;
 
             // Add points for any commas within this paragraph.
-            $contentScore += count(explode(',', $node->getValue(true)));
+            $contentScore += count(explode(',', $node->getTextContent(true)));
 
             // For every 100 characters in this paragraph, add another point. Up to 3 points.
-            $contentScore += min(floor(mb_strlen($node->getValue(true)) / 100), 3);
+            $contentScore += min(floor(mb_strlen($node->getTextContent(true)) / 100), 3);
 
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
