@@ -29,18 +29,13 @@ class HTMLParser
     /**
      * @var array
      */
-    private $title = [];
-
-    /**
-     * @var array
-     */
     private $regexps = [
         'unlikelyCandidates' => '/banner|combx|comment|community|disqus|extra|foot|header|menu|modal|related|remark|rss|share|shoutbox|sidebar|skyscraper|sponsor|ad-break|agegate|pagination|pager|popup/i',
         'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
         'extraneous' => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
         'byline' => '/byline|author|dateline|writtenby|p-author/i',
         'replaceFonts' => '/<(\/?)font[^>]*>/gi',
-        'normalize' => '/\s{2,}/g',
+        'normalize' => '/\s{2,}/',
         'videos' => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
         'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
@@ -104,6 +99,7 @@ class HTMLParser
             'weightClasses' => true,
             'removeReadabilityTags' => true,
             'fixRelativeURLs' => false,
+            'substituteEntities' => true,
             'originalURL' => 'http://fakehost',
         ];
 
@@ -137,7 +133,9 @@ class HTMLParser
 
         $this->metadata = $this->getMetadata();
 
-        $this->title = $this->getTitle();
+        $this->metadata['image'] = $this->getMainImage();
+
+        $this->metadata['title'] = $this->getTitle();
 
         // Checking for minimum HTML to work with.
         if (!($root = $this->dom->getElementsByTagName('body')->item(0))) {
@@ -162,7 +160,11 @@ class HTMLParser
 
             // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
             // that doesn't really count to the quality of the result.
-            if ($result && mb_strlen($result->textContent) < 500) {
+            $length = 0;
+            foreach ($result->getElementsByTagName('p') as $p) {
+                $length += mb_strlen($p->textContent);
+            }
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
                 $root = $this->backupdom->getElementsByTagName('body')->item(0);
 
                 if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
@@ -205,6 +207,11 @@ class HTMLParser
      */
     private function loadHTML($html)
     {
+        if (!$this->getConfig()->getOption('substituteEntities')) {
+            // Keep the original HTML entities
+            $this->dom->substituteEntities = false;
+        }
+
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
         $this->dom->loadHTML('<?xml encoding="UTF-8">' . $html);
         $this->dom->encoding = 'UTF-8';
@@ -292,6 +299,15 @@ class HTMLParser
                     $next = $sibling;
                 }
             }
+        }
+
+        // Replace font tags with span
+        $fonts = $this->dom->getElementsByTagName('font');
+        $length = $fonts->length;
+        for ($i = 0; $i < $length; $i++) {
+            $font = $fonts->item($length - 1 - $i);
+            $span = new Readability($font);
+            $span->setNodeTag('span', true);
         }
     }
 
@@ -436,9 +452,37 @@ class HTMLParser
 
         if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
             $metadata['image'] = ($values['og:image']) ? $values['og:image'] : $values['twitter:image'];
+        } else {
+            $metadata['image'] = null;
         }
 
         return $metadata;
+    }
+
+    /**
+     * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
+     * find a correct image.
+     *
+     * @return bool|string URL of the top image or false if unsuccessful.
+     */
+    public function getMainImage()
+    {
+        if ($this->metadata['image'] !== null) {
+            return $this->metadata['image'];
+        }
+
+        foreach ($this->dom->getElementsByTagName('link') as $link) {
+            /** @var \DOMElement $link */
+            /*
+             * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
+             * finally check for the existence of the href attribute, which should hold the image url.
+             */
+            if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
+                return $link->getAttribute('href');
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -493,6 +537,7 @@ class HTMLParser
      * Gets nodes from the root element.
      *
      * @param $node Readability
+     *
      * @return array
      */
     private function getNodes(Readability $node)
@@ -586,7 +631,7 @@ class HTMLParser
                 continue;
             }
             // Discard nodes with less than 25 characters, without blank space
-            if (mb_strlen($node->getValue(true)) < 25) {
+            if (mb_strlen($node->getTextContent(true)) < 25) {
                 continue;
             }
 
@@ -601,10 +646,10 @@ class HTMLParser
             $contentScore = 1;
 
             // Add points for any commas within this paragraph.
-            $contentScore += count(explode(',', $node->getValue(true)));
+            $contentScore += count(explode(',', $node->getTextContent(true)));
 
             // For every 100 characters in this paragraph, add another point. Up to 3 points.
-            $contentScore += min(floor(mb_strlen($node->getValue(true)) / 100), 3);
+            $contentScore += min(floor(mb_strlen($node->getTextContent(true)) / 100), 3);
 
             // Initialize and score ancestors.
             /** @var Readability $ancestor */
@@ -1066,13 +1111,20 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string $matchString
+     * @param string      $matchString
      *
      * @return bool
      */
     private function checkByline($node, $matchString)
     {
-        if ($this->getConfig()->getOption('articleByLine')) {
+        if (!$this->getConfig()->getOption('articleByLine')) {
+            return false;
+        }
+
+        /*
+         * Check if the byline is already set
+         */
+        if (isset($this->metadata['byline'])) {
             return false;
         }
 
