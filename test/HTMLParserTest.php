@@ -13,7 +13,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
     {
         $options = ['originalURL' => 'http://fakehost/test/test.html',
             'fixRelativeURLs' => true,
-            'substituteEntities' => true
+            'substituteEntities' => true,
         ];
 
         if ($config) {
