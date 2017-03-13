@@ -40,9 +40,13 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
             $source = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'source.html');
             $expectedHTML = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected.html');
             $expectedMetadata = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json');
-            $config = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json');
-            if ($config) {
-                $config = json_decode($config, true);
+
+            $config = null;
+            if (file_exists($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json')) {
+                $config = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json');
+                if ($config) {
+                    $config = json_decode($config, true);
+                }
             }
 
             $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata, $config];
