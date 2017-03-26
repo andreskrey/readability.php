@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Added `normalizeEntities` flag to convert UTF-8 characters to its HTML Entity equivalent. Fixes bugs on htmls with mixed encoding.
+
 ## [v0.2.0](https://github.com/andreskrey/readability.php/releases/tag/v0.2.0)
 
 We ARE a 100% complete port of Readability.js!

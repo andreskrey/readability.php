@@ -100,6 +100,7 @@ class HTMLParser
             'removeReadabilityTags' => true,
             'fixRelativeURLs' => false,
             'substituteEntities' => true,
+            'normalizeEntities' => false,
             'originalURL' => 'http://fakehost',
         ];
 
@@ -206,6 +207,11 @@ class HTMLParser
         if (!$this->getConfig()->getOption('substituteEntities')) {
             // Keep the original HTML entities
             $this->dom->substituteEntities = false;
+        }
+
+        if ($this->getConfig()->getOption('normalizeEntities')) {
+            // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
+            $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
         }
 
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
