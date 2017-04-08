@@ -143,38 +143,44 @@ class HTMLParser
         }
 
         $parseSuccessful = true;
+        $result = false;
+
         while (true) {
-            $root = new Readability($root->firstChild);
+            if ($root->firstChild) {
+                $root = new Readability($root->firstChild);
 
-            $elementsToScore = $this->getNodes($root);
+                $elementsToScore = $this->getNodes($root);
 
-            if ($result = $this->rateNodes($elementsToScore)) {
+                if ($result = $this->rateNodes($elementsToScore)) {
 
-                /*
-                 * Now that we've gone through the full algorithm, check to see if
-                 * we got any meaningful content. If we didn't, we may need to re-run
-                 * grabArticle with different flags set. This gives us a higher likelihood of
-                 * finding the content, and the sieve approach gives us a higher likelihood of
-                 * finding the -right- content.
-                 */
+                    /*
+                     * Now that we've gone through the full algorithm, check to see if
+                     * we got any meaningful content. If we didn't, we may need to re-run
+                     * grabArticle with different flags set. This gives us a higher likelihood of
+                     * finding the content, and the sieve approach gives us a higher likelihood of
+                     * finding the -right- content.
+                     */
 
-                // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
-                // that doesn't really count to the quality of the result.
-                $length = 0;
-                foreach ($result->getElementsByTagName('p') as $p) {
-                    $length += mb_strlen($p->textContent);
-                }
-                if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
-                    $root = $this->backupdom->getElementsByTagName('body')->item(0);
+                    // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
+                    // that doesn't really count to the quality of the result.
+                    $length = 0;
+                    foreach ($result->getElementsByTagName('p') as $p) {
+                        $length += mb_strlen($p->textContent);
+                    }
+                    if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
+                        $root = $this->backupdom->getElementsByTagName('body')->item(0);
 
-                    if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
-                        $this->getConfig()->setOption('stripUnlikelyCandidates', false);
-                    } elseif ($this->getConfig()->getOption('weightClasses')) {
-                        $this->getConfig()->setOption('weightClasses', false);
-                    } elseif ($this->getConfig()->getOption('cleanConditionally')) {
-                        $this->getConfig()->setOption('cleanConditionally', false);
+                        if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
+                            $this->getConfig()->setOption('stripUnlikelyCandidates', false);
+                        } elseif ($this->getConfig()->getOption('weightClasses')) {
+                            $this->getConfig()->setOption('weightClasses', false);
+                        } elseif ($this->getConfig()->getOption('cleanConditionally')) {
+                            $this->getConfig()->setOption('cleanConditionally', false);
+                        } else {
+                            $parseSuccessful = false;
+                            break;
+                        }
                     } else {
-                        $parseSuccessful = false;
                         break;
                     }
                 } else {
