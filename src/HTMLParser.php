@@ -148,33 +148,36 @@ class HTMLParser
 
             $elementsToScore = $this->getNodes($root);
 
-            $result = $this->rateNodes($elementsToScore);
+            if ($result = $this->rateNodes($elementsToScore)) {
 
-            /*
-             * Now that we've gone through the full algorithm, check to see if
-             * we got any meaningful content. If we didn't, we may need to re-run
-             * grabArticle with different flags set. This gives us a higher likelihood of
-             * finding the content, and the sieve approach gives us a higher likelihood of
-             * finding the -right- content.
-             */
+                /*
+                 * Now that we've gone through the full algorithm, check to see if
+                 * we got any meaningful content. If we didn't, we may need to re-run
+                 * grabArticle with different flags set. This gives us a higher likelihood of
+                 * finding the content, and the sieve approach gives us a higher likelihood of
+                 * finding the -right- content.
+                 */
 
-            // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
-            // that doesn't really count to the quality of the result.
-            $length = 0;
-            foreach ($result->getElementsByTagName('p') as $p) {
-                $length += mb_strlen($p->textContent);
-            }
-            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
-                $root = $this->backupdom->getElementsByTagName('body')->item(0);
+                // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
+                // that doesn't really count to the quality of the result.
+                $length = 0;
+                foreach ($result->getElementsByTagName('p') as $p) {
+                    $length += mb_strlen($p->textContent);
+                }
+                if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
+                    $root = $this->backupdom->getElementsByTagName('body')->item(0);
 
-                if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
-                    $this->getConfig()->setOption('stripUnlikelyCandidates', false);
-                } elseif ($this->getConfig()->getOption('weightClasses')) {
-                    $this->getConfig()->setOption('weightClasses', false);
-                } elseif ($this->getConfig()->getOption('cleanConditionally')) {
-                    $this->getConfig()->setOption('cleanConditionally', false);
+                    if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
+                        $this->getConfig()->setOption('stripUnlikelyCandidates', false);
+                    } elseif ($this->getConfig()->getOption('weightClasses')) {
+                        $this->getConfig()->setOption('weightClasses', false);
+                    } elseif ($this->getConfig()->getOption('cleanConditionally')) {
+                        $this->getConfig()->setOption('cleanConditionally', false);
+                    } else {
+                        $parseSuccessful = false;
+                        break;
+                    }
                 } else {
-                    $parseSuccessful = false;
                     break;
                 }
             } else {
@@ -792,59 +795,65 @@ class HTMLParser
         $articleContent = new DOMDocument('1.0', 'utf-8');
         $articleContent->createElement('div');
 
-        $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
-        $siblings = $topCandidate->getParent()->getChildren();
-
         $hasContent = false;
 
-        /** @var Readability $sibling */
-        foreach ($siblings as $sibling) {
-            $append = false;
+        $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
 
-            if ($sibling->compareNodes($sibling, $topCandidate)) {
-                $append = true;
-            } else {
-                $contentBonus = 0;
+        if ($parent = $topCandidate->getParent()) {
 
-                // Give a bonus if sibling nodes and top candidates have the example same classname
-                if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
-                    $contentBonus += $topCandidate->getContentScore() * 0.2;
-                }
-                if ($sibling->getContentScore() + $contentBonus >= $siblingScoreThreshold) {
-                    $append = true;
-                } elseif ($sibling->tagNameEqualsTo('p')) {
-                    $linkDensity = $this->getLinkDensity($sibling);
-                    $nodeContent = $sibling->getTextContent(true);
+            if ($siblings = $parent->getChildren()) {
 
-                    if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+
+                /** @var Readability $sibling */
+                foreach ($siblings as $sibling) {
+                    $append = false;
+
+                    if ($sibling->compareNodes($sibling, $topCandidate)) {
                         $append = true;
-                    } elseif ($nodeContent && mb_strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
-                        $append = true;
+                    } else {
+                        $contentBonus = 0;
+
+                        // Give a bonus if sibling nodes and top candidates have the example same classname
+                        if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
+                            $contentBonus += $topCandidate->getContentScore() * 0.2;
+                        }
+                        if ($sibling->getContentScore() + $contentBonus >= $siblingScoreThreshold) {
+                            $append = true;
+                        } elseif ($sibling->tagNameEqualsTo('p')) {
+                            $linkDensity = $this->getLinkDensity($sibling);
+                            $nodeContent = $sibling->getTextContent(true);
+
+                            if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+                                $append = true;
+                            } elseif ($nodeContent && mb_strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
+                                $append = true;
+                            }
+                        }
+                    }
+
+                    if ($append) {
+                        $hasContent = true;
+
+                        if (!in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
+                            /*
+                             * We have a node that isn't a common block level element, like a form or td tag.
+                             * Turn it into a div so it doesn't get filtered out later by accident.
+                             */
+
+                            $sibling->setNodeTag('div');
+                        }
+
+                        $import = $articleContent->importNode($sibling->getDOMNode(), true);
+                        $articleContent->appendChild($import);
+
+                        /*
+                         * No node shifting needs to be check because when calling getChildren, an array is made with the
+                         * children of the parent node, instead of using the DOMElement childNodes function, which, when used
+                         * along with appendChild, would shift the nodes position and the current foreach will behave in
+                         * unpredictable ways.
+                         */
                     }
                 }
-            }
-
-            if ($append) {
-                $hasContent = true;
-
-                if (!in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
-                    /*
-                     * We have a node that isn't a common block level element, like a form or td tag.
-                     * Turn it into a div so it doesn't get filtered out later by accident.
-                     */
-
-                    $sibling->setNodeTag('div');
-                }
-
-                $import = $articleContent->importNode($sibling->getDOMNode(), true);
-                $articleContent->appendChild($import);
-
-                /*
-                 * No node shifting needs to be check because when calling getChildren, an array is made with the
-                 * children of the parent node, instead of using the DOMElement childNodes function, which, when used
-                 * along with appendChild, would shift the nodes position and the current foreach will behave in
-                 * unpredictable ways.
-                 */
             }
         }
 
