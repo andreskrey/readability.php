@@ -809,7 +809,6 @@ class HTMLParser
 
             if ($siblings = $parent->getChildren()) {
 
-
                 /** @var Readability $sibling */
                 foreach ($siblings as $sibling) {
                     $append = false;
