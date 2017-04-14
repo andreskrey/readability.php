@@ -806,7 +806,6 @@ class HTMLParser
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
 
         if ($parent = $topCandidate->getParent()) {
-
             if ($siblings = $parent->getChildren()) {
 
                 /** @var Readability $sibling */
