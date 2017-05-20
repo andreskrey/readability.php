@@ -118,10 +118,6 @@ class HTMLParser
     {
         $this->dom = $this->loadHTML($html);
 
-        $this->removeScripts();
-
-        $this->prepDocument();
-
         $this->metadata = $this->getMetadata();
 
         $this->metadata['image'] = $this->getMainImage();
@@ -223,6 +219,10 @@ class HTMLParser
         $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
         $dom->encoding = 'UTF-8';
 
+        $this->removeScripts($dom);
+
+        $this->prepDocument($dom);
+
         return $dom;
     }
 
@@ -236,13 +236,15 @@ class HTMLParser
 
     /**
      * Removes all the scripts of the html.
+     *
+     * @param DOMDocument $dom
      */
-    private function removeScripts()
+    private function removeScripts(DOMDocument $dom)
     {
         $toRemove = ['script', 'noscript'];
 
         foreach ($toRemove as $tag) {
-            while ($script = $this->dom->getElementsByTagName($tag)) {
+            while ($script = $dom->getElementsByTagName($tag)) {
                 if ($script->item(0)) {
                     $script->item(0)->parentNode->removeChild($script->item(0));
                 } else {
@@ -252,12 +254,14 @@ class HTMLParser
         }
     }
 
-    /*
+    /**
      * Prepares the document for parsing
+     *
+     * @param DOMDocument $dom
      */
-    private function prepDocument()
+    private function prepDocument(DOMDocument $dom)
     {
-        $brs = $this->dom->getElementsByTagName('br');
+        $brs = $dom->getElementsByTagName('br');
         $length = $brs->length;
         for ($i = 0; $i < $length; $i++) {
             /** @var \DOMNode $br */
@@ -289,7 +293,7 @@ class HTMLParser
              */
 
             if ($replaced) {
-                $p = $this->dom->createElement('p');
+                $p = $dom->createElement('p');
                 $br->parentNode->replaceChild($p, $br);
 
                 $next = $p->nextSibling;
@@ -311,7 +315,7 @@ class HTMLParser
         }
 
         // Replace font tags with span
-        $fonts = $this->dom->getElementsByTagName('font');
+        $fonts = $dom->getElementsByTagName('font');
         $length = $fonts->length;
         for ($i = 0; $i < $length; $i++) {
             $font = $fonts->item($length - 1 - $i);
