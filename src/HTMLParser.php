@@ -17,11 +17,6 @@ class HTMLParser
     private $dom = null;
 
     /**
-     * @var DOMDocument
-     */
-    private $backupdom = null;
-
-    /**
      * @var array
      */
     private $metadata = [];
@@ -108,8 +103,6 @@ class HTMLParser
 
         $this->environment->getConfig()->merge($options);
 
-        $this->dom = new DOMDocument('1.0', 'utf-8');
-
         // To avoid having a gazillion of errors on malformed HTMLs
         libxml_use_internal_errors(true);
     }
@@ -123,14 +116,11 @@ class HTMLParser
      */
     public function parse($html)
     {
-        $this->loadHTML($html);
+        $this->dom = $this->loadHTML($html);
 
         $this->removeScripts();
 
         $this->prepDocument();
-
-        // In case we need the original HTML to create a fake top candidate
-        $this->backupdom = clone $this->dom;
 
         $this->metadata = $this->getMetadata();
 
@@ -166,7 +156,8 @@ class HTMLParser
                 $length += mb_strlen($p->textContent);
             }
             if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
-                $root = $this->backupdom->getElementsByTagName('body')->item(0);
+                $this->dom = $this->loadHTML($html);
+                $root = $this->dom->getElementsByTagName('body')->item(0);
 
                 if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
                     $this->getConfig()->setOption('stripUnlikelyCandidates', false);
@@ -187,6 +178,10 @@ class HTMLParser
             return false;
         }
 
+        if (!$result) {
+            return false;
+        }
+
         $result = $this->postProcessContent($result);
 
         // Todo, fix return, check for values, maybe create a function to create the return object
@@ -200,13 +195,23 @@ class HTMLParser
     }
 
     /**
+     * Creates a DOM Document object and loads the provided HTML on it.
+     *
+     * Used for the first load of Readability and subsequent reloads (when disabling flags and rescanning the text)
+     * Previous versions of Readability used this method one time and cloned the DOM to keep a backup. This caused bugs
+     * because cloning the DOM object keeps a relation between the clone and the original one, doing changes in both
+     * objects and ruining the backup.
+     *
      * @param string $html
+     * @return DOMDocument
      */
     private function loadHTML($html)
     {
+        $dom = new DOMDocument('1.0', 'utf-8');
+
         if (!$this->getConfig()->getOption('substituteEntities')) {
             // Keep the original HTML entities
-            $this->dom->substituteEntities = false;
+            $dom->substituteEntities = false;
         }
 
         if ($this->getConfig()->getOption('normalizeEntities')) {
@@ -215,8 +220,10 @@ class HTMLParser
         }
 
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
-        $this->dom->loadHTML('<?xml encoding="UTF-8">' . $html);
-        $this->dom->encoding = 'UTF-8';
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+        $dom->encoding = 'UTF-8';
+
+        return $dom;
     }
 
     /**
