@@ -170,7 +170,7 @@ class HTMLParser
             }
         }
 
-        if (!$parseSuccessful || $result) {
+        if (!$parseSuccessful) {
             return false;
         }
 
