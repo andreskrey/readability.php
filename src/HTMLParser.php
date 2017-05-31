@@ -195,6 +195,7 @@ class HTMLParser
      * objects and ruining the backup.
      *
      * @param string $html
+     *
      * @return DOMDocument
      */
     private function loadHTML($html)
@@ -251,7 +252,7 @@ class HTMLParser
     }
 
     /**
-     * Prepares the document for parsing
+     * Prepares the document for parsing.
      *
      * @param DOMDocument $dom
      */
