@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 - Added `normalizeEntities` flag to convert UTF-8 characters to its HTML Entity equivalent. Fixes bugs on htmls with mixed encoding.
+- Added more information to the readme.md file
 - New way to create a backup DOM: not creating a backup. In the previous version, the system cloned the $this->dom object to keep it as a backup in order to restart the algorithm with other flags, if needed. This seemed to work until I realized that *sometimes* the backup changes even if we are not touching it. Seems that the `dom` and `backupdom` objects are linked and *some* changes on the dom object reach the bakcupdom object. The new approach consists in deleting the backupdom object and recreating from scratch the dom object. Of course this has a performance impact, but seems to be quite low.
 
 ## [v0.2.0](https://github.com/andreskrey/readability.php/releases/tag/v0.2.0)

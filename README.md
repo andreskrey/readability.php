@@ -1,7 +1,7 @@
 # Readability.php
 [![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Build Status](https://travis-ci.org/andreskrey/readability.php.svg?branch=master)](https://travis-ci.org/andreskrey/readability.php)
 
-PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and tries to return title, byline and text content. Analizes each text node, gives an score and orders them based on this calculation.
+PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and tries to return title, byline and text content without nav bars, ads, footers, or anything that isn't the main body of the text. Analizes each text node, gives an score and orders them based on this calculation.
 
 **Requires**: PHP 5.4+ & DOMDocument (libxml)
 
@@ -9,7 +9,7 @@ PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readabilit
 
 ## Status
 
-Current status is *ultra-mega-alpha*. It is broken right now and it will change dramatically until the first 1.0 release. Expect wild changes. Submit pull requests. Argue with me.
+Current status is stable. Not _suuuuper_ stable but stable enough.
 
 ## How to use it
 
