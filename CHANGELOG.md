@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Added a safecheck for really nasty HTML
+
 ## [v0.2.1](https://github.com/andreskrey/readability.php/releases/tag/v0.2.1)
 
 - Added `normalizeEntities` flag to convert UTF-8 characters to its HTML Entity equivalent. Fixes bugs on htmls with mixed encoding.
