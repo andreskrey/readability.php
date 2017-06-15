@@ -125,7 +125,7 @@ class HTMLParser
         $this->metadata['title'] = $this->getTitle();
 
         // Checking for minimum HTML to work with.
-        if (!($root = $this->dom->getElementsByTagName('body')->item(0))) {
+        if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
             return false;
         }
 
