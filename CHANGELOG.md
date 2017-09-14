@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+
 ## [v0.2.2](https://github.com/andreskrey/readability.php/releases/tag/v0.2.2)
 
 - Added a safecheck for really nasty HTML
