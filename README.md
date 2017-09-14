@@ -54,7 +54,7 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 - **substituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&aacute;` to á.
 - **normalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.
 - **originalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
-- **summonCthulhu**: default value `false`, remove all <script> nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/andreskrey/readability.php#known-issues).
+- **summonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/andreskrey/readability.php#known-issues).
 
 ## Limitations
 
@@ -82,6 +82,8 @@ If you would like to remove the scripts of the HTML (like readability does), you
 ```
 
 This is a libxml issue and not a Readability.php bug.
+
+There's a workaround for this: using the summonCthulhu option. This will remove all script tags via regex, which is not ideal because you may end up summoning [the lord of darkness](https://stackoverflow.com/a/1732454).
 
 ## Dependencies
 
