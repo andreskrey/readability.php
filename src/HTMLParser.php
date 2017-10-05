@@ -213,7 +213,7 @@ class HTMLParser
             $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
         }
 
-        if($this->getConfig()->getOption('summonCthulhu')){
+        if ($this->getConfig()->getOption('summonCthulhu')) {
             $html = preg_replace('/<script\b[^>]*>([\s\S]*?)<\/script>/', '', $html);
         }
 
