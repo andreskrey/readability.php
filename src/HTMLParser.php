@@ -531,16 +531,83 @@ class HTMLParser
      */
     private function getTitle()
     {
+        $originalTitle = null;
+
         if (isset($this->metadata['title'])) {
-            return $this->metadata['title'];
+            $originalTitle = $this->metadata['title'];
+        } else {
+            $titleTag = $this->dom->getElementsByTagName('title');
+            if ($titleTag->length > 0) {
+                $originalTitle = $titleTag->item(0)->nodeValue;
+            }
         }
 
-        $title = $this->dom->getElementsByTagName('title');
-        if ($title->length > 0) {
-            return $title->item(0)->nodeValue;
+        if ($originalTitle === null) {
+            return null;
         }
 
-        return null;
+        $curTitle = $originalTitle;
+        $titleHadHierarchicalSeparators = false;
+
+        /*
+         * If there's a separator in the title, first remove the final part
+         *
+         * Sanity warning: if you eval this match in PHPStorm's "Evaluate expression" box, it will return false
+         * I can assure you it works properly if you let the code run.
+         */
+        if (preg_match('/ [\|\-\\\\\/>»] /i', $curTitle)) {
+            $titleHadHierarchicalSeparators = (bool)preg_match('/ [\\\\\/>»] /', $curTitle);
+            $curTitle = preg_replace('/(.*)[\|\-\\\\\/>»] .*/i', '$1', $originalTitle);
+
+            // If the resulting title is too short (3 words or fewer), remove
+            // the first part instead:
+            if (count(preg_split('/\s+/', $curTitle)) < 3) {
+                $curTitle = preg_replace('/[^\|\-\\\\\/>»]*[\|\-\\\\\/>»](.*)/i', '$1', $originalTitle);
+            }
+        } else if (strpos($curTitle, ': ') !== false) {
+            // Check if we have an heading containing this exact string, so we
+            // could assume it's the full title.
+            $match = false;
+            for ($i = 1; $i <= 2; $i++) {
+                foreach ($this->dom->getElementsByTagName('h' . $i) as $hTag) {
+                    if ($hTag->nodeValue === $curTitle) {
+                        $match = true;
+                    }
+                }
+            }
+
+            // If we don't, let's extract the title out of the original title string.
+            if (!$match) {
+                $curTitle = substr($originalTitle, strrpos($originalTitle, ':') + 1);
+
+                // If the title is now too short, try the first colon instead:
+                if (count(preg_split('/\s+/', $curTitle)) < 3)
+                    $curTitle = substr($originalTitle, strpos($originalTitle, ':') + 1);
+            }
+        } else if (mb_strlen($curTitle) > 150 || mb_strlen($curTitle) < 15) {
+            $hOnes = $this->dom->getElementsByTagName('h1');
+
+            if ($hOnes->length === 1) {
+                $curTitle = $hOnes->item(0)->nodeValue;
+            }
+        }
+
+        $curTitle = trim($curTitle);
+
+        /*
+         * If we now have 4 words or fewer as our title, and either no
+         * 'hierarchical' separators (\, /, > or ») were found in the original
+         * title or we decreased the number of words by more than 1 word, use
+         * the original title.
+         */
+        $curTitleWordCount = count(preg_split('/\s+/', $curTitle));
+
+        if ($curTitleWordCount <= 4 &&
+            (!$titleHadHierarchicalSeparators || $curTitleWordCount !== preg_split('/\s+/', preg_replace('/[\|\-\\\\\/>»]+/', '', $originalTitle)) - 1)) {
+            $curTitle = $originalTitle;
+        }
+
+        return $curTitle;
     }
 
     /**
@@ -1121,7 +1188,7 @@ class HTMLParser
      * Checks if the node is a byline.
      *
      * @param Readability $node
-     * @param string      $matchString
+     * @param string $matchString
      *
      * @return bool
      */
