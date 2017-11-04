@@ -97,7 +97,7 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 ## Code porting
 
-Current version follows the latest version of readability.js as of [05 May 2015](https://github.com/mozilla/readability/commit/f0edc77cb58ef52890e3065cf2b0e334d940feb2).
+Current version follows the latest version of readability.js as of [05 May 2017](https://github.com/mozilla/readability/commit/f0edc77cb58ef52890e3065cf2b0e334d940feb2).
  
 ### TO-DOs of the current port:
 
