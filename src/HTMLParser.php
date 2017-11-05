@@ -684,12 +684,9 @@ class HTMLParser
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
                         /** @var Readability $child */
-                        if ($child->isText()) {
-                            // Check if there's actual content on the node.
-                            if (trim($child->getTextContent())) {
-                                $newNode = $node->createNode($child, 'p');
-                                $child->replaceChild($newNode);
-                            }
+                        if ($child->isText() && mb_strlen(trim($child->getTextContent())) > 0) {
+                            $newNode = $node->createNode($child, 'p');
+                            $child->replaceChild($newNode);
                         }
                     }
                 }
