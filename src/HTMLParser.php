@@ -806,6 +806,7 @@ class HTMLParser
 
         $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
         $neededToCreateTopCandidate = false;
+        $parentOfTopCandidate = null;
 
         /*
          * If we still have no top candidate, just use the body as a last resort.
@@ -814,8 +815,6 @@ class HTMLParser
 
         if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
             // Move all of the page's children into topCandidate
-            $neededToCreateTopCandidate = true;
-
             $topCandidate = new DOMDocument('1.0', 'utf-8');
             $topCandidate->encoding = 'UTF-8';
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
@@ -834,6 +833,31 @@ class HTMLParser
             //TODO on the original code, $topCandidate is added to the page variable, which holds the whole HTML
             // Should be done this here also? (line 823 in readability.js)
         } elseif ($topCandidate) {
+            // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
+            // and whose scores are quite closed with current `topCandidate` node.
+            $alternativeCandidateAncestors = [];
+            for ($i = 0; $i < count($topCandidates) - 1; $i++) {
+                if ($topCandidates[$i]->getContentScore() / $topCandidate->getContentScore() >= 0.75) {
+                    $alternativeCandidateAncestors[$i] = $topCandidates[$i]->getNodeAncestors(5);
+                }
+            }
+
+            $MINIMUM_TOPCANDIDATES = 3;
+            if (count($alternativeCandidateAncestors) >= $MINIMUM_TOPCANDIDATES) {
+                $parentOfTopCandidate = $topCandidate->getParent();
+                while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
+                    $listsContainingThisAncestor = 0;
+                    for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
+                        $listsContainingThisAncestor += (int)in_array($parentOfTopCandidate, $alternativeCandidateAncestors[$ancestorIndex]);
+                    }
+                    if ($listsContainingThisAncestor >= $MINIMUM_TOPCANDIDATES) {
+                        $topCandidate = $parentOfTopCandidate;
+                        break;
+                    }
+                    $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+                }
+            }
+
             /*
              * Because of our bonus system, parents of candidates might have scores
              * themselves. They get half of the node. There won't be nodes with higher
