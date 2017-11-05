@@ -13,7 +13,7 @@ use League\HTMLToMarkdown\Element;
 class Readability extends Element implements ReadabilityInterface
 {
     /**
-     * @var \DOMNode
+     * @var \DOMNode|\DOMElement
      */
     protected $node;
 
@@ -50,7 +50,7 @@ class Readability extends Element implements ReadabilityInterface
          * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
          * by getting the node parents we'll get a undefined function fatal error
          */
-            if (method_exists($node, 'getAttribute')) {
+        if (method_exists($node, 'getAttribute')) {
             if ($node->hasAttribute('data-readability')) {
                 // Node was initialized previously. Restoring score and setting flag.
                 $this->initialized = true;
@@ -250,7 +250,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         // Check if the setAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
         if (method_exists($this->node, 'setAttribute')) {
-            $this->contentScore = (float) $score;
+            $this->contentScore = (float)$score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('data-readability', $this->contentScore);
@@ -283,7 +283,7 @@ class Readability extends Element implements ReadabilityInterface
      * element with the new tag name and importing it to the main DOMDocument.
      *
      * @param string $value
-     * @param bool   $importAttributes
+     * @param bool $importAttributes
      */
     public function setNodeTag($value, $importAttributes = false)
     {
@@ -340,7 +340,7 @@ class Readability extends Element implements ReadabilityInterface
      * for parents.
      *
      * @param Readability $originalNode
-     * @param bool        $ignoreSelfAndKids
+     * @param bool $ignoreSelfAndKids
      *
      * @return Readability
      */
@@ -416,7 +416,7 @@ class Readability extends Element implements ReadabilityInterface
      * Creates a new node based on the text content of the original node.
      *
      * @param Readability $originalNode
-     * @param string      $tagName
+     * @param string $tagName
      *
      * @return Readability
      */
@@ -463,8 +463,8 @@ class Readability extends Element implements ReadabilityInterface
      * provided one.
      *
      * @param Readability $node
-     * @param string      $tagName
-     * @param int         $maxDepth
+     * @param string $tagName
+     * @param int $maxDepth
      *
      * @return bool
      */
@@ -486,6 +486,8 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
+     * Returns the children of the current node
+     *
      * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
      *
      * @return array
@@ -503,5 +505,20 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         return $ret;
+    }
+
+
+    /**
+     * Determines if a node has no content or it is just a bunch of dividing lines and/or whitespace
+     *
+     * @return bool
+     */
+    public function isElementWithoutContent()
+    {
+        return ($this->node instanceof \DOMElement &&
+            mb_strlen(trim($this->node->textContent)) === 0 &&
+            ($this->node->childNodes->length === 0 ||
+                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
+            ));
     }
 }
