@@ -874,8 +874,8 @@ class HTMLParser
             // The scores shouldn't get too low.
             $scoreThreshold = $lastScore / 3;
 
-            while ($parentOfTopCandidate) {
-                /* @var Readability $parentOfTopCandidate */
+            /* @var Readability $parentOfTopCandidate */
+            while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
                 $parentScore = $parentOfTopCandidate->getContentScore();
                 if ($parentScore < $scoreThreshold) {
                     break;
@@ -888,6 +888,14 @@ class HTMLParser
                 }
                 $lastScore = $parentOfTopCandidate->getContentScore();
                 $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+            }
+
+            // If the top candidate is the only child, use parent instead. This will help sibling
+            // joining logic when adjacent content is actually located in parent's sibling node.
+            $parentOfTopCandidate = $topCandidate->getParent();
+            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren()) === 1) {
+                $topCandidate = $parentOfTopCandidate;
+                $parentOfTopCandidate = $topCandidate->getParent();
             }
         }
 
