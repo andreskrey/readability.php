@@ -945,6 +945,7 @@ class HTMLParser
     {
         // Clean out junk from the article content
         $this->_cleanConditionally($article, 'form');
+        $this->_cleanConditionally($article, 'fieldset');
         $this->_clean($article, 'object');
         $this->_clean($article, 'embed');
         $this->_clean($article, 'h1');
@@ -953,13 +954,29 @@ class HTMLParser
         // Readability.js cleans styles on prepDocument but we do it here.
         $this->_clean($article, 'style');
 
-        // If there is only one h2, they are probably using it as a header
-        // and not a subheader, so remove it since we already have a header.
-        if ($article->getElementsByTagName('h2')->length === 1) {
-            $this->_clean($article, 'h2');
+        /*
+         * If there is only one h2 and its text content substantially equals article title,
+         * they are probably using it as a header and not a subheader,
+         * so remove it since we already extract the title separately.
+         */
+        $h2 = $article->getElementsByTagName('h2');
+        if ($h2->length === 1) {
+            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->metadata['title'])) / mb_strlen($this->metadata['title']);
+            if (abs($lengthSimilarRate) < 0.5 &&
+                ($lengthSimilarRate > 0 ?
+                    strpos($h2->item(0)->textContent, $this->metadata['title']) !== false :
+                    strpos($this->metadata['title'], $h2->item(0)->textContent) !== false
+                )
+            ) {
+                $this->_clean($article, 'h2');
+            }
         }
 
         $this->_clean($article, 'iframe');
+        $this->_clean($article, 'input');
+        $this->_clean($article, 'textarea');
+        $this->_clean($article, 'select');
+        $this->_clean($article, 'button');
         $this->_cleanHeaders($article);
 
         // Do these last as the previous stuff may have removed junk
@@ -1109,8 +1126,8 @@ class HTMLParser
      *
      * TODO To be moved to Readability
      *
-     * @param Element
-     * @param string tag to clean
+     * @param $article DOMDocument
+     * @param $tag string tag to clean
      *
      * @return void
      **/
