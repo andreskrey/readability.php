@@ -651,6 +651,16 @@ class HTMLParser
                 }
             }
 
+            // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
+            if (($node->tagNameEqualsTo('div') || $node->tagNameEqualsTo('section') || $node->tagNameEqualsTo('header') ||
+                 $node->tagNameEqualsTo('h1') || $node->tagNameEqualsTo('h2') || $node->tagNameEqualsTo('h3') ||
+                 $node->tagNameEqualsTo('h4') || $node->tagNameEqualsTo('h5') || $node->tagNameEqualsTo('h6') ) &&
+                $node->isElementWithoutContent()) {
+              $node = $node->removeAndGetNext($node);
+              continue;
+            }
+
+
             if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
                 $elementsToScore[] = $node;
             }
