@@ -472,7 +472,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         $depth = 0;
         while ($node->getParent()) {
-            if ($depth > $maxDepth) {
+            if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;
             }
             if ($node->getParent()->tagNameEqualsTo($tagName)) {
