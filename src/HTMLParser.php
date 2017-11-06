@@ -909,7 +909,9 @@ class HTMLParser
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
-        $siblings = $topCandidate->getParent()->getChildren();
+        // Keep potential top candidate's parent node to try to get text direction of it later.
+        $parentOfTopCandidate = $topCandidate->getParent();
+        $siblings = $parentOfTopCandidate->getChildren();
 
         $hasContent = false;
 
