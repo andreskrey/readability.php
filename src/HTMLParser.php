@@ -17,6 +17,7 @@ class HTMLParser
     private $dom = null;
 
     /**
+     * TODO Make this an object? Instead of a dumb array
      * @var array
      */
     private $metadata = [];
@@ -969,6 +970,16 @@ class HTMLParser
         $articleContent = $this->prepArticle($articleContent);
 
         if ($hasContent) {
+            // Find out text direction from ancestors of final top candidate.
+            $ancestors = array_merge([$parentOfTopCandidate, $topCandidate], $parentOfTopCandidate->getNodeAncestors());
+            foreach ($ancestors as $ancestor) {
+                $articleDir = $ancestor->getAttribute('dir');
+                if ($articleDir) {
+                    $this->metadata['articleDir'] = $articleDir;
+                    break;
+                }
+            }
+
             return $articleContent;
         } else {
             return false;
