@@ -1001,6 +1001,9 @@ class HTMLParser
      */
     public function prepArticle(DOMDocument $article)
     {
+        $this->_cleanStyles($article);
+        $this->_clean($article, 'style');
+
         // Check for data tables before we continue, to avoid removing items in
         // those tables, which will often be isolated even though they're
         // visually linked to other content-ful elements (text, images, etc.).
@@ -1014,8 +1017,6 @@ class HTMLParser
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
 
-        // Readability.js cleans styles on prepDocument but we do it here.
-        $this->_clean($article, 'style');
 
         /*
          * If there is only one h2 and its text content substantially equals article title,
@@ -1172,6 +1173,35 @@ class HTMLParser
                     $tag->removeAttribute('data-readability');
                 }
             }
+        }
+    }
+
+    /**
+     * Remove the style attribute on every e and under.
+     * TODO: To be moved to Readability
+     *
+     * @param $node \DOMDocument|\DOMNode
+     **/
+    public function _cleanStyles($node)
+    {
+        $cur = $node->firstChild;
+
+        // Remove any root styles, if we're able.
+        //TODO Check if we actually need to check for the method to exist
+        if (method_exists($cur, 'removeAttribute')) {
+            $cur->removeAttribute('style');
+        }
+
+        // Go until there are no more child nodes
+        while ($cur !== null) {
+            if ($cur->nodeType === XML_ELEMENT_NODE) {
+                // Remove style attribute(s) :
+                $cur->removeAttribute('style');
+
+                $this->_cleanStyles($cur);
+            }
+
+            $cur = $cur->nextSibling;
         }
     }
 
