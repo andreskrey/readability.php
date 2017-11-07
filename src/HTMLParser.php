@@ -995,6 +995,11 @@ class HTMLParser
      */
     public function prepArticle(DOMDocument $article)
     {
+        // Check for data tables before we continue, to avoid removing items in
+        // those tables, which will often be isolated even though they're
+        // visually linked to other content-ful elements (text, images, etc.).
+        $this->_markDataTables($article);
+
         // Clean out junk from the article content
         $this->_cleanConditionally($article, 'form');
         $this->_cleanConditionally($article, 'fieldset');
@@ -1052,6 +1057,98 @@ class HTMLParser
         }
 
         return $article;
+    }
+
+    /**
+     * Look for 'data' (as opposed to 'layout') tables, for which we use
+     * similar checks as
+     * https://dxr.mozilla.org/mozilla-central/rev/71224049c0b52ab190564d3ea0eab089a159a4cf/accessible/html/HTMLTableAccessible.cpp#920
+     *
+     * TODO To be moved to Readability. WARNING: check if we actually keep the "readabilityDataTable" param and
+     * maybe switch to a readability data-tag?
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _markDataTables(DOMDocument $article)
+    {
+        $tables = $article->getElementsByTagName('table');
+        foreach ($tables as $table) {
+            /** @var \DOMElement $table */
+            $role = $table->getAttribute('role');
+            if ($role === "presentation") {
+                $table->readabilityDataTable = false;
+                continue;
+            }
+            $datatable = $table->getAttribute('datatable');
+            if ($datatable == '0') {
+                $table->readabilityDataTable = false;
+                continue;
+            }
+            $summary = $table->getAttribute('summary');
+            if ($summary) {
+                $table->readabilityDataTable = true;
+                continue;
+            }
+
+            $caption = $table->getElementsByTagName('caption');
+            if ($caption->length > 0 && $caption->item(0)->childNodes->length > 0) {
+                $table->readabilityDataTable = true;
+                continue;
+            }
+
+            // If the table has a descendant with any of these tags, consider a data table:
+            foreach (['col', 'colgroup', 'tfoot', 'thead', 'th'] as $dataTableDescendants) {
+                if ($table->getElementsByTagName($dataTableDescendants)->length > 0) {
+                    $table->readabilityDataTable = true;
+                    continue 2;
+                }
+            }
+
+            // Nested tables indicate a layout table:
+            if ($table->getElementsByTagName('table')->length > 0) {
+                $table->readabilityDataTable = false;
+                continue;
+            }
+
+            $sizeInfo = $this->_getRowAndColumnCount($table);
+            if ($sizeInfo['rows'] >= 10 || $sizeInfo['columns'] > 4) {
+                $table->readabilityDataTable = true;
+                continue;
+            }
+            // Now just go by size entirely:
+            $table->readabilityDataTable = $sizeInfo['rows'] * $sizeInfo['columns'] > 10;
+        }
+    }
+
+    /**
+     * Return an array indicating how many rows and columns this table has.
+     * @param \DOMElement $table
+     *
+     * @return array
+     */
+    public function _getRowAndColumnCount(\DOMElement $table)
+    {
+        $rows = $columns = 0;
+        $trs = $table->getElementsByTagName('tr');
+        foreach ($trs as $tr) {
+            /** @var \DOMElement $tr */
+            $rowspan = $tr->getAttribute('rowspan');
+            $rows += ($rowspan || 1);
+
+            // Now look for column-related info
+            $columnsInThisRow = 0;
+            $cells = $tr->getElementsByTagName('td');
+            foreach ($cells as $cell) {
+                /** @var \DOMElement $cell */
+                $colspan = $cell->getAttribute('colspan');
+                $columnsInThisRow += ($colspan || 1);
+            }
+            $columns = max($columns, $columnsInThisRow);
+        }
+
+        return ['rows' => $rows, 'columns' => $columns];
     }
 
     /**
@@ -1123,6 +1220,12 @@ class HTMLParser
             $node = $DOMNodeList->item($length - 1 - $i);
 
             $node = new Readability($node);
+
+            // First check if we're in a data table, in which case don't remove us.
+            if ($node->hasAncestorTag($node, 'table', -1) && isset($node->readabilityDataTable)) {
+                continue;
+            }
+
             $weight = $node->getClassWeight();
 
             if ($weight < 0) {
