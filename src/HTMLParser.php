@@ -97,6 +97,7 @@ class HTMLParser
             'fixRelativeURLs' => false,
             'substituteEntities' => true,
             'normalizeEntities' => false,
+            'summonCthulhu' => false,
             'originalURL' => 'http://fakehost',
         ];
 
@@ -212,6 +213,10 @@ class HTMLParser
         if ($this->getConfig()->getOption('normalizeEntities')) {
             // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
             $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        }
+
+        if ($this->getConfig()->getOption('summonCthulhu')) {
+            $html = preg_replace('/<script\b[^>]*>([\s\S]*?)<\/script>/', '', $html);
         }
 
         // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
@@ -463,7 +468,7 @@ class HTMLParser
         }
 
         if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
-            $metadata['image'] = ($values['og:image']) ? $values['og:image'] : $values['twitter:image'];
+            $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
         } else {
             $metadata['image'] = null;
         }
