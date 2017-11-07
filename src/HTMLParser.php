@@ -184,6 +184,7 @@ class HTMLParser
             'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
             'article' => $result,
             'html' => $result->C14N(),
+            'dir' => isset($this->metadata['articleDir']) ? $this->metadata['articleDir'] : null,
         ];
     }
 
