@@ -1259,11 +1259,10 @@ class HTMLParser
                 $contentLength = mb_strlen($node->getTextContent(true));
 
                 $haveToRemove =
-                    // Make an exception for elements with no p's and exactly 1 img.
-                    ($img > $p && $node->hasAncestorTag($node, 'figure')) ||
+                    ($img > 1 && $p / $img < 0.5 && !$node->hasAncestorTag($node, 'figure')) ||
                     (!$isList && $li > $p) ||
                     ($input > floor($p / 3)) ||
-                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2)) ||
+                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag($node, 'figure')) ||
                     (!$isList && $weight < 25 && $linkDensity > 0.2) ||
                     ($weight >= 25 && $linkDensity > 0.5) ||
                     (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
