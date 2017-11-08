@@ -1053,15 +1053,16 @@ class HTMLParser
 
         $this->_cleanReadabilityTags($article);
 
-        $brs = $article->getElementsByTagName('br');
-        $length = $brs->length;
-        for ($i = 0; $i < $length; $i++) {
-            $node = $brs->item($length - 1 - $i);
-            $next = $node->nextSibling;
-            if ($next && $next->nodeName === 'p') {
-                $node->parentNode->removeChild($node);
-            }
-        }
+        // TODO: Check if we can actually remove this. Removes BRs from text nodes.
+//        $brs = $article->getElementsByTagName('br');
+//        $length = $brs->length;
+//        for ($i = 0; $i < $length; $i++) {
+//            $node = $brs->item($length - 1 - $i);
+//            $next = $node->nextSibling;
+//            if ($next && $next->nodeType === XML_TEXT_NODE) {
+//                $node->parentNode->removeChild($node);
+//            }
+//        }
 
         return $article;
     }
