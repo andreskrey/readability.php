@@ -1,4 +1,4 @@
-<article class="post" role="article"><p>For more than a decade the Web has used XMLHttpRequest (XHR) to achieve
+<div><article class="post" role="article"><p>For more than a decade the Web has used XMLHttpRequest (XHR) to achieve
                             asynchronous requests in JavaScript. While very useful, XHR is not a very
                             nice API. It suffers from lack of separation of concerns. The input, output
                             and state are all managed by interacting with one object, and state is
@@ -30,37 +30,37 @@
                             In its simplest form it takes a URL and returns a promise that resolves
                             to the response. The response is captured as a <code>Response</code> object.</p>
                         <div class="wp_syntax">
-                            <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">fetch<span style="color: #009900;">(</span><span style="color: #3366CC;">"/data.json"</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>res<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  <span style="color: #006600; font-style: italic;">// res instanceof Response == true.</span>
-  <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">(</span>res.<span style="color: #660066;">ok</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-    res.<span style="color: #660066;">json</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>data<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-      console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>data.<span style="color: #660066;">entries</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-    <span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span> <span style="color: #000066; font-weight: bold;">else</span> <span style="color: #009900;">{</span>
-    console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Looks like the response wasn't perfect, got status"</span><span style="color: #339933;">,</span> res.<span style="color: #660066;">status</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span>
-<span style="color: #009900;">}</span><span style="color: #339933;">,</span> <span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>e<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Fetch failed!"</span><span style="color: #339933;">,</span> e<span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                            <table><tbody><tr><td class="code"><pre class="javascript">fetch<span>(</span><span>"/data.json"</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>res<span>)</span> <span>{</span>
+  <span>// res instanceof Response == true.</span>
+  <span>if</span> <span>(</span>res.<span>ok</span><span>)</span> <span>{</span>
+    res.<span>json</span><span>(</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>data<span>)</span> <span>{</span>
+      console.<span>log</span><span>(</span>data.<span>entries</span><span>)</span><span>;</span>
+    <span>}</span><span>)</span><span>;</span>
+  <span>}</span> <span>else</span> <span>{</span>
+    console.<span>log</span><span>(</span><span>"Looks like the response wasn't perfect, got status"</span><span>,</span> res.<span>status</span><span>)</span><span>;</span>
+  <span>}</span>
+<span>}</span><span>,</span> <span>function</span><span>(</span>e<span>)</span> <span>{</span>
+  console.<span>log</span><span>(</span><span>"Fetch failed!"</span><span>,</span> e<span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                                         </td>
                                     </tr></tbody></table></div>
             <p>Submitting some parameters, it would look like this:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">fetch<span style="color: #009900;">(</span><span style="color: #3366CC;">"http://www.example.org/submit.php"</span><span style="color: #339933;">,</span> <span style="color: #009900;">{</span>
-  method<span style="color: #339933;">:</span> <span style="color: #3366CC;">"POST"</span><span style="color: #339933;">,</span>
-  headers<span style="color: #339933;">:</span> <span style="color: #009900;">{</span>
-    <span style="color: #3366CC;">"Content-Type"</span><span style="color: #339933;">:</span> <span style="color: #3366CC;">"application/x-www-form-urlencoded"</span>
-  <span style="color: #009900;">}</span><span style="color: #339933;">,</span>
-  body<span style="color: #339933;">:</span> <span style="color: #3366CC;">"firstName=Nikhil&amp;favColor=blue&amp;password=easytoguess"</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>res<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">(</span>res.<span style="color: #660066;">ok</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-    alert<span style="color: #009900;">(</span><span style="color: #3366CC;">"Perfect! Your settings are saved."</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span> <span style="color: #000066; font-weight: bold;">else</span> <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">(</span>res.<span style="color: #660066;">status</span> <span style="color: #339933;">==</span> <span style="color: #CC0000;">401</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-    alert<span style="color: #009900;">(</span><span style="color: #3366CC;">"Oops! You are not authorized."</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span>
-<span style="color: #009900;">}</span><span style="color: #339933;">,</span> <span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>e<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  alert<span style="color: #009900;">(</span><span style="color: #3366CC;">"Error submitting form!"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript">fetch<span>(</span><span>"http://www.example.org/submit.php"</span><span>,</span> <span>{</span>
+  method<span>:</span> <span>"POST"</span><span>,</span>
+  headers<span>:</span> <span>{</span>
+    <span>"Content-Type"</span><span>:</span> <span>"application/x-www-form-urlencoded"</span>
+  <span>}</span><span>,</span>
+  body<span>:</span> <span>"firstName=Nikhil&amp;favColor=blue&amp;password=easytoguess"</span>
+<span>}</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>res<span>)</span> <span>{</span>
+  <span>if</span> <span>(</span>res.<span>ok</span><span>)</span> <span>{</span>
+    alert<span>(</span><span>"Perfect! Your settings are saved."</span><span>)</span><span>;</span>
+  <span>}</span> <span>else</span> <span>if</span> <span>(</span>res.<span>status</span> <span>==</span> <span>401</span><span>)</span> <span>{</span>
+    alert<span>(</span><span>"Oops! You are not authorized."</span><span>)</span><span>;</span>
+  <span>}</span>
+<span>}</span><span>,</span> <span>function</span><span>(</span>e<span>)</span> <span>{</span>
+  alert<span>(</span><span>"Error submitting form!"</span><span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>The <code>fetch()</code> function’s arguments are the same as those passed
@@ -79,36 +79,36 @@
             <p>The <a href="https://fetch.spec.whatwg.org/#headers-class">Headers interface</a> is
                 a simple multi-map of names to values:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> content <span style="color: #339933;">=</span> <span style="color: #3366CC;">"Hello World"</span><span style="color: #339933;">;</span>
-<span style="color: #000066; font-weight: bold;">var</span> reqHeaders <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Headers<span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-reqHeaders.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Content-Type"</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"text/plain"</span>
-reqHeaders.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Content-Length"</span><span style="color: #339933;">,</span> content.<span style="color: #660066;">length</span>.<span style="color: #660066;">toString</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-reqHeaders.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"X-Custom-Header"</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"ProcessThisImmediately"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> content <span>=</span> <span>"Hello World"</span><span>;</span>
+<span>var</span> reqHeaders <span>=</span> <span>new</span> Headers<span>(</span><span>)</span><span>;</span>
+reqHeaders.<span>append</span><span>(</span><span>"Content-Type"</span><span>,</span> <span>"text/plain"</span>
+reqHeaders.<span>append</span><span>(</span><span>"Content-Length"</span><span>,</span> content.<span>length</span>.<span>toString</span><span>(</span><span>)</span><span>)</span><span>;</span>
+reqHeaders.<span>append</span><span>(</span><span>"X-Custom-Header"</span><span>,</span> <span>"ProcessThisImmediately"</span><span>)</span><span>;</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>The same can be achieved by passing an array of arrays or a JS object
                 literal
                 <br></br>to the constructor:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">reqHeaders <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Headers<span style="color: #009900;">(</span><span style="color: #009900;">{</span>
-  <span style="color: #3366CC;">"Content-Type"</span><span style="color: #339933;">:</span> <span style="color: #3366CC;">"text/plain"</span><span style="color: #339933;">,</span>
-  <span style="color: #3366CC;">"Content-Length"</span><span style="color: #339933;">:</span> content.<span style="color: #660066;">length</span>.<span style="color: #660066;">toString</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #339933;">,</span>
-  <span style="color: #3366CC;">"X-Custom-Header"</span><span style="color: #339933;">:</span> <span style="color: #3366CC;">"ProcessThisImmediately"</span><span style="color: #339933;">,</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript">reqHeaders <span>=</span> <span>new</span> Headers<span>(</span><span>{</span>
+  <span>"Content-Type"</span><span>:</span> <span>"text/plain"</span><span>,</span>
+  <span>"Content-Length"</span><span>:</span> content.<span>length</span>.<span>toString</span><span>(</span><span>)</span><span>,</span>
+  <span>"X-Custom-Header"</span><span>:</span> <span>"ProcessThisImmediately"</span><span>,</span>
+<span>}</span><span>)</span><span>;</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>The contents can be queried and retrieved:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>reqHeaders.<span style="color: #660066;">has</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Content-Type"</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// true</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>reqHeaders.<span style="color: #660066;">has</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Set-Cookie"</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// false</span>
-reqHeaders.<span style="color: #000066; font-weight: bold;">set</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Content-Type"</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"text/html"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-reqHeaders.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"X-Custom-Header"</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"AnotherValue"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+                <table><tbody><tr><td class="code"><pre class="javascript">console.<span>log</span><span>(</span>reqHeaders.<span>has</span><span>(</span><span>"Content-Type"</span><span>)</span><span>)</span><span>;</span> <span>// true</span>
+console.<span>log</span><span>(</span>reqHeaders.<span>has</span><span>(</span><span>"Set-Cookie"</span><span>)</span><span>)</span><span>;</span> <span>// false</span>
+reqHeaders.<span>set</span><span>(</span><span>"Content-Type"</span><span>,</span> <span>"text/html"</span><span>)</span><span>;</span>
+reqHeaders.<span>append</span><span>(</span><span>"X-Custom-Header"</span><span>,</span> <span>"AnotherValue"</span><span>)</span><span>;</span>
  
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>reqHeaders.<span style="color: #000066; font-weight: bold;">get</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Content-Length"</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// 11</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>reqHeaders.<span style="color: #660066;">getAll</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"X-Custom-Header"</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// ["ProcessThisImmediately", "AnotherValue"]</span>
+console.<span>log</span><span>(</span>reqHeaders.<span>get</span><span>(</span><span>"Content-Length"</span><span>)</span><span>)</span><span>;</span> <span>// 11</span>
+console.<span>log</span><span>(</span>reqHeaders.<span>getAll</span><span>(</span><span>"X-Custom-Header"</span><span>)</span><span>)</span><span>;</span> <span>// ["ProcessThisImmediately", "AnotherValue"]</span>
  
-reqHeaders.<span style="color: #000066; font-weight: bold;">delete</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"X-Custom-Header"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>reqHeaders.<span style="color: #660066;">getAll</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"X-Custom-Header"</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// []</span></pre>
+reqHeaders.<span>delete</span><span>(</span><span>"X-Custom-Header"</span><span>)</span><span>;</span>
+console.<span>log</span><span>(</span>reqHeaders.<span>getAll</span><span>(</span><span>"X-Custom-Header"</span><span>)</span><span>)</span><span>;</span> <span>// []</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>Some of these operations are only useful in ServiceWorkers, but they provide
@@ -136,12 +136,12 @@ console.<span style="color: #660066;">log</span><span style="color: #009900;">(<
                 <a href="https://fetch.spec.whatwg.org/#concept-header-name">valid HTTP Header name</a>. The mutation operations will throw TypeError
                     if there is an immutable guard. Otherwise they fail silently. For example:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> res <span style="color: #339933;">=</span> Response.<span style="color: #660066;">error</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #000066; font-weight: bold;">try</span> <span style="color: #009900;">{</span>
-  res.<span style="color: #660066;">headers</span>.<span style="color: #000066; font-weight: bold;">set</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Origin"</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"http://mybank.com"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span> <span style="color: #000066; font-weight: bold;">catch</span><span style="color: #009900;">(</span>e<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Cannot pretend to be a bank!"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> res <span>=</span> Response.<span>error</span><span>(</span><span>)</span><span>;</span>
+<span>try</span> <span>{</span>
+  res.<span>headers</span>.<span>set</span><span>(</span><span>"Origin"</span><span>,</span> <span>"http://mybank.com"</span><span>)</span><span>;</span>
+<span>}</span> <span>catch</span><span>(</span>e<span>)</span> <span>{</span>
+  console.<span>log</span><span>(</span><span>"Cannot pretend to be a bank!"</span><span>)</span><span>;</span>
+<span>}</span></pre>
                             </td>
                         </tr></tbody></table></div>
         
@@ -153,9 +153,9 @@ console.<span style="color: #660066;">log</span><span style="color: #009900;">(<
         <p>The simplest Request is of course, just a URL, as you may do to GET a
             resource.</p>
         <div class="wp_syntax">
-            <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> req <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Request<span style="color: #009900;">(</span><span style="color: #3366CC;">"/index.html"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>req.<span style="color: #660066;">method</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// "GET"</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>req.<span style="color: #660066;">url</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// "http://example.com/index.html"</span></pre>
+            <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> req <span>=</span> <span>new</span> Request<span>(</span><span>"/index.html"</span><span>)</span><span>;</span>
+console.<span>log</span><span>(</span>req.<span>method</span><span>)</span><span>;</span> <span>// "GET"</span>
+console.<span>log</span><span>(</span>req.<span>url</span><span>)</span><span>;</span> <span>// "http://example.com/index.html"</span></pre>
                         </td>
                     </tr></tbody></table></div>
         <p>You may also pass a Request to the <code>Request()</code> constructor to
@@ -164,9 +164,9 @@ console.<span style="color: #660066;">log</span><span style="color: #009900;">(<
             is covered in
             <br></br>the “Reading bodies” section.).</p>
         <div class="wp_syntax">
-            <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> copy <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Request<span style="color: #009900;">(</span>req<span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>copy.<span style="color: #660066;">method</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// "GET"</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>copy.<span style="color: #660066;">url</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// "http://example.com/index.html"</span></pre>
+            <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> copy <span>=</span> <span>new</span> Request<span>(</span>req<span>)</span><span>;</span>
+console.<span>log</span><span>(</span>copy.<span>method</span><span>)</span><span>;</span> <span>// "GET"</span>
+console.<span>log</span><span>(</span>copy.<span>url</span><span>)</span><span>;</span> <span>// "http://example.com/index.html"</span></pre>
                         </td>
                     </tr></tbody></table></div>
         <p>Again, this form is probably only useful in ServiceWorkers.</p>
@@ -174,13 +174,13 @@ console.<span style="color: #660066;">log</span><span style="color: #009900;">(<
             initial
             <br></br>values as a second argument to the constructor. This argument is a dictionary.</p>
         <div class="wp_syntax">
-            <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> uploadReq <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Request<span style="color: #009900;">(</span><span style="color: #3366CC;">"/uploadImage"</span><span style="color: #339933;">,</span> <span style="color: #009900;">{</span>
-  method<span style="color: #339933;">:</span> <span style="color: #3366CC;">"POST"</span><span style="color: #339933;">,</span>
-  headers<span style="color: #339933;">:</span> <span style="color: #009900;">{</span>
-    <span style="color: #3366CC;">"Content-Type"</span><span style="color: #339933;">:</span> <span style="color: #3366CC;">"image/png"</span><span style="color: #339933;">,</span>
-  <span style="color: #009900;">}</span><span style="color: #339933;">,</span>
-  body<span style="color: #339933;">:</span> <span style="color: #3366CC;">"image data"</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+            <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> uploadReq <span>=</span> <span>new</span> Request<span>(</span><span>"/uploadImage"</span><span>,</span> <span>{</span>
+  method<span>:</span> <span>"POST"</span><span>,</span>
+  headers<span>:</span> <span>{</span>
+    <span>"Content-Type"</span><span>:</span> <span>"image/png"</span><span>,</span>
+  <span>}</span><span>,</span>
+  body<span>:</span> <span>"image data"</span>
+<span>}</span><span>)</span><span>;</span></pre>
                         </td>
                     </tr></tbody></table></div>
             <p>The Request’s mode is used to determine if cross-origin requests lead
@@ -192,12 +192,12 @@ console.<span style="color: #660066;">log</span><span style="color: #009900;">(<
                 this to ensure that
                 <br></br>a request is always being made to your origin.</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> arbitraryUrl <span style="color: #339933;">=</span> document.<span style="color: #660066;">getElementById</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"url-input"</span><span style="color: #009900;">)</span>.<span style="color: #660066;">value</span><span style="color: #339933;">;</span>
-fetch<span style="color: #009900;">(</span>arbitraryUrl<span style="color: #339933;">,</span> <span style="color: #009900;">{</span> mode<span style="color: #339933;">:</span> <span style="color: #3366CC;">"same-origin"</span> <span style="color: #009900;">}</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>res<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Response succeeded?"</span><span style="color: #339933;">,</span> res.<span style="color: #660066;">ok</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #339933;">,</span> <span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>e<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Please enter a same-origin URL!"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> arbitraryUrl <span>=</span> document.<span>getElementById</span><span>(</span><span>"url-input"</span><span>)</span>.<span>value</span><span>;</span>
+fetch<span>(</span>arbitraryUrl<span>,</span> <span>{</span> mode<span>:</span> <span>"same-origin"</span> <span>}</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>res<span>)</span> <span>{</span>
+  console.<span>log</span><span>(</span><span>"Response succeeded?"</span><span>,</span> res.<span>ok</span><span>)</span><span>;</span>
+<span>}</span><span>,</span> <span>function</span><span>(</span>e<span>)</span> <span>{</span>
+  console.<span>log</span><span>(</span><span>"Please enter a same-origin URL!"</span><span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>The <code>"no-cors"</code> mode captures what the web platform does by default
@@ -218,31 +218,31 @@ fetch<span style="color: #009900;">(</span>arbitraryUrl<span style="color: #3399
                 you could get a list of Flickr’s <a href="https://www.flickr.com/services/api/flickr.interestingness.getList.html">most interesting</a> photos
                 today like this:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> u <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> URLSearchParams<span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-u.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">'method'</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">'flickr.interestingness.getList'</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-u.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">'api_key'</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">'&lt;insert api key here&gt;'</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-u.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">'format'</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">'json'</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-u.<span style="color: #660066;">append</span><span style="color: #009900;">(</span><span style="color: #3366CC;">'nojsoncallback'</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">'1'</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+                <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> u <span>=</span> <span>new</span> URLSearchParams<span>(</span><span>)</span><span>;</span>
+u.<span>append</span><span>(</span><span>'method'</span><span>,</span> <span>'flickr.interestingness.getList'</span><span>)</span><span>;</span>
+u.<span>append</span><span>(</span><span>'api_key'</span><span>,</span> <span>'&lt;insert api key here&gt;'</span><span>)</span><span>;</span>
+u.<span>append</span><span>(</span><span>'format'</span><span>,</span> <span>'json'</span><span>)</span><span>;</span>
+u.<span>append</span><span>(</span><span>'nojsoncallback'</span><span>,</span> <span>'1'</span><span>)</span><span>;</span>
  
-<span style="color: #000066; font-weight: bold;">var</span> apiCall <span style="color: #339933;">=</span> fetch<span style="color: #009900;">(</span><span style="color: #3366CC;">'https://api.flickr.com/services/rest?'</span> <span style="color: #339933;">+</span> u<span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+<span>var</span> apiCall <span>=</span> fetch<span>(</span><span>'https://api.flickr.com/services/rest?'</span> <span>+</span> u<span>)</span><span>;</span>
  
-apiCall.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>response<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  <span style="color: #000066; font-weight: bold;">return</span> response.<span style="color: #660066;">json</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>json<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-    <span style="color: #006600; font-style: italic;">// photo is a list of photos.</span>
-    <span style="color: #000066; font-weight: bold;">return</span> json.<span style="color: #660066;">photos</span>.<span style="color: #660066;">photo</span><span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>photos<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  photos.<span style="color: #660066;">forEach</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>photo<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-    console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>photo.<span style="color: #660066;">title</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+apiCall.<span>then</span><span>(</span><span>function</span><span>(</span>response<span>)</span> <span>{</span>
+  <span>return</span> response.<span>json</span><span>(</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>json<span>)</span> <span>{</span>
+    <span>// photo is a list of photos.</span>
+    <span>return</span> json.<span>photos</span>.<span>photo</span><span>;</span>
+  <span>}</span><span>)</span><span>;</span>
+<span>}</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>photos<span>)</span> <span>{</span>
+  photos.<span>forEach</span><span>(</span><span>function</span><span>(</span>photo<span>)</span> <span>{</span>
+    console.<span>log</span><span>(</span>photo.<span>title</span><span>)</span><span>;</span>
+  <span>}</span><span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>You may not read out the “Date” header since Flickr does not allow it
                 via
                 <br></br><code>Access-Control-Expose-Headers</code>.</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">response.<span style="color: #660066;">headers</span>.<span style="color: #000066; font-weight: bold;">get</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Date"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// null</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript">response.<span>headers</span>.<span>get</span><span>(</span><span>"Date"</span><span>)</span><span>;</span> <span>// null</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>The <code>credentials</code> enumeration determines if cookies for the other
@@ -297,11 +297,11 @@ apiCall.<span style="color: #660066;">then</span><span style="color: #009900;">(
                 <br></br>idiomatic way to return a Response to an intercepted request in ServiceWorkers
                 is:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">addEventListener<span style="color: #009900;">(</span><span style="color: #3366CC;">'fetch'</span><span style="color: #339933;">,</span> <span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>event<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  event.<span style="color: #660066;">respondWith</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">new</span> Response<span style="color: #009900;">(</span><span style="color: #3366CC;">"Response body"</span><span style="color: #339933;">,</span> <span style="color: #009900;">{</span>
-    headers<span style="color: #339933;">:</span> <span style="color: #009900;">{</span> <span style="color: #3366CC;">"Content-Type"</span> <span style="color: #339933;">:</span> <span style="color: #3366CC;">"text/plain"</span> <span style="color: #009900;">}</span>
-  <span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript">addEventListener<span>(</span><span>'fetch'</span><span>,</span> <span>function</span><span>(</span>event<span>)</span> <span>{</span>
+  event.<span>respondWith</span><span>(</span><span>new</span> Response<span>(</span><span>"Response body"</span><span>,</span> <span>{</span>
+    headers<span>:</span> <span>{</span> <span>"Content-Type"</span> <span>:</span> <span>"text/plain"</span> <span>}</span>
+  <span>}</span><span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                             </td>
                         </tr></tbody></table></div>
             <p>As you can see, Response has a two argument constructor, where both arguments
@@ -348,17 +348,17 @@ apiCall.<span style="color: #660066;">then</span><span style="color: #009900;">(
                 non-text data!</p>
             <p>Request bodies can be set by passing <code>body</code> parameters:</p>
             <div class="wp_syntax">
-                <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> form <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> FormData<span style="color: #009900;">(</span>document.<span style="color: #660066;">getElementById</span><span style="color: #009900;">(</span><span style="color: #3366CC;">'login-form'</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-fetch<span style="color: #009900;">(</span><span style="color: #3366CC;">"/login"</span><span style="color: #339933;">,</span> <span style="color: #009900;">{</span>
-  method<span style="color: #339933;">:</span> <span style="color: #3366CC;">"POST"</span><span style="color: #339933;">,</span>
-  body<span style="color: #339933;">:</span> form
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span></pre>
+                <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> form <span>=</span> <span>new</span> FormData<span>(</span>document.<span>getElementById</span><span>(</span><span>'login-form'</span><span>)</span><span>)</span><span>;</span>
+fetch<span>(</span><span>"/login"</span><span>,</span> <span>{</span>
+  method<span>:</span> <span>"POST"</span><span>,</span>
+  body<span>:</span> form
+<span>}</span><span>)</span></pre>
                             </td>
                         </tr></tbody></table></div>
                 <p>Responses take the first argument as the body.</p>
                 <div class="wp_syntax">
-                    <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> res <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Response<span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">new</span> File<span style="color: #009900;">(</span><span style="color: #009900;">[</span><span style="color: #3366CC;">"chunk"</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"chunk"</span><span style="color: #009900;">]</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"archive.zip"</span><span style="color: #339933;">,</span>
-                       <span style="color: #009900;">{</span> type<span style="color: #339933;">:</span> <span style="color: #3366CC;">"application/zip"</span> <span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+                    <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> res <span>=</span> <span>new</span> Response<span>(</span><span>new</span> File<span>(</span><span>[</span><span>"chunk"</span><span>,</span> <span>"chunk"</span><span>]</span><span>,</span> <span>"archive.zip"</span><span>,</span>
+                       <span>{</span> type<span>:</span> <span>"application/zip"</span> <span>}</span><span>)</span><span>)</span><span>;</span></pre>
                                 </td>
                             </tr></tbody></table></div>
                 <p>Both Request and Response (and by extension the <code>fetch()</code> function),
@@ -372,16 +372,16 @@ fetch<span style="color: #009900;">(</span><span style="color: #3366CC;">"/login
                     read once! Both interfaces have a boolean attribute <code>bodyUsed</code> to
                     determine if it is safe to read or not.</p>
                 <div class="wp_syntax">
-                    <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> res <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Response<span style="color: #009900;">(</span><span style="color: #3366CC;">"one time use"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>res.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// false</span>
-res.<span style="color: #660066;">text</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>v<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>res.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// true</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>res.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// true</span>
+                    <table><tbody><tr><td class="code"><pre class="javascript"><span>var</span> res <span>=</span> <span>new</span> Response<span>(</span><span>"one time use"</span><span>)</span><span>;</span>
+console.<span>log</span><span>(</span>res.<span>bodyUsed</span><span>)</span><span>;</span> <span>// false</span>
+res.<span>text</span><span>(</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>v<span>)</span> <span>{</span>
+  console.<span>log</span><span>(</span>res.<span>bodyUsed</span><span>)</span><span>;</span> <span>// true</span>
+<span>}</span><span>)</span><span>;</span>
+console.<span>log</span><span>(</span>res.<span>bodyUsed</span><span>)</span><span>;</span> <span>// true</span>
  
-res.<span style="color: #660066;">text</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span>.<span style="color: #000066; font-weight: bold;">catch</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>e<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"Tried to read already consumed Response"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+res.<span>text</span><span>(</span><span>)</span>.<span>catch</span><span>(</span><span>function</span><span>(</span>e<span>)</span> <span>{</span>
+  console.<span>log</span><span>(</span><span>"Tried to read already consumed Response"</span><span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                                 </td>
                             </tr></tbody></table></div>
                 <p>This decision allows easing the transition to an eventual <a href="https://streams.spec.whatwg.org/">stream-based</a> Fetch
@@ -398,20 +398,20 @@ res.<span style="color: #660066;">text</span><span style="color: #009900;">(</sp
                     be called before the body of the corresponding object has been used. That
                     is, <code>clone()</code> first, read later.</p>
                 <div class="wp_syntax">
-                    <table><tbody><tr><td class="code"><pre class="javascript" style="font-family:monospace;">addEventListener<span style="color: #009900;">(</span><span style="color: #3366CC;">'fetch'</span><span style="color: #339933;">,</span> <span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>evt<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-  <span style="color: #000066; font-weight: bold;">var</span> sheep <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Response<span style="color: #009900;">(</span><span style="color: #3366CC;">"Dolly"</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>sheep.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// false</span>
-  <span style="color: #000066; font-weight: bold;">var</span> clone <span style="color: #339933;">=</span> sheep.<span style="color: #660066;">clone</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>clone.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// false</span>
+                    <table><tbody><tr><td class="code"><pre class="javascript">addEventListener<span>(</span><span>'fetch'</span><span>,</span> <span>function</span><span>(</span>evt<span>)</span> <span>{</span>
+  <span>var</span> sheep <span>=</span> <span>new</span> Response<span>(</span><span>"Dolly"</span><span>)</span><span>;</span>
+  console.<span>log</span><span>(</span>sheep.<span>bodyUsed</span><span>)</span><span>;</span> <span>// false</span>
+  <span>var</span> clone <span>=</span> sheep.<span>clone</span><span>(</span><span>)</span><span>;</span>
+  console.<span>log</span><span>(</span>clone.<span>bodyUsed</span><span>)</span><span>;</span> <span>// false</span>
  
-  clone.<span style="color: #660066;">text</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>sheep.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// false</span>
-  console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>clone.<span style="color: #660066;">bodyUsed</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> <span style="color: #006600; font-style: italic;">// true</span>
+  clone.<span>text</span><span>(</span><span>)</span><span>;</span>
+  console.<span>log</span><span>(</span>sheep.<span>bodyUsed</span><span>)</span><span>;</span> <span>// false</span>
+  console.<span>log</span><span>(</span>clone.<span>bodyUsed</span><span>)</span><span>;</span> <span>// true</span>
  
-  evt.<span style="color: #660066;">respondWith</span><span style="color: #009900;">(</span>cache.<span style="color: #660066;">add</span><span style="color: #009900;">(</span>sheep.<span style="color: #660066;">clone</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span>.<span style="color: #660066;">then</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>e<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
-    <span style="color: #000066; font-weight: bold;">return</span> sheep<span style="color: #339933;">;</span>
-  <span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
-<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre>
+  evt.<span>respondWith</span><span>(</span>cache.<span>add</span><span>(</span>sheep.<span>clone</span><span>(</span><span>)</span><span>)</span>.<span>then</span><span>(</span><span>function</span><span>(</span>e<span>)</span> <span>{</span>
+    <span>return</span> sheep<span>;</span>
+  <span>}</span><span>)</span><span>;</span>
+<span>}</span><span>)</span><span>;</span></pre>
                                 </td>
                             </tr></tbody></table></div>
                 
@@ -429,4 +429,4 @@ res.<span style="color: #660066;">text</span><span style="color: #009900;">(</sp
                 <p><em>The author would like to thank Andrea Marchesini, Anne van Kesteren and Ben<br></br>
 Kelly for helping with the specification and implementation.</em>
                 </p>
-                </article>
+                </article></div>
