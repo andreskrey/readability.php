@@ -45,7 +45,7 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 ## Options
 
 - **maxTopCandidates**: default value `5`, max amount of top level candidates.
-- **articleByLine**: default value `false`, search for the article byline. 
+- **articleByLine**: default value `false`, search for the article byline and remove it from the text. It will be moved to the article metadata. 
 - **stripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
 - **cleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
 - **weightClasses**: default value `true`, weight classes during the rating phase. 
@@ -61,6 +61,8 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php will need to be complete and all the content should be in the HTML already.  
 
 ## Known Issues
+
+### Javascript spilling into the text body
 
 DOMDocument has some issues while parsing javascript with unescaped HTML on strings. Consider the following code:
 
@@ -83,7 +85,15 @@ If you would like to remove the scripts of the HTML (like readability does), you
 
 This is a libxml issue and not a Readability.php bug.
 
-There's a workaround for this: using the summonCthulhu option. This will remove all script tags via regex, which is not ideal because you may end up summoning [the lord of darkness](https://stackoverflow.com/a/1732454).
+There's a workaround for this: using the `summonCthulhu` option. This will remove all script tags **via regex**, which is not ideal because you may end up summoning [the lord of darkness](https://stackoverflow.com/a/1732454).
+
+### &nbsp entities disappearing
+
+`&nbsp` entities are converted to spaces automatically by libxml and there's no way to disable it.
+
+### Self closing tags rendering as fully expanded tags
+
+Self closing tags like `<br />` get automatically expanded to `<br></br`. No way to disable it in libxml.
 
 ## Dependencies
 
@@ -102,7 +112,7 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 Current version follows the latest version of readability.js as of [05 May 2017](https://github.com/mozilla/readability/commit/f0edc77cb58ef52890e3065cf2b0e334d940feb2).
  
-### TO-DOs of the current port:
+## TO-DOs of the current port:
 
  - Port `_cleanStyles` to avoid style attributes inside other tags (like `<p style="hello   ">`) 
 
