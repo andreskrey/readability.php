@@ -265,11 +265,15 @@ class HTMLParser
      */
     private function prepDocument(DOMDocument $dom)
     {
-        $brs = $dom->getElementsByTagName('br');
-        $length = $brs->length;
-        for ($i = 0; $i < $length; $i++) {
-            /** @var \DOMNode $br */
-            $br = $brs->item($length - 1 - $i);
+        /*
+         * DOMNodeList must be converted to an array before looping over it.
+         * This is done to avoid node shifting when removing nodes.
+         *
+         * Reverse traversing cannot be done here because we need to find brs that are right next to other brs.
+         * (If we go the other way around we need to search for previous nodes forcing the creation of new functions
+         * that will be used only here)
+         */
+        foreach(iterator_to_array($dom->getElementsByTagName('br')) as $br){
             $next = $br->nextSibling;
 
             /*
