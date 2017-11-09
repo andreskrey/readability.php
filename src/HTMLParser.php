@@ -273,7 +273,7 @@ class HTMLParser
          * (If we go the other way around we need to search for previous nodes forcing the creation of new functions
          * that will be used only here)
          */
-        foreach(iterator_to_array($dom->getElementsByTagName('br')) as $br){
+        foreach (iterator_to_array($dom->getElementsByTagName('br')) as $br) {
             $next = $br->nextSibling;
 
             /*
@@ -1057,16 +1057,12 @@ class HTMLParser
 
         $this->_cleanReadabilityTags($article);
 
-        // TODO: Check if we can actually remove this. Removes BRs from text nodes.
-//        $brs = $article->getElementsByTagName('br');
-//        $length = $brs->length;
-//        for ($i = 0; $i < $length; $i++) {
-//            $node = $brs->item($length - 1 - $i);
-//            $next = $node->nextSibling;
-//            if ($next && $next->nodeType === XML_TEXT_NODE) {
-//                $node->parentNode->removeChild($node);
-//            }
-//        }
+        foreach (iterator_to_array($article->getElementsByTagName('br')) as $br) {
+            $next = $br->nextSibling;
+            if ($next && $next->nodeName === 'p') {
+                $br->parentNode->removeChild($br);
+            }
+        }
 
         return $article;
     }
