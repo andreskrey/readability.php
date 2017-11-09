@@ -17,7 +17,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
         ];
 
         if ($config) {
-            array_merge($options, $config);
+            $options = array_merge($options, $config);
         }
 
         $readability = new HTMLParser($options);
