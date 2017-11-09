@@ -78,6 +78,18 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
+     * Checks for the node type.
+     *
+     * @param string $value Type of node to compare to
+     *
+     * @return bool
+     */
+    public function nodeTypeEqualsTo($value)
+    {
+        return $this->node->nodeType === $value;
+    }
+
+    /**
      * Get the ancestors of the current node.
      *
      * @param int $maxLevel Max amount of ancestors to get.

@@ -1454,9 +1454,16 @@ class HTMLParser
     private function hasSinglePNode(Readability $node)
     {
         // There should be exactly 1 element child which is a P:
-        // And there should be no text nodes with real content (param true on ->getChildren)
-        if (count($children = $node->getChildren(true)) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
+        if (count($children = $node->getChildren()) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
             return false;
+        }
+
+        // And there should be no text nodes with real content (param true on ->getChildren)
+        foreach ($children as $child) {
+            /** @var $child Readability */
+            if ($child->nodeTypeEqualsTo(XML_TEXT_NODE) && !preg_match('/\S$/', $child->getTextContent())) {
+                return false;
+            }
         }
 
         return true;
