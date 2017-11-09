@@ -1215,7 +1215,12 @@ class HTMLParser
      */
     public function _cleanExtraParagraphs(DOMDocument $article)
     {
-        foreach ($article->getElementsByTagName('p') as $paragraph) {
+        $paragraphs = $article->getElementsByTagName('p');
+        $length = $paragraphs->length;
+
+        for ($i = 0; $i < $length; $i++) {
+            $paragraph = $paragraphs->item($length - 1 - $i);
+
             $imgCount = $paragraph->getElementsByTagName('img')->length;
             $embedCount = $paragraph->getElementsByTagName('embed')->length;
             $objectCount = $paragraph->getElementsByTagName('object')->length;
