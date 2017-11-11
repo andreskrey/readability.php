@@ -92,7 +92,7 @@ class Readability extends Element implements ReadabilityInterface
     /**
      * Get the ancestors of the current node.
      *
-     * @param int $maxLevel Max amount of ancestors to get.
+     * @param int|bool $maxLevel Max amount of ancestors to get. False for all of them
      *
      * @return array
      */
@@ -106,7 +106,7 @@ class Readability extends Element implements ReadabilityInterface
         while ($node) {
             $ancestors[] = $node;
             $level++;
-            if ($level >= $maxLevel) {
+            if ($level === $maxLevel) {
                 break;
             }
             $node = $node->getParent();
