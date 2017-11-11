@@ -1021,6 +1021,11 @@ class HTMLParser
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
 
+        // Clean out elements have "share" in their id/class combinations from final top candidates,
+        // which means we don't remove the top candidates even they have "share".
+        foreach ($article->childNodes as $child) {
+            $this->_cleanMatchedNodes($child, '/share/i');
+        }
 
         /*
          * If there is only one h2 and its text content substantially equals article title,
@@ -1203,6 +1208,28 @@ class HTMLParser
             }
 
             $cur = $cur->nextSibling;
+        }
+    }
+
+    /**
+     * Clean out elements whose id/class combinations match specific string.
+     *
+     * TODO To be moved to readability
+     *
+     * @param string $regex Match id/class combination.
+     * @return void
+     **/
+    public function _cleanMatchedNodes($node, $regex)
+    {
+        $node = new Readability($node);
+        $endOfSearchMarkerNode = $node->getNextNode($node, true);
+        $next = $node->getNextNode($node);
+        while ($next && $next !== $endOfSearchMarkerNode) {
+            if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
+                $next = $next->removeAndGetNext($next);
+            } else {
+                $next = $next->getNextNode($next);
+            }
         }
     }
 
