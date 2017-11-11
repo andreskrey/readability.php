@@ -530,7 +530,13 @@ class Readability extends Element implements ReadabilityInterface
         return ($this->node instanceof \DOMElement &&
             mb_strlen(trim($this->node->textContent)) === 0 &&
             ($this->node->childNodes->length === 0 ||
-                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
+                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length ||
+                /*
+                 * Special DOMDocument case: When there's an empty tag with a space inside, like "<h3> </h3>", the
+                 * previous if will fail because DOMElement will say that it has one node inside (A DOMText) and this
+                 * in JS doesn't happens. So here we check if we have exactly one node, and that node is a DOMText one.
+                 */
+                ($this->node->childNodes->length === 1 && $this->node->childNodes->item(0)->nodeType === XML_TEXT_NODE)
             ));
     }
 }
