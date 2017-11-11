@@ -341,7 +341,7 @@ class HTMLParser
 
         // Readability cannot open relative uris so we convert them to absolute uris.
         if ($this->getConfig()->getOption('fixRelativeURLs')) {
-            foreach ($article->getElementsByTagName('a') as $link) {
+            foreach (iterator_to_array($article->getElementsByTagName('a')) as $link) {
                 /** @var \DOMElement $link */
                 $href = $link->getAttribute('href');
                 if ($href) {
