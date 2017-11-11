@@ -643,6 +643,12 @@ class HTMLParser
         while ($node) {
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
+            // Remove DOMComments nodes as we don't need them and mess up children counting
+            if ($node->nodeTypeEqualsTo(XML_COMMENT_NODE)) {
+                $node = $node->removeAndGetNext($node);
+                continue;
+            }
+
             // Check to see if this node is a byline, and remove it if it is.
             if ($this->checkByline($node, $matchString)) {
                 $node = $node->removeAndGetNext($node);
@@ -847,9 +853,9 @@ class HTMLParser
             // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
             // and whose scores are quite closed with current `topCandidate` node.
             $alternativeCandidateAncestors = [];
-            for ($i = 0; $i < count($topCandidates) - 1; $i++) {
+            for ($i = 0; $i < count($topCandidates); $i++) {
                 if ($topCandidates[$i]->getContentScore() / $topCandidate->getContentScore() >= 0.75) {
-                    $alternativeCandidateAncestors[$i] = $topCandidates[$i]->getNodeAncestors(5);
+                    $alternativeCandidateAncestors[$i] = $topCandidates[$i]->getNodeAncestors(false);
                 }
             }
 
@@ -904,7 +910,7 @@ class HTMLParser
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->getParent();
-            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren()) === 1) {
+            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren(true)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->getParent();
             }
