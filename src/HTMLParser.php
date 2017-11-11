@@ -1486,7 +1486,7 @@ class HTMLParser
     private function hasSinglePNode(Readability $node)
     {
         // There should be exactly 1 element child which is a P:
-        if (count($children = $node->getChildren()) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
+        if (count($children = $node->getChildren(true)) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
             return false;
         }
 
