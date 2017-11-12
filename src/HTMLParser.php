@@ -17,7 +17,8 @@ class HTMLParser
     private $dom = null;
 
     /**
-     * TODO Make this an object? Instead of a dumb array
+     * TODO Make this an object? Instead of a dumb array.
+     *
      * @var array
      */
     private $metadata = [];
@@ -578,7 +579,7 @@ class HTMLParser
             if (count(preg_split('/\s+/', $curTitle)) < 3) {
                 $curTitle = preg_replace('/[^\|\-\\\\\/>»]*[\|\-\\\\\/>»](.*)/i', '$1', $originalTitle);
             }
-        } else if (strpos($curTitle, ': ') !== false) {
+        } elseif (strpos($curTitle, ': ') !== false) {
             // Check if we have an heading containing this exact string, so we
             // could assume it's the full title.
             $match = false;
@@ -595,10 +596,11 @@ class HTMLParser
                 $curTitle = substr($originalTitle, strrpos($originalTitle, ':') + 1);
 
                 // If the title is now too short, try the first colon instead:
-                if (count(preg_split('/\s+/', $curTitle)) < 3)
+                if (count(preg_split('/\s+/', $curTitle)) < 3) {
                     $curTitle = substr($originalTitle, strpos($originalTitle, ':') + 1);
+                }
             }
-        } else if (mb_strlen($curTitle) > 150 || mb_strlen($curTitle) < 15) {
+        } elseif (mb_strlen($curTitle) > 150 || mb_strlen($curTitle) < 15) {
             $hOnes = $this->dom->getElementsByTagName('h1');
 
             if ($hOnes->length === 1) {
@@ -680,7 +682,6 @@ class HTMLParser
                 $node = $node->removeAndGetNext($node);
                 continue;
             }
-
 
             if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
                 $elementsToScore[] = $node;
@@ -1088,7 +1089,7 @@ class HTMLParser
     /**
      * Look for 'data' (as opposed to 'layout') tables, for which we use
      * similar checks as
-     * https://dxr.mozilla.org/mozilla-central/rev/71224049c0b52ab190564d3ea0eab089a159a4cf/accessible/html/HTMLTableAccessible.cpp#920
+     * https://dxr.mozilla.org/mozilla-central/rev/71224049c0b52ab190564d3ea0eab089a159a4cf/accessible/html/HTMLTableAccessible.cpp#920.
      *
      * TODO To be moved to Readability. WARNING: check if we actually keep the "readabilityDataTable" param and
      * maybe switch to a readability data-tag?
@@ -1103,7 +1104,7 @@ class HTMLParser
         foreach ($tables as $table) {
             /** @var \DOMElement $table */
             $role = $table->getAttribute('role');
-            if ($role === "presentation") {
+            if ($role === 'presentation') {
                 $table->readabilityDataTable = false;
                 continue;
             }
@@ -1150,6 +1151,7 @@ class HTMLParser
 
     /**
      * Return an array indicating how many rows and columns this table has.
+     *
      * @param \DOMElement $table
      *
      * @return array
@@ -1197,7 +1199,7 @@ class HTMLParser
 
     /**
      * Remove the style attribute on every e and under.
-     * TODO: To be moved to Readability
+     * TODO: To be moved to Readability.
      *
      * @param $node \DOMDocument|\DOMNode
      **/
@@ -1235,6 +1237,7 @@ class HTMLParser
      * TODO To be moved to readability
      *
      * @param string $regex Match id/class combination.
+     *
      * @return void
      **/
     public function _cleanMatchedNodes($node, $regex)
