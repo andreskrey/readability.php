@@ -419,7 +419,7 @@ class Readability extends Element implements ReadabilityInterface
      *
      * @param Readability $newNode
      */
-    public function replaceChild(Readability $newNode)
+    public function replaceChild(self $newNode)
     {
         $this->node->parentNode->replaceChild($newNode->node, $this->node);
     }
@@ -432,7 +432,7 @@ class Readability extends Element implements ReadabilityInterface
      *
      * @return Readability
      */
-    public function createNode(Readability $originalNode, $tagName)
+    public function createNode(self $originalNode, $tagName)
     {
         $text = $originalNode->getTextContent();
         $newNode = $originalNode->node->ownerDocument->createElement($tagName, $text);
@@ -480,7 +480,7 @@ class Readability extends Element implements ReadabilityInterface
      *
      * @return bool
      */
-    public function hasAncestorTag(Readability $node, $tagName, $maxDepth = 3)
+    public function hasAncestorTag(self $node, $tagName, $maxDepth = 3)
     {
         $depth = 0;
         while ($node->getParent()) {
@@ -498,7 +498,7 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Returns the children of the current node
+     * Returns the children of the current node.
      *
      * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
      *
@@ -519,15 +519,14 @@ class Readability extends Element implements ReadabilityInterface
         return $ret;
     }
 
-
     /**
-     * Determines if a node has no content or it is just a bunch of dividing lines and/or whitespace
+     * Determines if a node has no content or it is just a bunch of dividing lines and/or whitespace.
      *
      * @return bool
      */
     public function isElementWithoutContent()
     {
-        return ($this->node instanceof \DOMElement &&
+        return $this->node instanceof \DOMElement &&
             // /\x{00A0}|\s+/u TODO to be replaced with regexps array
             mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->node->textContent)) === 0 &&
             ($this->node->childNodes->length === 0 ||
@@ -544,6 +543,6 @@ class Readability extends Element implements ReadabilityInterface
                     return $child instanceof \DOMText;
                 }))
 
-            ));
+            );
     }
 }
