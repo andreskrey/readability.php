@@ -45,7 +45,8 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 ## Options
 
 - **maxTopCandidates**: default value `5`, max amount of top level candidates.
-- **articleByLine**: default value `false`, search for the article byline. 
+- **wordThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
+- **articleByLine**: default value `false`, search for the article byline and remove it from the text. It will be moved to the article metadata. 
 - **stripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
 - **cleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
 - **weightClasses**: default value `true`, weight classes during the rating phase. 
@@ -61,6 +62,8 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php will need to be complete and all the content should be in the HTML already.  
 
 ## Known Issues
+
+### Javascript spilling into the text body
 
 DOMDocument has some issues while parsing javascript with unescaped HTML on strings. Consider the following code:
 
@@ -83,7 +86,15 @@ If you would like to remove the scripts of the HTML (like readability does), you
 
 This is a libxml issue and not a Readability.php bug.
 
-There's a workaround for this: using the summonCthulhu option. This will remove all script tags via regex, which is not ideal because you may end up summoning [the lord of darkness](https://stackoverflow.com/a/1732454).
+There's a workaround for this: using the `summonCthulhu` option. This will remove all script tags **via regex**, which is not ideal because you may end up summoning [the lord of darkness](https://stackoverflow.com/a/1732454).
+
+### &nbsp entities disappearing
+
+`&nbsp` entities are converted to spaces automatically by libxml and there's no way to disable it.
+
+### Self closing tags rendering as fully expanded tags
+
+Self closing tags like `<br />` get automatically expanded to `<br></br`. No way to disable it in libxml.
 
 ## Dependencies
 
@@ -91,14 +102,20 @@ Readability uses the Element interface and class from *The PHP League's* **[html
 
 ## To-do
 
-100% of the original readability code was ported, at least until the last commit when I started this project ([13 Aug 2016](https://github.com/mozilla/readability/commit/71aa562387fa507b0bac30ae7144e1df7ba8a356)). There are a lot of `TODO`s around the code, which are the part that need to be finished.
-
 - Right now the Readability object is an extension of the Element object of html-to-markdown. This is a problem because you lose context. The scoring when creating a new Readability object must be reloaded manually. The DOMDocument object is consistent across the same document. You change one value here and that will update all other nodes in other variables. By using the element interface you lose that reference and the score must be restored manually. Ideally, the Readability object should be an extension of the DOMDocument or DOMElement objects, the score should be saved within that object and no restoration or recalculation would be needed.
 - There are a lot of problems with responsabilities. Right now there are two classes: HTMLParser and Readability. HTMLParser does a lot of things that should be a responsibility of Readability. It also does a lot of things that should be part of another class, specially when building the final article DOMDocument.
 
 ## How it works
 
 Readability parses all the text with DOMDocument, scans the text nodes and gives the a score, based on the amount of words, links and type of element. Then it selects the highest scoring element and creates a new DOMDocument with all its siblings. Each sibling is scored to discard useless elements, like nav bars, empty nodes, etc.
+
+## Code porting
+
+Current version follows the latest version of readability.js as of [05 May 2017](https://github.com/mozilla/readability/commit/f0edc77cb58ef52890e3065cf2b0e334d940feb2).
+ 
+## TO-DOs of the current port:
+
+ - Port `_cleanStyles` to avoid style attributes inside other tags (like `<p style="hello   ">`) 
 
 ## License
 
