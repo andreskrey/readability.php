@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v0.3.0](https://github.com/andreskrey/readability.php/releases/tag/v0.3.0)
+
 - Merged PR #24. Fixes notice when trying to extract `og:image`
 - Up to date to commit [eb221c5](https://github.com/mozilla/readability/commit/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5) (2017-10-16), which includes the following changes:
   - New tags added to the unlikelyCandidates regex
