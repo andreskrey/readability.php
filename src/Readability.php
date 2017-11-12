@@ -528,7 +528,8 @@ class Readability extends Element implements ReadabilityInterface
     public function isElementWithoutContent()
     {
         return ($this->node instanceof \DOMElement &&
-            mb_strlen(trim($this->node->textContent)) === 0 &&
+            // /\x{00A0}|\s+/u TODO to be replaced with regexps array
+            mb_strlen(preg_replace('/\x{00A0}|\s+/u','',$this->node->textContent)) === 0 &&
             ($this->node->childNodes->length === 0 ||
                 $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length ||
                 /*

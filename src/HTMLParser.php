@@ -37,6 +37,8 @@ class HTMLParser
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
         'whitespace' => '/^\s*$/',
         'hasContent' => '/\S$/',
+        // \x{00A0} is the unicode version of &nbsp;
+        'onlyWhitespace' => '/\x{00A0}|\s+/u'
     ];
 
     private $defaultTagsToScore = [
@@ -1261,7 +1263,7 @@ class HTMLParser
             $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
             $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
 
-            if ($totalCount === 0 && !trim($paragraph->textContent)) {
+            if ($totalCount === 0 && !preg_replace($this->regexps['onlyWhitespace'], '', $paragraph->textContent)) {
                 // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
