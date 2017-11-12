@@ -853,9 +853,9 @@ class HTMLParser
             // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
             // and whose scores are quite closed with current `topCandidate` node.
             $alternativeCandidateAncestors = [];
-            for ($i = 0; $i < count($topCandidates); $i++) {
+            for ($i = 1; $i < count($topCandidates); $i++) {
                 if ($topCandidates[$i]->getContentScore() / $topCandidate->getContentScore() >= 0.75) {
-                    $alternativeCandidateAncestors[$i] = $topCandidates[$i]->getNodeAncestors(false);
+                    array_push($alternativeCandidateAncestors, $topCandidates[$i]->getNodeAncestors(false));
                 }
             }
 
