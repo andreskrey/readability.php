@@ -4,9 +4,20 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 - Merged PR #24. Fixes notice when trying to extract `og:image`
-- Up to date to commit [eb221c5](https://github.com/mozilla/readability/commit/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5) (2017-10-16), which included the following changes:
-  - test
+- Up to date to commit [eb221c5](https://github.com/mozilla/readability/commit/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5) (2017-10-16), which includes the following changes:
+  - New tags added to the unlikelyCandidates regex
+  - Detection and removal of hierarchical separators in titles
+  - Added more tags to clean after parsing the article (`button`, `textarea`, `select`, etc.)
+  - New way to detect empty nodes (including a edge case where a node with a `&nsbp;` was detected as a node with content)
+  - Better approach to find a top candidate (specially when a top candidate is the only child of a parent node, which allows a more accurate joining of sibling elements)
+  - Detect text direction (`ltr` or `rtl`)
+  - Detect and mark data tables to avoid removing them during final clean up
+  - Major fixes when scanning and deleting nodes (no need to traverse backwards anymore)
+  - Node cleaning via regex matches
+  - Clean table attributes during final clean up.
 - Added license
+
+Next release after this one will be v1 and will be a major refactor around Readability and HTMLParser methods and responsibilities.
 
 ## [v0.2.2](https://github.com/andreskrey/readability.php/releases/tag/v0.2.2)
 
@@ -21,7 +32,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.2.0](https://github.com/andreskrey/readability.php/releases/tag/v0.2.0)
 
-We ARE a 100% complete port of Readability.js!
+100% complete port of Readability.js!
 - Every test unit passes
 - Readability.php produces the same exact output as Readability.js
 - I'm happy :)
