@@ -90,7 +90,8 @@ class HTMLParser
     public function __construct(array $options = [])
     {
         $defaults = [
-            'maxTopCandidates' => 5, // Max amount of top level candidates
+            'maxTopCandidates' => 5,
+            'wordThreshold' => 500,
             'articleByLine' => false,
             'stripUnlikelyCandidates' => true,
             'cleanConditionally' => true,
@@ -155,7 +156,7 @@ class HTMLParser
             foreach ($result->getElementsByTagName('p') as $p) {
                 $length += mb_strlen($p->textContent);
             }
-            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < 500) {
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->getConfig()->getOption('wordThreshold')) {
                 $this->dom = $this->loadHTML($html);
                 $root = $this->dom->getElementsByTagName('body')->item(0);
 
