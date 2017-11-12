@@ -45,6 +45,7 @@ If the parsing process was unsuccessful the HTMLParser will return `false`
 ## Options
 
 - **maxTopCandidates**: default value `5`, max amount of top level candidates.
+- **wordThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
 - **articleByLine**: default value `false`, search for the article byline and remove it from the text. It will be moved to the article metadata. 
 - **stripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
 - **cleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
