@@ -37,6 +37,8 @@ class HTMLParser
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
         'whitespace' => '/^\s*$/',
         'hasContent' => '/\S$/',
+        // \x{00A0} is the unicode version of &nbsp;
+        'onlyWhitespace' => '/\x{00A0}|\s+/u'
     ];
 
     private $defaultTagsToScore = [
@@ -341,7 +343,7 @@ class HTMLParser
 
         // Readability cannot open relative uris so we convert them to absolute uris.
         if ($this->getConfig()->getOption('fixRelativeURLs')) {
-            foreach ($article->getElementsByTagName('a') as $link) {
+            foreach (iterator_to_array($article->getElementsByTagName('a')) as $link) {
                 /** @var \DOMElement $link */
                 $href = $link->getAttribute('href');
                 if ($href) {
@@ -643,6 +645,12 @@ class HTMLParser
         while ($node) {
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
+            // Remove DOMComments nodes as we don't need them and mess up children counting
+            if ($node->nodeTypeEqualsTo(XML_COMMENT_NODE)) {
+                $node = $node->removeAndGetNext($node);
+                continue;
+            }
+
             // Check to see if this node is a byline, and remove it if it is.
             if ($this->checkByline($node, $matchString)) {
                 $node = $node->removeAndGetNext($node);
@@ -847,9 +855,9 @@ class HTMLParser
             // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
             // and whose scores are quite closed with current `topCandidate` node.
             $alternativeCandidateAncestors = [];
-            for ($i = 0; $i < count($topCandidates) - 1; $i++) {
+            for ($i = 1; $i < count($topCandidates); $i++) {
                 if ($topCandidates[$i]->getContentScore() / $topCandidate->getContentScore() >= 0.75) {
-                    $alternativeCandidateAncestors[$i] = $topCandidates[$i]->getNodeAncestors(5);
+                    array_push($alternativeCandidateAncestors, $topCandidates[$i]->getNodeAncestors(false));
                 }
             }
 
@@ -904,7 +912,7 @@ class HTMLParser
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->getParent();
-            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren()) === 1) {
+            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren(true)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->getParent();
             }
@@ -1021,6 +1029,11 @@ class HTMLParser
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
 
+        // Clean out elements have "share" in their id/class combinations from final top candidates,
+        // which means we don't remove the top candidates even they have "share".
+        foreach ($article->childNodes as $child) {
+            $this->_cleanMatchedNodes($child, '/share/i');
+        }
 
         /*
          * If there is only one h2 and its text content substantially equals article title,
@@ -1207,6 +1220,28 @@ class HTMLParser
     }
 
     /**
+     * Clean out elements whose id/class combinations match specific string.
+     *
+     * TODO To be moved to readability
+     *
+     * @param string $regex Match id/class combination.
+     * @return void
+     **/
+    public function _cleanMatchedNodes($node, $regex)
+    {
+        $node = new Readability($node);
+        $endOfSearchMarkerNode = $node->getNextNode($node, true);
+        $next = $node->getNextNode($node);
+        while ($next && $next !== $endOfSearchMarkerNode) {
+            if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
+                $next = $next->removeAndGetNext($next);
+            } else {
+                $next = $next->getNextNode($next);
+            }
+        }
+    }
+
+    /**
      * TODO To be moved to Readability.
      *
      * @param DOMDocument $article
@@ -1228,7 +1263,7 @@ class HTMLParser
             $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
             $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
 
-            if ($totalCount === 0 && !trim($paragraph->textContent)) {
+            if ($totalCount === 0 && !preg_replace($this->regexps['onlyWhitespace'], '', $paragraph->textContent)) {
                 // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
@@ -1459,7 +1494,7 @@ class HTMLParser
     private function hasSinglePNode(Readability $node)
     {
         // There should be exactly 1 element child which is a P:
-        if (count($children = $node->getChildren()) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
+        if (count($children = $node->getChildren(true)) !== 1 || !$children[0]->tagNameEqualsTo('p')) {
             return false;
         }
 

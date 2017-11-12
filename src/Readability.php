@@ -92,7 +92,7 @@ class Readability extends Element implements ReadabilityInterface
     /**
      * Get the ancestors of the current node.
      *
-     * @param int $maxLevel Max amount of ancestors to get.
+     * @param int|bool $maxLevel Max amount of ancestors to get. False for all of them
      *
      * @return array
      */
@@ -106,7 +106,7 @@ class Readability extends Element implements ReadabilityInterface
         while ($node) {
             $ancestors[] = $node;
             $level++;
-            if ($level >= $maxLevel) {
+            if ($level === $maxLevel) {
                 break;
             }
             $node = $node->getParent();
@@ -528,9 +528,16 @@ class Readability extends Element implements ReadabilityInterface
     public function isElementWithoutContent()
     {
         return ($this->node instanceof \DOMElement &&
-            mb_strlen(trim($this->node->textContent)) === 0 &&
+            // /\x{00A0}|\s+/u TODO to be replaced with regexps array
+            mb_strlen(preg_replace('/\x{00A0}|\s+/u','',$this->node->textContent)) === 0 &&
             ($this->node->childNodes->length === 0 ||
-                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
+                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length ||
+                /*
+                 * Special DOMDocument case: When there's an empty tag with a space inside, like "<h3> </h3>", the
+                 * previous if will fail because DOMElement will say that it has one node inside (A DOMText) and this
+                 * in JS doesn't happens. So here we check if we have exactly one node, and that node is a DOMText one.
+                 */
+                ($this->node->childNodes->length === 1 && $this->node->childNodes->item(0)->nodeType === XML_TEXT_NODE)
             ));
     }
 }
