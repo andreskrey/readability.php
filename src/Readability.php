@@ -13,7 +13,7 @@ use League\HTMLToMarkdown\Element;
 class Readability extends Element implements ReadabilityInterface
 {
     /**
-     * @var \DOMNode
+     * @var \DOMNode|\DOMElement
      */
     protected $node;
 
@@ -50,9 +50,6 @@ class Readability extends Element implements ReadabilityInterface
          * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
          * by getting the node parents we'll get a undefined function fatal error
          */
-        $score = 0;
-
-        // Check if the getAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
         if (method_exists($node, 'getAttribute')) {
             if ($node->hasAttribute('data-readability')) {
                 // Node was initialized previously. Restoring score and setting flag.
@@ -81,9 +78,21 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
+     * Checks for the node type.
+     *
+     * @param string $value Type of node to compare to
+     *
+     * @return bool
+     */
+    public function nodeTypeEqualsTo($value)
+    {
+        return $this->node->nodeType === $value;
+    }
+
+    /**
      * Get the ancestors of the current node.
      *
-     * @param int $maxLevel Max amount of ancestors to get.
+     * @param int|bool $maxLevel Max amount of ancestors to get. False for all of them
      *
      * @return array
      */
@@ -97,7 +106,7 @@ class Readability extends Element implements ReadabilityInterface
         while ($node) {
             $ancestors[] = $node;
             $level++;
-            if ($level >= $maxLevel) {
+            if ($level === $maxLevel) {
                 break;
             }
             $node = $node->getParent();
@@ -253,7 +262,7 @@ class Readability extends Element implements ReadabilityInterface
     {
         // Check if the setAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
         if (method_exists($this->node, 'setAttribute')) {
-            $this->contentScore = (float) $score;
+            $this->contentScore = (float)$score;
 
             // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
             $this->node->setAttribute('data-readability', $this->contentScore);
@@ -286,7 +295,7 @@ class Readability extends Element implements ReadabilityInterface
      * element with the new tag name and importing it to the main DOMDocument.
      *
      * @param string $value
-     * @param bool   $importAttributes
+     * @param bool $importAttributes
      */
     public function setNodeTag($value, $importAttributes = false)
     {
@@ -343,7 +352,7 @@ class Readability extends Element implements ReadabilityInterface
      * for parents.
      *
      * @param Readability $originalNode
-     * @param bool        $ignoreSelfAndKids
+     * @param bool $ignoreSelfAndKids
      *
      * @return Readability
      */
@@ -410,7 +419,7 @@ class Readability extends Element implements ReadabilityInterface
      *
      * @param Readability $newNode
      */
-    public function replaceChild(Readability $newNode)
+    public function replaceChild(self $newNode)
     {
         $this->node->parentNode->replaceChild($newNode->node, $this->node);
     }
@@ -419,11 +428,11 @@ class Readability extends Element implements ReadabilityInterface
      * Creates a new node based on the text content of the original node.
      *
      * @param Readability $originalNode
-     * @param string      $tagName
+     * @param string $tagName
      *
      * @return Readability
      */
-    public function createNode(Readability $originalNode, $tagName)
+    public function createNode(self $originalNode, $tagName)
     {
         $text = $originalNode->getTextContent();
         $newNode = $originalNode->node->ownerDocument->createElement($tagName, $text);
@@ -466,16 +475,16 @@ class Readability extends Element implements ReadabilityInterface
      * provided one.
      *
      * @param Readability $node
-     * @param string      $tagName
-     * @param int         $maxDepth
+     * @param string $tagName
+     * @param int $maxDepth
      *
      * @return bool
      */
-    public function hasAncestorTag(Readability $node, $tagName, $maxDepth = 3)
+    public function hasAncestorTag(self $node, $tagName, $maxDepth = 3)
     {
         $depth = 0;
         while ($node->getParent()) {
-            if ($depth > $maxDepth) {
+            if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;
             }
             if ($node->getParent()->tagNameEqualsTo($tagName)) {
@@ -489,6 +498,8 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
+     * Returns the children of the current node.
+     *
      * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
      *
      * @return array
@@ -506,5 +517,32 @@ class Readability extends Element implements ReadabilityInterface
         }
 
         return $ret;
+    }
+
+    /**
+     * Determines if a node has no content or it is just a bunch of dividing lines and/or whitespace.
+     *
+     * @return bool
+     */
+    public function isElementWithoutContent()
+    {
+        return $this->node instanceof \DOMElement &&
+            // /\x{00A0}|\s+/u TODO to be replaced with regexps array
+            mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->node->textContent)) === 0 &&
+            ($this->node->childNodes->length === 0 ||
+                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
+                /*
+                 * Special DOMDocument case: We also need to count how many DOMText we have inside the node.
+                 * If there's an empty tag with an space inside and a BR (for example "<p> <br/></p>) counting only BRs and
+                 * HRs will will say that the example has 2 nodes, instead of one. This happens because in DOMDocument,
+                 * DOMTexts are also nodes (which doesn't happen in JS). So we need to also count how many DOMText we
+                 * are dealing with (And at this point we know they are empty or are just whitespace, because of the
+                 * mb_strlen in this chain of checks).
+                 */
+                + count(array_filter(iterator_to_array($this->node->childNodes), function ($child) {
+                    return $child instanceof \DOMText;
+                }))
+
+            );
     }
 }
