@@ -1203,23 +1203,28 @@ class HTMLParser
      **/
     public function _cleanStyles($node)
     {
-        $cur = $node->firstChild;
-
-        // Remove any root styles, if we're able.
-        //TODO Check if we actually need to check for the method to exist
-        if (method_exists($cur, 'removeAttribute')) {
-            $cur->removeAttribute('style');
+        if (property_exists($node, 'tagName') && $node->tagName === 'svg') {
+            return;
         }
 
-        // Go until there are no more child nodes
-        while ($cur !== null) {
-            if ($cur->nodeType === XML_ELEMENT_NODE) {
-                // Remove style attribute(s) :
-                $cur->removeAttribute('style');
-
-                $this->_cleanStyles($cur);
+        // Do not bother if there's no method to remove an attribute
+        if (method_exists($node, 'removeAttribute')) {
+            $presentational_attributes = ['align', 'background', 'bgcolor', 'border', 'cellpadding', 'cellspacing', 'frame', 'hspace', 'rules', 'style', 'valign', 'vspace'];
+            // Remove `style` and deprecated presentational attributes
+            foreach ($presentational_attributes as $presentational_attribute) {
+                $node->removeAttribute($presentational_attribute);
             }
 
+            $deprecated_size_attribute_elems = ['table', 'th', 'td', 'hr', 'pre'];
+            if (property_exists($node, 'tagName') && in_array($node->tagName, $deprecated_size_attribute_elems)) {
+                $node->removeAttribute('width');
+                $node->removeAttribute('height');
+            }
+        }
+
+        $cur = $node->firstChild;
+        while ($cur !== null) {
+            $this->_cleanStyles($cur);
             $cur = $cur->nextSibling;
         }
     }
