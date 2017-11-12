@@ -529,15 +529,21 @@ class Readability extends Element implements ReadabilityInterface
     {
         return ($this->node instanceof \DOMElement &&
             // /\x{00A0}|\s+/u TODO to be replaced with regexps array
-            mb_strlen(preg_replace('/\x{00A0}|\s+/u','',$this->node->textContent)) === 0 &&
+            mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->node->textContent)) === 0 &&
             ($this->node->childNodes->length === 0 ||
-                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length ||
+                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
                 /*
-                 * Special DOMDocument case: When there's an empty tag with a space inside, like "<h3> </h3>", the
-                 * previous if will fail because DOMElement will say that it has one node inside (A DOMText) and this
-                 * in JS doesn't happens. So here we check if we have exactly one node, and that node is a DOMText one.
+                 * Special DOMDocument case: We also need to count how many DOMText we have inside the node.
+                 * If there's an empty tag with an space inside and a BR (for example "<p> <br/></p>) counting only BRs and
+                 * HRs will will say that the example has 2 nodes, instead of one. This happens because in DOMDocument,
+                 * DOMTexts are also nodes (which doesn't happen in JS). So we need to also count how many DOMText we
+                 * are dealing with (And at this point we know they are empty or are just whitespace, because of the
+                 * mb_strlen in this chain of checks).
                  */
-                ($this->node->childNodes->length === 1 && $this->node->childNodes->item(0)->nodeType === XML_TEXT_NODE)
+                + count(array_filter(iterator_to_array($this->node->childNodes), function ($child) {
+                    return $child instanceof \DOMText;
+                }))
+
             ));
     }
 }
