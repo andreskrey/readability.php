@@ -1045,13 +1045,16 @@ class HTMLParser
         $h2 = $article->getElementsByTagName('h2');
         if ($h2->length === 1) {
             $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->metadata['title'])) / mb_strlen($this->metadata['title']);
-            if (abs($lengthSimilarRate) < 0.5 &&
-                ($lengthSimilarRate > 0 ?
-                    strpos($h2->item(0)->textContent, $this->metadata['title']) !== false :
-                    strpos($this->metadata['title'], $h2->item(0)->textContent) !== false
-                )
-            ) {
-                $this->_clean($article, 'h2');
+
+            if (abs($lengthSimilarRate) < 0.5) {
+                if ($lengthSimilarRate > 0) {
+                    $titlesMatch = strpos($h2->item(0)->textContent, $this->metadata['title']) !== false;
+                } else {
+                    $titlesMatch = strpos($this->metadata['title'], $h2->item(0)->textContent) !== false;
+                }
+                if ($titlesMatch) {
+                    $this->_clean($article, 'h2');
+                }
             }
         }
 
