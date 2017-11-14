@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Trim titles when detecting hierarchical separators to avoid false negatives on strings with spaces.
+
 ## [v0.3.0](https://github.com/andreskrey/readability.php/releases/tag/v0.3.0)
 
 - Merged PR #24. Fixes notice when trying to extract `og:image`

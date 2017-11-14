@@ -585,7 +585,8 @@ class HTMLParser
             $match = false;
             for ($i = 1; $i <= 2; $i++) {
                 foreach ($this->dom->getElementsByTagName('h' . $i) as $hTag) {
-                    if ($hTag->nodeValue === $curTitle) {
+                    // Trim texts to avoid having false negatives when the title is surrounded by spaces or tabs
+                    if (trim($hTag->nodeValue) === trim($curTitle)) {
                         $match = true;
                     }
                 }
