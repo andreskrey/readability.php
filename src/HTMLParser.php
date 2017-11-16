@@ -187,6 +187,7 @@ class HTMLParser
             'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
             'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
             'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
+            'images' => $this->getImages(),
             'article' => $result,
             'html' => $result->C14N(),
             'dir' => isset($this->metadata['articleDir']) ? $this->metadata['articleDir'] : null,
@@ -338,10 +339,7 @@ class HTMLParser
 
     public function postProcessContent(DOMDocument $article)
     {
-        $url = $this->getConfig()->getOption('originalURL');
-        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
-        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
-        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+        list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->getConfig()->getOption('originalURL'));
 
         // Readability cannot open relative uris so we convert them to absolute uris.
         if ($this->getConfig()->getOption('fixRelativeURLs')) {
@@ -401,6 +399,20 @@ class HTMLParser
         // Standard relative URI; add entire path. pathBase already includes a
         // trailing "/".
         return $pathBase . $uri;
+    }
+
+    /**
+     * @param  string $url
+     *
+     * @return array  [$pathBase, $scheme, $prePath]
+     */
+    public function getPathInfo($url)
+    {
+        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+
+        return [$pathBase, $scheme, $prePath];
     }
 
     private function nextElement($node)
@@ -508,6 +520,37 @@ class HTMLParser
         }
 
         return false;
+    }
+
+    /**
+     * @return array
+     */
+    public function getImages()
+    {
+        $result = [];
+        if (!empty($this->metadata['image'])) {
+            $result[] = $this->metadata['image'];
+        }
+        if (null == $this->dom) {
+            return $result;
+        }
+
+        foreach ($this->dom->getElementsByTagName('img') as $img) {
+            if ($src = $img->getAttribute('src')) {
+                $result[] = $src;
+            }
+        }
+
+        if ($this->getConfig()->getOption('fixRelativeURLs')) {
+            list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->getConfig()->getOption('originalURL'));
+            foreach ($result as &$imgSrc) {
+                $imgSrc = $this->toAbsoluteURI($imgSrc, $pathBase, $scheme, $prePath);
+            }
+        }
+
+        $result = array_unique(array_filter($result));
+
+        return $result;
     }
 
     /**
