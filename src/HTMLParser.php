@@ -339,8 +339,6 @@ class HTMLParser
 
     public function postProcessContent(DOMDocument $article)
     {
-        list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->getConfig()->getOption('originalURL'));
-
         // Readability cannot open relative uris so we convert them to absolute uris.
         if ($this->getConfig()->getOption('fixRelativeURLs')) {
             foreach (iterator_to_array($article->getElementsByTagName('a')) as $link) {
@@ -353,7 +351,7 @@ class HTMLParser
                         $text = $article->createTextNode($link->textContent);
                         $link->parentNode->replaceChild($text, $link);
                     } else {
-                        $link->setAttribute('href', $this->toAbsoluteURI($href, $pathBase, $scheme, $prePath));
+                        $link->setAttribute('href', $this->toAbsoluteURI($href));
                     }
                 }
             }
@@ -362,7 +360,7 @@ class HTMLParser
                 /** @var \DOMElement $img */
                 $src = $img->getAttribute('src');
                 if ($src) {
-                    $img->setAttribute('src', $this->toAbsoluteURI($src, $pathBase, $scheme, $prePath));
+                    $img->setAttribute('src', $this->toAbsoluteURI($src));
                 }
             }
         }
@@ -370,8 +368,10 @@ class HTMLParser
         return $article;
     }
 
-    private function toAbsoluteURI($uri, $pathBase, $scheme, $prePath)
+    private function toAbsoluteURI($uri)
     {
+        list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->getConfig()->getOption('originalURL'));
+
         // If this is already an absolute URI, return it.
         if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
             return $uri;
@@ -542,9 +542,8 @@ class HTMLParser
         }
 
         if ($this->getConfig()->getOption('fixRelativeURLs')) {
-            list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->getConfig()->getOption('originalURL'));
             foreach ($result as &$imgSrc) {
-                $imgSrc = $this->toAbsoluteURI($imgSrc, $pathBase, $scheme, $prePath);
+                $imgSrc = $this->toAbsoluteURI($imgSrc);
             }
         }
 
