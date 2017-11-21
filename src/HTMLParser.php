@@ -504,22 +504,31 @@ class HTMLParser
      */
     public function getMainImage()
     {
+        $imgUrl = false;
+
         if ($this->metadata['image'] !== null) {
-            return $this->metadata['image'];
+            $imgUrl = $this->metadata['image'];
         }
 
-        foreach ($this->dom->getElementsByTagName('link') as $link) {
-            /** @var \DOMElement $link */
-            /*
-             * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
-             * finally check for the existence of the href attribute, which should hold the image url.
-             */
-            if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
-                return $link->getAttribute('href');
+        if (!$imgUrl) {
+            foreach ($this->dom->getElementsByTagName('link') as $link) {
+                /** @var \DOMElement $link */
+                /*
+                 * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
+                 * finally check for the existence of the href attribute, which should hold the image url.
+                 */
+                if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
+                    $imgUrl = $link->getAttribute('href');
+                    break;
+                }
             }
         }
 
-        return false;
+        if (!empty($imgUrl) && $this->getConfig()->getOption('fixRelativeURLs')) {
+            $imgUrl = $this->toAbsoluteURI($imgUrl);
+        }
+
+        return $imgUrl;
     }
 
     /**
