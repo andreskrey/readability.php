@@ -618,9 +618,10 @@ class HTMLParser
          * the original title.
          */
         $curTitleWordCount = count(preg_split('/\s+/', $curTitle));
+        $originalTitleWordCount = count(preg_split('/\s+/', preg_replace('/[\|\-\\\\\/>»]+/', '', $originalTitle))) - 1;
 
         if ($curTitleWordCount <= 4 &&
-            (!$titleHadHierarchicalSeparators || $curTitleWordCount !== preg_split('/\s+/', preg_replace('/[\|\-\\\\\/>»]+/', '', $originalTitle)) - 1)) {
+            (!$titleHadHierarchicalSeparators || $curTitleWordCount !== $originalTitleWordCount)) {
             $curTitle = $originalTitle;
         }
 
