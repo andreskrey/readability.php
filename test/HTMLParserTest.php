@@ -24,6 +24,24 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
         $result = $readability->parse($html);
 
         $this->assertEquals($expectedResult, $result['html']);
+    }
+
+    /**
+     * @dataProvider getSamplePages
+     */
+    public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
+    {
+        $options = ['originalURL' => 'http://fakehost/test/test.html',
+            'fixRelativeURLs' => true,
+            'substituteEntities' => true,
+        ];
+
+        if ($config) {
+            $options = array_merge($options, $config);
+        }
+
+        $readability = new HTMLParser($options);
+        $result = $readability->parse($html);
         $this->assertEquals($expectedImages, json_encode($result['images']));
     }
 
