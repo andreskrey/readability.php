@@ -700,6 +700,7 @@ class HTMLParser
                     $pNode = $node->getChildren(true)[0];
                     $node->replaceChild($pNode);
                     $node = $pNode;
+                    $elementsToScore[] = $node;
                 } elseif (!$this->hasSingleChildBlockElement($node)) {
                     $node->setNodeTag('p');
                     $elementsToScore[] = $node;
