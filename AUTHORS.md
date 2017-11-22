@@ -6,3 +6,4 @@ The AUTHORS/Contributors are (and/or have been):
 
 * Andres Rey
 * Sergiy Lavryk
+* Pedro Amorim 
