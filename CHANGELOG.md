@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix "Unsupported operand types" (PR #31) 
 - Fix division by zero when no title was found (issue #32)
 - New function to retrieve all images at once (PR #30)
+- Get the title from the `<title>` tag before searching on the `<meta>` tags
 
 ## [v0.3.0](https://github.com/andreskrey/readability.php/releases/tag/v0.3.0)
 
