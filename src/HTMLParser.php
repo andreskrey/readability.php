@@ -128,8 +128,6 @@ class HTMLParser
 
         $this->metadata['image'] = $this->getMainImage();
 
-        $this->metadata['title'] = $this->getTitle();
-
         // Checking for minimum HTML to work with.
         if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
             return false;
@@ -479,19 +477,23 @@ class HTMLParser
             $metadata['excerpt'] = $values['twitter:description'];
         }
 
-        if (array_key_exists('og:title', $values)) {
-            // Use facebook open graph title.
-            $metadata['title'] = $values['og:title'];
-        } elseif (array_key_exists('twitter:title', $values)) {
-            // Use twitter cards title.
-            $metadata['title'] = $values['twitter:title'];
+        $metadata['title'] = $this->getTitle();
+
+        if (!$metadata['title']) {
+            if (array_key_exists('og:title', $values)) {
+                // Use facebook open graph title.
+                $metadata['title'] = $values['og:title'];
+            } elseif (array_key_exists('twitter:title', $values)) {
+                // Use twitter cards title.
+                $metadata['title'] = $values['twitter:title'];
+            }
         }
 
-        if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
-            $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
-        } else {
-            $metadata['image'] = null;
-        }
+            if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
+                $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
+            } else {
+                $metadata['image'] = null;
+            }
 
         return $metadata;
     }
