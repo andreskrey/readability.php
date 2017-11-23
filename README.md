@@ -36,6 +36,7 @@ $result = [
     'title' => 'Title of the article',
     'author' => 'Name of the author of the article',
     'image' => 'Main image of the article',
+    'images' => 'All images of the article',
     'article' => 'DOMDocument with the full article text, scored and parsed'
 ]
 ```
