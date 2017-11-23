@@ -187,6 +187,7 @@ class HTMLParser
             'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
             'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
             'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
+            'images' => $this->getImages(),
             'article' => $result,
             'html' => $result->C14N(),
             'dir' => isset($this->metadata['articleDir']) ? $this->metadata['articleDir'] : null,
@@ -338,11 +339,6 @@ class HTMLParser
 
     public function postProcessContent(DOMDocument $article)
     {
-        $url = $this->getConfig()->getOption('originalURL');
-        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
-        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
-        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
-
         // Readability cannot open relative uris so we convert them to absolute uris.
         if ($this->getConfig()->getOption('fixRelativeURLs')) {
             foreach (iterator_to_array($article->getElementsByTagName('a')) as $link) {
@@ -355,7 +351,7 @@ class HTMLParser
                         $text = $article->createTextNode($link->textContent);
                         $link->parentNode->replaceChild($text, $link);
                     } else {
-                        $link->setAttribute('href', $this->toAbsoluteURI($href, $pathBase, $scheme, $prePath));
+                        $link->setAttribute('href', $this->toAbsoluteURI($href));
                     }
                 }
             }
@@ -364,7 +360,7 @@ class HTMLParser
                 /** @var \DOMElement $img */
                 $src = $img->getAttribute('src');
                 if ($src) {
-                    $img->setAttribute('src', $this->toAbsoluteURI($src, $pathBase, $scheme, $prePath));
+                    $img->setAttribute('src', $this->toAbsoluteURI($src));
                 }
             }
         }
@@ -372,8 +368,10 @@ class HTMLParser
         return $article;
     }
 
-    private function toAbsoluteURI($uri, $pathBase, $scheme, $prePath)
+    private function toAbsoluteURI($uri)
     {
+        list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->getConfig()->getOption('originalURL'));
+
         // If this is already an absolute URI, return it.
         if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
             return $uri;
@@ -401,6 +399,20 @@ class HTMLParser
         // Standard relative URI; add entire path. pathBase already includes a
         // trailing "/".
         return $pathBase . $uri;
+    }
+
+    /**
+     * @param  string $url
+     *
+     * @return array  [$pathBase, $scheme, $prePath]
+     */
+    public function getPathInfo($url)
+    {
+        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+
+        return [$pathBase, $scheme, $prePath];
     }
 
     private function nextElement($node)
@@ -492,22 +504,61 @@ class HTMLParser
      */
     public function getMainImage()
     {
+        $imgUrl = false;
+
         if ($this->metadata['image'] !== null) {
-            return $this->metadata['image'];
+            $imgUrl = $this->metadata['image'];
         }
 
-        foreach ($this->dom->getElementsByTagName('link') as $link) {
-            /** @var \DOMElement $link */
-            /*
-             * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
-             * finally check for the existence of the href attribute, which should hold the image url.
-             */
-            if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
-                return $link->getAttribute('href');
+        if (!$imgUrl) {
+            foreach ($this->dom->getElementsByTagName('link') as $link) {
+                /** @var \DOMElement $link */
+                /*
+                 * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
+                 * finally check for the existence of the href attribute, which should hold the image url.
+                 */
+                if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
+                    $imgUrl = $link->getAttribute('href');
+                    break;
+                }
             }
         }
 
-        return false;
+        if (!empty($imgUrl) && $this->getConfig()->getOption('fixRelativeURLs')) {
+            $imgUrl = $this->toAbsoluteURI($imgUrl);
+        }
+
+        return $imgUrl;
+    }
+
+    /**
+     * @return array
+     */
+    public function getImages()
+    {
+        $result = [];
+        if (!empty($this->metadata['image'])) {
+            $result[] = $this->metadata['image'];
+        }
+        if (null == $this->dom) {
+            return $result;
+        }
+
+        foreach ($this->dom->getElementsByTagName('img') as $img) {
+            if ($src = $img->getAttribute('src')) {
+                $result[] = $src;
+            }
+        }
+
+        if ($this->getConfig()->getOption('fixRelativeURLs')) {
+            foreach ($result as &$imgSrc) {
+                $imgSrc = $this->toAbsoluteURI($imgSrc);
+            }
+        }
+
+        $result = array_unique(array_filter($result));
+
+        return $result;
     }
 
     /**

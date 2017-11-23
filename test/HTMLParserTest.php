@@ -9,7 +9,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider getSamplePages
      */
-    public function testHTMLParserParsesHTML($html, $expectedResult, $expectedMetadata, $config)
+    public function testHTMLParserParsesHTML($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
     {
         $options = ['originalURL' => 'http://fakehost/test/test.html',
             'fixRelativeURLs' => true,
@@ -26,6 +26,25 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expectedResult, $result['html']);
     }
 
+    /**
+     * @dataProvider getSamplePages
+     */
+    public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
+    {
+        $options = ['originalURL' => 'http://fakehost/test/test.html',
+            'fixRelativeURLs' => true,
+            'substituteEntities' => true,
+        ];
+
+        if ($config) {
+            $options = array_merge($options, $config);
+        }
+
+        $readability = new HTMLParser($options);
+        $result = $readability->parse($html);
+        $this->assertEquals($expectedImages, json_encode($result['images']));
+    }
+
     public function getSamplePages()
     {
         $path = pathinfo(__FILE__, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . 'test-pages';
@@ -40,6 +59,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
             $source = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'source.html');
             $expectedHTML = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected.html');
             $expectedMetadata = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json');
+            $expectedImages = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-images.json');
 
             $config = null;
             if (file_exists($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json')) {
@@ -49,7 +69,7 @@ class HTMLParserTest extends \PHPUnit_Framework_TestCase
                 }
             }
 
-            $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata, $config];
+            $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata, $config, $expectedImages];
         }
 
         return $pages;
