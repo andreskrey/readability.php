@@ -1048,7 +1048,7 @@ class HTMLParser
          */
         $h2 = $article->getElementsByTagName('h2');
         if ($h2->length === 1) {
-            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->metadata['title'])) / mb_strlen($this->metadata['title']);
+            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->metadata['title'])) / max(mb_strlen($this->metadata['title']), 1);
 
             if (abs($lengthSimilarRate) < 0.5) {
                 if ($lengthSimilarRate > 0) {
