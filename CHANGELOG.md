@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Fix issue when converting divs to p nodes and never rating them (issue #29)
 - Fix "Unsupported operand types" (PR #31) 
 - Fix division by zero when no title was found (issue #32)
+- New function to retrieve all images at once (PR #30)
 
 ## [v0.3.0](https://github.com/andreskrey/readability.php/releases/tag/v0.3.0)
 
