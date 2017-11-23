@@ -489,11 +489,11 @@ class HTMLParser
             }
         }
 
-            if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
-                $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
-            } else {
-                $metadata['image'] = null;
-            }
+        if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
+            $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
+        } else {
+            $metadata['image'] = null;
+        }
 
         return $metadata;
     }
