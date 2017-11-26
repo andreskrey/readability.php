@@ -10,13 +10,7 @@ use andreskrey\Readability\NodeClass\DOMComment;
 use andreskrey\Readability\NodeClass\DOMDocumentFragment;
 use andreskrey\Readability\NodeClass\DOMDocumentType;
 use andreskrey\Readability\NodeClass\DOMElement;
-use andreskrey\Readability\NodeClass\DOMEntity;
-use andreskrey\Readability\NodeClass\DOMEntityReference;
-use andreskrey\Readability\NodeClass\DOMException;
-use andreskrey\Readability\NodeClass\DOMImplementation;
-use andreskrey\Readability\NodeClass\DOMNamedNodeMap;
 use andreskrey\Readability\NodeClass\DOMNode;
-use andreskrey\Readability\NodeClass\DOMNodeList;
 use andreskrey\Readability\NodeClass\DOMNotation;
 use andreskrey\Readability\NodeClass\DOMProcessingInstruction;
 use andreskrey\Readability\NodeClass\DOMText;
@@ -47,6 +41,8 @@ class Readability
      */
     private $configuration;
 
+    private $dom;
+
     /**
      * Readability constructor.
      *
@@ -62,7 +58,74 @@ class Readability
 
     public function parse($html)
     {
-        $this->loadHTML($html);
+        $this->dom = $this->loadHTML($html);
+
+        $this->metadata = $this->getMetadata();
+
+        $this->metadata['image'] = $this->getMainImage();
+
+        // Checking for minimum HTML to work with.
+        if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
+            return false;
+        }
+
+        $parseSuccessful = true;
+        while (true) {
+            $root = $root->firstChild;
+
+            $elementsToScore = $this->getNodes($root);
+
+            $result = $this->rateNodes($elementsToScore);
+
+            /*
+             * Now that we've gone through the full algorithm, check to see if
+             * we got any meaningful content. If we didn't, we may need to re-run
+             * grabArticle with different flags set. This gives us a higher likelihood of
+             * finding the content, and the sieve approach gives us a higher likelihood of
+             * finding the -right- content.
+             */
+
+            // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
+            // that doesn't really count to the quality of the result.
+            $length = 0;
+            foreach ($result->getElementsByTagName('p') as $p) {
+                $length += mb_strlen($p->textContent);
+            }
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->getConfig()->getOption('wordThreshold')) {
+                $this->dom = $this->loadHTML($html);
+                $root = $this->dom->getElementsByTagName('body')->item(0);
+
+                if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
+                    $this->getConfig()->setOption('stripUnlikelyCandidates', false);
+                } elseif ($this->getConfig()->getOption('weightClasses')) {
+                    $this->getConfig()->setOption('weightClasses', false);
+                } elseif ($this->getConfig()->getOption('cleanConditionally')) {
+                    $this->getConfig()->setOption('cleanConditionally', false);
+                } else {
+                    $parseSuccessful = false;
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (!$parseSuccessful) {
+            return false;
+        }
+
+        $result = $this->postProcessContent($result);
+
+        // Todo, fix return, check for values, maybe create a function to create the return object
+        return [
+            'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
+            'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
+            'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
+            'images' => $this->getImages(),
+            'article' => $result,
+            'html' => $result->C14N(),
+            'dir' => isset($this->metadata['articleDir']) ? $this->metadata['articleDir'] : null,
+        ];
     }
 
     /**
@@ -87,13 +150,7 @@ class Readability
         $dom->registerNodeClass('DOMDocumentFragment', DOMDocumentFragment::class);
         $dom->registerNodeClass('DOMDocumentType', DOMDocumentType::class);
         $dom->registerNodeClass('DOMElement', DOMElement::class);
-        $dom->registerNodeClass('DOMEntity', DOMEntity::class);
-        $dom->registerNodeClass('DOMEntityReference', DOMEntityReference::class);
-        $dom->registerNodeClass('DOMException', DOMException::class);
-        $dom->registerNodeClass('DOMImplementation', DOMImplementation::class);
-        $dom->registerNodeClass('DOMNamedNodeMap', DOMNamedNodeMap::class);
         $dom->registerNodeClass('DOMNode', DOMNode::class);
-        $dom->registerNodeClass('DOMNodeList', DOMNodeList::class);
         $dom->registerNodeClass('DOMNotation', DOMNotation::class);
         $dom->registerNodeClass('DOMProcessingInstruction', DOMProcessingInstruction::class);
         $dom->registerNodeClass('DOMText', DOMText::class);
@@ -123,6 +180,258 @@ class Readability
 
         return $dom;
     }
+
+    /**
+     * Tries to guess relevant info from metadata of the html.
+     *
+     * @return array Metadata info. May have title, excerpt and or byline.
+     */
+    private function getMetadata()
+    {
+        $metadata = $values = [];
+        // Match "description", or Twitter's "twitter:description" (Cards)
+        // in name attribute.
+        $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title|image)\s*$/i';
+
+        // Match Facebook's Open Graph title & description properties.
+        $propertyPattern = '/^\s*og\s*:\s*(description|title|image)\s*$/i';
+
+        foreach ($this->dom->getElementsByTagName('meta') as $meta) {
+            /* @var DOMNode $meta */
+            $elementName = $meta->getAttribute('name');
+            $elementProperty = $meta->getAttribute('property');
+
+            if (in_array('author', [$elementName, $elementProperty])) {
+                $metadata['byline'] = $meta->getAttribute('content');
+                continue;
+            }
+
+            $name = null;
+            if (preg_match($namePattern, $elementName)) {
+                $name = $elementName;
+            } elseif (preg_match($propertyPattern, $elementProperty)) {
+                $name = $elementProperty;
+            }
+
+            if ($name) {
+                $content = $meta->getAttribute('content');
+                if ($content) {
+                    // Convert to lowercase and remove any whitespace
+                    // so we can match below.
+                    $name = preg_replace('/\s/', '', strtolower($name));
+                    $values[$name] = trim($content);
+                }
+            }
+        }
+        if (array_key_exists('description', $values)) {
+            $metadata['excerpt'] = $values['description'];
+        } elseif (array_key_exists('og:description', $values)) {
+            // Use facebook open graph description.
+            $metadata['excerpt'] = $values['og:description'];
+        } elseif (array_key_exists('twitter:description', $values)) {
+            // Use twitter cards description.
+            $metadata['excerpt'] = $values['twitter:description'];
+        }
+
+        $metadata['title'] = $this->getTitle();
+
+        if (!$metadata['title']) {
+            if (array_key_exists('og:title', $values)) {
+                // Use facebook open graph title.
+                $metadata['title'] = $values['og:title'];
+            } elseif (array_key_exists('twitter:title', $values)) {
+                // Use twitter cards title.
+                $metadata['title'] = $values['twitter:title'];
+            }
+        }
+
+        if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
+            $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
+        } else {
+            $metadata['image'] = null;
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
+     * find a correct image.
+     *
+     * @return bool|string URL of the top image or false if unsuccessful.
+     */
+    public function getMainImage()
+    {
+        $imgUrl = false;
+
+        if ($this->metadata['image'] !== null) {
+            $imgUrl = $this->metadata['image'];
+        }
+
+        if (!$imgUrl) {
+            foreach ($this->dom->getElementsByTagName('link') as $link) {
+                /** @var \DOMElement $link */
+                /*
+                 * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
+                 * finally check for the existence of the href attribute, which should hold the image url.
+                 */
+                if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
+                    $imgUrl = $link->getAttribute('href');
+                    break;
+                }
+            }
+        }
+
+        if (!empty($imgUrl) && $this->configuration->getFixRelativeURLs()) {
+            $imgUrl = $this->toAbsoluteURI($imgUrl);
+        }
+
+        return $imgUrl;
+    }
+
+    private function toAbsoluteURI($uri)
+    {
+        list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->configuration->getOriginalURL());
+
+        // If this is already an absolute URI, return it.
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
+            return $uri;
+        }
+
+        // Scheme-rooted relative URI.
+        if (substr($uri, 0, 2) === '//') {
+            return $scheme . '://' . substr($uri, 2);
+        }
+
+        // Prepath-rooted relative URI.
+        if (substr($uri, 0, 1) === '/') {
+            return $prePath . $uri;
+        }
+
+        // Dotslash relative URI.
+        if (strpos($uri, './') === 0) {
+            return $pathBase . substr($uri, 2);
+        }
+        // Ignore hash URIs:
+        if (substr($uri, 0, 1) === '#') {
+            return $uri;
+        }
+
+        // Standard relative URI; add entire path. pathBase already includes a
+        // trailing "/".
+        return $pathBase . $uri;
+    }
+
+    /**
+     * @param  string $url
+     *
+     * @return array  [$pathBase, $scheme, $prePath]
+     */
+    public function getPathInfo($url)
+    {
+        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+
+        return [$pathBase, $scheme, $prePath];
+    }
+
+
+    /**
+     * Gets nodes from the root element.
+     *
+     * @param $node DOMNode|DOMText
+     *
+     * @return array
+     */
+    private function getNodes($node)
+    {
+        $stripUnlikelyCandidates = $this->configuration->getStripUnlikelyCandidates();
+
+        $elementsToScore = [];
+
+        /*
+         * First, node prepping. Trash nodes that look cruddy (like ones with the
+         * class name "comment", etc), and turn divs into P tags where they have been
+         * used inappropriately (as in, where they contain no other block level elements.)
+         */
+
+        while ($node) {
+            $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
+
+            // Remove DOMComments nodes as we don't need them and mess up children counting
+            if ($node->nodeTypeEqualsTo(XML_COMMENT_NODE)) {
+                $node = $node->removeAndGetNext($node);
+                continue;
+            }
+
+            // Check to see if this node is a byline, and remove it if it is.
+            if ($this->checkByline($node, $matchString)) {
+                $node = $node->removeAndGetNext($node);
+                continue;
+            }
+
+            // Remove unlikely candidates
+            if ($stripUnlikelyCandidates) {
+                if (
+                    preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
+                    !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
+                    !$node->tagNameEqualsTo('body') &&
+                    !$node->tagNameEqualsTo('a')
+                ) {
+                    $node = $node->removeAndGetNext($node);
+                    continue;
+                }
+            }
+
+            // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
+            if (($node->tagNameEqualsTo('div') || $node->tagNameEqualsTo('section') || $node->tagNameEqualsTo('header') ||
+                    $node->tagNameEqualsTo('h1') || $node->tagNameEqualsTo('h2') || $node->tagNameEqualsTo('h3') ||
+                    $node->tagNameEqualsTo('h4') || $node->tagNameEqualsTo('h5') || $node->tagNameEqualsTo('h6') ||
+                    $node->tagNameEqualsTo('p')) &&
+                $node->isElementWithoutContent()) {
+                $node = $node->removeAndGetNext($node);
+                continue;
+            }
+
+            if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
+                $elementsToScore[] = $node;
+            }
+
+            // Turn all divs that don't have children block level elements into p's
+            if ($node->tagNameEqualsTo('div')) {
+                /*
+                 * Sites like http://mobile.slate.com encloses each paragraph with a DIV
+                 * element. DIVs with only a P element inside and no text content can be
+                 * safely converted into plain P elements to avoid confusing the scoring
+                 * algorithm with DIVs with are, in practice, paragraphs.
+                 */
+                if ($this->hasSinglePNode($node)) {
+                    $pNode = $node->getChildren(true)[0];
+                    $node->replaceChild($pNode);
+                    $node = $pNode;
+                    $elementsToScore[] = $node;
+                } elseif (!$this->hasSingleChildBlockElement($node)) {
+                    $node->setNodeTag('p');
+                    $elementsToScore[] = $node;
+                } else {
+                    // EXPERIMENTAL
+                    foreach ($node->getChildren() as $child) {
+                        /** @var Readability $child */
+                        if ($child->isText() && mb_strlen(trim($child->getTextContent())) > 0) {
+                            $newNode = $node->createNode($child, 'p');
+                            $child->replaceChild($newNode);
+                        }
+                    }
+                }
+            }
+
+            $node = $node->getNextNode($node);
+        }
+
+        return $elementsToScore;
+    }
+
 
     /**
      * Removes all the scripts of the html.
@@ -216,7 +525,6 @@ class Readability
             NodeUtility::setNodeTag($font, 'span', true);
         }
     }
-
 
 
     /**
