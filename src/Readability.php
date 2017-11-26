@@ -41,6 +41,49 @@ class Readability
      */
     private $configuration;
 
+    /**
+     * @var array
+     */
+    private $regexps = [
+        'unlikelyCandidates' => '/banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|foot|header|legends|menu|modal|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote/i',
+        'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
+        'extraneous' => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
+        'byline' => '/byline|author|dateline|writtenby|p-author/i',
+        'replaceFonts' => '/<(\/?)font[^>]*>/gi',
+        'normalize' => '/\s{2,}/',
+        'videos' => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
+        'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
+        'prevLink' => '/(prev|earl|old|new|<|«)/i',
+        'whitespace' => '/^\s*$/',
+        'hasContent' => '/\S$/',
+        // \x{00A0} is the unicode version of &nbsp;
+        'onlyWhitespace' => '/\x{00A0}|\s+/u'
+    ];
+    private $defaultTagsToScore = [
+        'section',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'p',
+        'td',
+        'pre',
+    ];
+
+    /**
+     * @var array
+     */
+    private $alterToDIVExceptions = [
+        'div',
+        'article',
+        'section',
+        'p',
+        // TODO, check if this is correct, #text elements do not exist in js
+        '#text',
+    ];
+
+
     private $dom;
 
     /**
@@ -367,7 +410,7 @@ class Readability
 
             // Check to see if this node is a byline, and remove it if it is.
             if ($this->checkByline($node, $matchString)) {
-                $node = $node->removeAndGetNext($node);
+                $node = NodeUtility::removeAndGetNext($node);
                 continue;
             }
 
@@ -379,7 +422,7 @@ class Readability
                     !$node->tagNameEqualsTo('body') &&
                     !$node->tagNameEqualsTo('a')
                 ) {
-                    $node = $node->removeAndGetNext($node);
+                    $node = NodeUtility::removeAndGetNext($node);
                     continue;
                 }
             }
@@ -390,11 +433,11 @@ class Readability
                     $node->tagNameEqualsTo('h4') || $node->tagNameEqualsTo('h5') || $node->tagNameEqualsTo('h6') ||
                     $node->tagNameEqualsTo('p')) &&
                 $node->isElementWithoutContent()) {
-                $node = $node->removeAndGetNext($node);
+                $node = NodeUtility::removeAndGetNext($node);
                 continue;
             }
 
-            if (in_array(strtolower($node->getTagName()), $this->defaultTagsToScore)) {
+            if (in_array(strtolower($node->nodeName), $this->defaultTagsToScore)) {
                 $elementsToScore[] = $node;
             }
 
@@ -406,21 +449,21 @@ class Readability
                  * safely converted into plain P elements to avoid confusing the scoring
                  * algorithm with DIVs with are, in practice, paragraphs.
                  */
-                if ($this->hasSinglePNode($node)) {
+                if (NodeUtility::hasSinglePNode($node)) {
                     $pNode = $node->getChildren(true)[0];
-                    $node->replaceChild($pNode);
+                    $node->replaceChild($pNode, $node);
                     $node = $pNode;
                     $elementsToScore[] = $node;
-                } elseif (!$this->hasSingleChildBlockElement($node)) {
-                    $node->setNodeTag('p');
+                } elseif (!NodeUtility::hasSingleChildBlockElement($node)) {
+                    NodeUtility::setNodeTag($node, 'p');
                     $elementsToScore[] = $node;
                 } else {
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
-                        /** @var Readability $child */
-                        if ($child->isText() && mb_strlen(trim($child->getTextContent())) > 0) {
+                        /** @var $child DOMNode */
+                        if ($child->nodeType === XML_TEXT_NODE && mb_strlen(trim(NodeUtility::getTextContent($child))) > 0) {
                             $newNode = $node->createNode($child, 'p');
-                            $child->replaceChild($newNode);
+                            $child->replaceChild($newNode, $child);
                         }
                     }
                 }
@@ -431,6 +474,58 @@ class Readability
 
         return $elementsToScore;
     }
+
+    /**
+     * Checks if the node is a byline.
+     *
+     * @param Readability $node
+     * @param string $matchString
+     *
+     * @return bool
+     */
+    private function checkByline($node, $matchString)
+    {
+        if (!$this->configuration->getArticleByLine()) {
+            return false;
+        }
+
+        /*
+         * Check if the byline is already set
+         */
+        if (isset($this->metadata['byline'])) {
+            return false;
+        }
+
+        $rel = $node->getAttribute('rel');
+
+        if ($rel === 'author' || preg_match($this->regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
+            $this->metadata['byline'] = trim($node->getTextContent());
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks the validity of a byLine. Based on string length.
+     *
+     * @param string $text
+     *
+     * @return bool
+     */
+    private function isValidByline($text)
+    {
+        if (gettype($text) == 'string') {
+            $byline = trim($text);
+
+            return (mb_strlen($byline) > 0) && (mb_strlen($text) < 100);
+        }
+
+        return false;
+    }
+
+
 
 
     /**

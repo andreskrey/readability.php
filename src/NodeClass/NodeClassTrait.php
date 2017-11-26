@@ -2,6 +2,8 @@
 
 namespace andreskrey\Readability\NodeClass;
 
+use andreskrey\Readability\NodeUtility;
+
 trait NodeClassTrait
 {
 
@@ -19,6 +21,27 @@ trait NodeClassTrait
     ];
 
     /**
+     * Placeholder for getAttribute method. Some nodes have the getAttribute method, some don't.
+     *
+     * @param $attributeName string Attribute to retrieve
+     *
+     * @return string|null
+     */
+    public function getAttribute($attributeName)
+    {
+        if (property_exists($this, 'attributes')) {
+            foreach ($this->attributes as $attribute) {
+                if ($attribute->name === $attributeName) {
+                    return $attribute->value;
+                }
+            }
+        }
+
+        return '';
+    }
+
+
+    /**
      * Checks for the tag name. Case insensitive.
      *
      * @param string $value Name to compare to the current tag
@@ -27,8 +50,7 @@ trait NodeClassTrait
      */
     public function tagNameEqualsTo($value)
     {
-        $tagName = $this->getTagName();
-        if (strtolower($value) === strtolower($tagName)) {
+        if (strtolower($value) === strtolower($this->nodeName)) {
             return true;
         }
 
@@ -52,9 +74,8 @@ trait NodeClassTrait
      */
     public function nodeTypeEqualsTo($value)
     {
-        return $this->node->nodeType === $value;
+        return $this->nodeType === $value;
     }
-
 
 
     /**
@@ -87,13 +108,13 @@ trait NodeClassTrait
      * Overloading the getParent function from League\HTMLToMarkdown\Element due to a bug when there are no more parents
      * on the selected element.
      *
-     * @return Readability|null
+     * @return DOMNode|null
      */
     public function getParent()
     {
-        $node = $this->node->parentNode;
+        $node = $this->parentNode;
 
-        return ($node) ? new self($node) : null;
+        return ($node) ? $node : null;
     }
 
     /**
@@ -114,6 +135,7 @@ trait NodeClassTrait
             return $links;
         }
     }
+
     /**
      * Calculates the weight of the class/id of the current element.
      *
@@ -187,7 +209,7 @@ trait NodeClassTrait
      */
     public function getTextContent($normalize = false)
     {
-        $nodeValue = $this->node->nodeValue;
+        $nodeValue = $this->nodeValue;
         if ($normalize) {
             $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
         }
@@ -196,28 +218,13 @@ trait NodeClassTrait
     }
 
     /**
-     * Removes the current node and returns the next node to be parsed (child, sibling or parent).
-     *
-     * @param Readability $node
-     *
-     * @return Readability
-     */
-    public function removeAndGetNext($node)
-    {
-        $nextNode = $this->getNextNode($node, true);
-        $node->node->parentNode->removeChild($node->node);
-
-        return $nextNode;
-    }
-
-    /**
      * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
      * for parents.
      *
-     * @param Readability $originalNode
+     * @param DOMNode|DOMText $originalNode
      * @param bool $ignoreSelfAndKids
      *
-     * @return Readability
+     * @return DOMNode
      */
     public function getNextNode($originalNode, $ignoreSelfAndKids = false)
     {
@@ -230,13 +237,13 @@ trait NodeClassTrait
          */
 
         // First check for kids if those aren't being ignored
-        if (!$ignoreSelfAndKids && $originalNode->node->firstChild) {
-            return new self($originalNode->node->firstChild);
+        if (!$ignoreSelfAndKids && $originalNode->firstChild) {
+            return $originalNode->firstChild;
         }
 
         // Then for siblings...
-        if ($originalNode->node->nextSibling) {
-            return new self($originalNode->node->nextSibling);
+        if ($originalNode->nextSibling) {
+            return $originalNode->nextSibling;
         }
 
         // And finally, move up the parent chain *and* find a sibling
@@ -244,9 +251,9 @@ trait NodeClassTrait
         // seen the parent nodes themselves).
         do {
             $originalNode = $originalNode->getParent();
-        } while ($originalNode && !$originalNode->node->nextSibling);
+        } while ($originalNode && !$originalNode->nextSibling);
 
-        return ($originalNode) ? new self($originalNode->node->nextSibling) : $originalNode;
+        return ($originalNode) ? $originalNode->nextSibling : $originalNode;
     }
 
     /**
@@ -280,17 +287,17 @@ trait NodeClassTrait
     /**
      * Creates a new node based on the text content of the original node.
      *
-     * @param Readability $originalNode
-     * @param string $tagName
+     * @param $originalNode self
+     * @param $tagName string
      *
-     * @return Readability
+     * @return self
      */
     public function createNode(self $originalNode, $tagName)
     {
-        $text = $originalNode->getTextContent();
-        $newNode = $originalNode->node->ownerDocument->createElement($tagName, $text);
+        $text = NodeUtility::getTextContent($originalNode);
+        $newNode = $originalNode->ownerDocument->createElement($tagName, $text);
 
-        return new static($newNode);
+        return $newNode;
     }
 
     /**
@@ -330,13 +337,12 @@ trait NodeClassTrait
     public function getChildren($filterEmptyDOMText = false)
     {
         $ret = [];
-        /** @var \DOMNode $node */
-        foreach ($this->node->childNodes as $node) {
+        foreach ($this->childNodes as $node) {
             if ($filterEmptyDOMText && $node->nodeName === '#text' && !trim($node->nodeValue)) {
                 continue;
             }
 
-            $ret[] = new static($node);
+            $ret[] = $node;
         }
 
         return $ret;
@@ -349,11 +355,11 @@ trait NodeClassTrait
      */
     public function isElementWithoutContent()
     {
-        return $this->node instanceof \DOMElement &&
+        return $this instanceof DOMElement &&
             // /\x{00A0}|\s+/u TODO to be replaced with regexps array
-            mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->node->textContent)) === 0 &&
-            ($this->node->childNodes->length === 0 ||
-                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
+            mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->textContent)) === 0 &&
+            ($this->childNodes->length === 0 ||
+                $this->childNodes->length === $this->getElementsByTagName('br')->length + $this->getElementsByTagName('hr')->length
                 /*
                  * Special DOMDocument case: We also need to count how many DOMText we have inside the node.
                  * If there's an empty tag with an space inside and a BR (for example "<p> <br/></p>) counting only BRs and
@@ -362,8 +368,8 @@ trait NodeClassTrait
                  * are dealing with (And at this point we know they are empty or are just whitespace, because of the
                  * mb_strlen in this chain of checks).
                  */
-                + count(array_filter(iterator_to_array($this->node->childNodes), function ($child) {
-                    return $child instanceof \DOMText;
+                + count(array_filter(iterator_to_array($this->childNodes), function ($child) {
+                    return $child instanceof DOMText;
                 }))
 
             );

@@ -3,8 +3,6 @@
 namespace andreskrey\Readability;
 use andreskrey\Readability\NodeClass\DOMDocument;
 use andreskrey\Readability\NodeClass\DOMNode;
-use andreskrey\Readability\NodeClass\DOMNodeList;
-
 
 /**
  * Class NodeUtility
@@ -12,6 +10,24 @@ use andreskrey\Readability\NodeClass\DOMNodeList;
  */
 class NodeUtility
 {
+
+    /**
+     * @var array
+     */
+    private static $divToPElements = [
+        'a',
+        'blockquote',
+        'dl',
+        'div',
+        'img',
+        'ol',
+        'p',
+        'pre',
+        'table',
+        'ul',
+        'select',
+    ];
+
 
     /**
      *
@@ -47,7 +63,7 @@ class NodeUtility
         $new->appendChild($new->createElement($value));
 
         $children = $node->childNodes;
-        /** @var $children DOMNodeList $i */
+        /** @var $children \DOMNodeList $i */
 
         for ($i = 0; $i < $children->length; $i++) {
             $import = $new->importNode($children->item($i), true);
@@ -121,4 +137,70 @@ class NodeUtility
 
         return ($originalNode) ? $originalNode->nextSibling : $originalNode;
     }
+
+    /**
+     * Checks if the current node has a single child and if that child is a P node.
+     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
+     * tags are, in practice, paragraphs.
+     *
+     * @param DOMNode $node
+     *
+     * @return bool
+     */
+    public static function hasSinglePNode($node)
+    {
+        // There should be exactly 1 element child which is a P:
+        if (count($children = $node->getChildren(true)) !== 1 || $children[0]->nodeName !== 'p') {
+            return false;
+        }
+
+        // And there should be no text nodes with real content (param true on ->getChildren)
+        foreach ($children as $child) {
+            /** @var $child DOMNode */
+            if ($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param $node DOMNode
+     * @return bool
+     */
+    public static function hasSingleChildBlockElement($node)
+    {
+        $result = false;
+        if ($node->hasChildNodes()) {
+            foreach ($node->getChildren() as $child) {
+                if (in_array($child->nodeName, self::$divToPElements)) {
+                    $result = true;
+                } else {
+                    // If any of the hasSingleChildBlockElement calls return true, return true then.
+                    $result = ($result || self::hasSingleChildBlockElement($child));
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns the full text of the node.
+     *
+     * @param $node DOMNode
+     * @param bool $normalize Normalize white space?
+     * @return string
+     */
+    public static function getTextContent($node, $normalize = false)
+    {
+        $nodeValue = $node->nodeValue;
+        if ($normalize) {
+            $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
+        }
+
+        return $nodeValue;
+    }
+
 }
