@@ -1,6 +1,6 @@
 <?php
 
-namespace andreskrey\Readability\v1;
+namespace andreskrey\Readability;
 
 /**
  * Class Configuration
