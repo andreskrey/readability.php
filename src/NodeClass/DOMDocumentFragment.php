@@ -2,7 +2,7 @@
 
 namespace andreskrey\Readability\NodeClass;
 
-class DOMDocument extends \DOMDocument
+class DOMDocumentFragment extends \DOMDocumentFragment
 {
     use NodeClassTrait;
 }
