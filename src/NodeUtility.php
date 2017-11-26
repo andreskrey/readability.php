@@ -68,5 +68,57 @@ class NodeUtility
         return $import;
     }
 
+    /**
+     * Removes the current node and returns the next node to be parsed (child, sibling or parent).
+     *
+     * @param DOMNode $node
+     *
+     * @return DOMNode
+     */
+    public static function removeAndGetNext($node)
+    {
+        $nextNode = self::getNextNode($node, true);
+        $node->parentNode->removeChild($node);
 
+        return $nextNode;
+    }
+
+    /**
+     * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
+     * for parents.
+     *
+     * @param DOMNode $originalNode
+     * @param bool $ignoreSelfAndKids
+     *
+     * @return DOMNode
+     */
+    public static function getNextNode($originalNode, $ignoreSelfAndKids = false)
+    {
+        /*
+         * Traverse the DOM from node to node, starting at the node passed in.
+         * Pass true for the second parameter to indicate this node itself
+         * (and its kids) are going away, and we want the next node over.
+         *
+         * Calling this in a loop will traverse the DOM depth-first.
+         */
+
+        // First check for kids if those aren't being ignored
+        if (!$ignoreSelfAndKids && $originalNode->firstChild) {
+            return $originalNode->firstChild;
+        }
+
+        // Then for siblings...
+        if ($originalNode->nextSibling) {
+            return $originalNode->nextSibling;
+        }
+
+        // And finally, move up the parent chain *and* find a sibling
+        // (because this is depth-first traversal, we will have already
+        // seen the parent nodes themselves).
+        do {
+            $originalNode = $originalNode->getParent();
+        } while ($originalNode && !$originalNode->nextSibling);
+
+        return ($originalNode) ? $originalNode->nextSibling : $originalNode;
+    }
 }
