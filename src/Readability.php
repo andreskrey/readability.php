@@ -404,7 +404,7 @@ class Readability
 
             // Remove DOMComments nodes as we don't need them and mess up children counting
             if ($node->nodeTypeEqualsTo(XML_COMMENT_NODE)) {
-                $node = $node->removeAndGetNext($node);
+                $node = NodeUtility::removeAndGetNext($node);
                 continue;
             }
 
@@ -478,7 +478,7 @@ class Readability
     /**
      * Checks if the node is a byline.
      *
-     * @param Readability $node
+     * @param DOMNode $node
      * @param string $matchString
      *
      * @return bool
