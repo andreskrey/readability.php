@@ -185,19 +185,7 @@ class Readability
      */
     private function loadHTML($html)
     {
-        $dom = new DOMDocument('1.0', 'utf-8');
-        $dom->registerNodeClass('DOMAttr', DOMAttr::class);
-        $dom->registerNodeClass('DOMCdataSection', DOMCdataSection::class);
-        $dom->registerNodeClass('DOMCharacterData', DOMCharacterData::class);
-        $dom->registerNodeClass('DOMComment', DOMComment::class);
-        $dom->registerNodeClass('DOMDocumentFragment', DOMDocumentFragment::class);
-        $dom->registerNodeClass('DOMDocumentType', DOMDocumentType::class);
-        $dom->registerNodeClass('DOMElement', DOMElement::class);
-        $dom->registerNodeClass('DOMNode', DOMNode::class);
-        $dom->registerNodeClass('DOMNotation', DOMNotation::class);
-        $dom->registerNodeClass('DOMProcessingInstruction', DOMProcessingInstruction::class);
-        $dom->registerNodeClass('DOMText', DOMText::class);
-
+        $dom = $this->createDOMDocument();
 
         if (!$this->configuration->getSubstituteEntities()) {
             // Keep the original HTML entities
@@ -220,6 +208,26 @@ class Readability
         $this->removeScripts($dom);
 
         $this->prepDocument($dom);
+
+        return $dom;
+    }
+
+    public function createDOMDocument()
+    {
+        $dom = new DOMDocument('1.0', 'utf-8');
+
+        $dom->registerNodeClass('DOMAttr', DOMAttr::class);
+        $dom->registerNodeClass('DOMCdataSection', DOMCdataSection::class);
+        $dom->registerNodeClass('DOMCharacterData', DOMCharacterData::class);
+        $dom->registerNodeClass('DOMComment', DOMComment::class);
+        $dom->registerNodeClass('DOMDocument', DOMDocument::class);
+        $dom->registerNodeClass('DOMDocumentFragment', DOMDocumentFragment::class);
+        $dom->registerNodeClass('DOMDocumentType', DOMDocumentType::class);
+        $dom->registerNodeClass('DOMElement', DOMElement::class);
+        $dom->registerNodeClass('DOMNode', DOMNode::class);
+        $dom->registerNodeClass('DOMNotation', DOMNotation::class);
+        $dom->registerNodeClass('DOMProcessingInstruction', DOMProcessingInstruction::class);
+        $dom->registerNodeClass('DOMText', DOMText::class);
 
         return $dom;
     }
@@ -721,7 +729,7 @@ class Readability
 
         if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
             // Move all of the page's children into topCandidate
-            $topCandidate = new DOMDocument('1.0', 'utf-8');
+            $topCandidate = $this->createDOMDocument();
             $topCandidate->encoding = 'UTF-8';
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
@@ -732,12 +740,8 @@ class Readability
                 $topCandidate->firstChild->appendChild($import);
             }
 
-            // Readability must be created using firstChild to grab the DOMElement instead of the DOMDocument.
-            $topCandidate = new Readability($topCandidate->firstChild);
-            $topCandidate->initializeNode();
-
-            //TODO on the original code, $topCandidate is added to the page variable, which holds the whole HTML
-            // Should be done this here also? (line 823 in readability.js)
+            // Candidate must be created using firstChild to grab the DOMElement instead of the DOMDocument.
+            $topCandidate = $topCandidate->firstChild;
         } elseif ($topCandidate) {
             // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
             // and whose scores are quite closed with current `topCandidate` node.
@@ -750,7 +754,7 @@ class Readability
 
             $MINIMUM_TOPCANDIDATES = 3;
             if (count($alternativeCandidateAncestors) >= $MINIMUM_TOPCANDIDATES) {
-                $parentOfTopCandidate = $topCandidate->getParent();
+                $parentOfTopCandidate = $topCandidate->parentNode;
                 while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
                     $listsContainingThisAncestor = 0;
                     for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
@@ -760,7 +764,7 @@ class Readability
                         $topCandidate = $parentOfTopCandidate;
                         break;
                     }
-                    $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+                    $parentOfTopCandidate = $parentOfTopCandidate->parentNode;
                 }
             }
 
@@ -811,12 +815,12 @@ class Readability
          * that we removed, etc.
          */
 
-        $articleContent = new DOMDocument('1.0', 'utf-8');
+        $articleContent = $this->createDOMDocument();
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
         // Keep potential top candidate's parent node to try to get text direction of it later.
-        $parentOfTopCandidate = $topCandidate->getParent();
+        $parentOfTopCandidate = $topCandidate->parentNode;
         $siblings = $parentOfTopCandidate->getChildren();
 
         $hasContent = false;
