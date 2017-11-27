@@ -90,7 +90,7 @@ trait NodeClassTrait
         $ancestors = [];
         $level = 0;
 
-        $node = $this->getParent();
+        $node = $this->parentNode;
 
         while ($node) {
             $ancestors[] = $node;
@@ -98,23 +98,10 @@ trait NodeClassTrait
             if ($level === $maxLevel) {
                 break;
             }
-            $node = $node->getParent();
+            $node = $node->parentNode;
         }
 
         return $ancestors;
-    }
-
-    /**
-     * Overloading the getParent function from League\HTMLToMarkdown\Element due to a bug when there are no more parents
-     * on the selected element.
-     *
-     * @return DOMNode|null
-     */
-    public function getParent()
-    {
-        $node = $this->parentNode;
-
-        return ($node) ? $node : null;
     }
 
     /**
@@ -124,17 +111,46 @@ trait NodeClassTrait
      */
     public function getAllLinks()
     {
-        if (($this->isText())) {
+        if ($this->nodeType === XML_TEXT_NODE) {
             return null;
         } else {
             $links = [];
-            foreach ($this->node->getElementsByTagName('a') as $link) {
-                $links[] = new self($link);
+            // TODO Better way to do this loop
+            foreach ($this->getElementsByTagName('a') as $link) {
+                $links[] = $link;
             }
 
             return $links;
         }
     }
+
+    /**
+     * Get the density of links as a percentage of the content
+     * This is the amount of text that is inside a link divided by the total text in the node.
+     *
+     * @return int
+     */
+    public function getLinkDensity()
+    {
+        $linkLength = 0;
+        $textLength = mb_strlen($this->getTextContent(true));
+
+        if (!$textLength) {
+            return 0;
+        }
+
+        $links = $this->getAllLinks();
+
+        if ($links) {
+            /** @var DOMElement $link */
+            foreach ($links as $link) {
+                $linkLength += mb_strlen($link->getTextContent(true));
+            }
+        }
+
+        return $linkLength / $textLength;
+    }
+
 
     /**
      * Calculates the weight of the class/id of the current element.
@@ -250,7 +266,7 @@ trait NodeClassTrait
         // (because this is depth-first traversal, we will have already
         // seen the parent nodes themselves).
         do {
-            $originalNode = $originalNode->getParent();
+            $originalNode = $originalNode->parentNode;
         } while ($originalNode && !$originalNode->nextSibling);
 
         return ($originalNode) ? $originalNode->nextSibling : $originalNode;
@@ -313,14 +329,14 @@ trait NodeClassTrait
     public function hasAncestorTag(self $node, $tagName, $maxDepth = 3)
     {
         $depth = 0;
-        while ($node->getParent()) {
+        while ($node->parentNode) {
             if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;
             }
-            if ($node->getParent()->tagNameEqualsTo($tagName)) {
+            if ($node->parentNode->tagNameEqualsTo($tagName)) {
                 return true;
             }
-            $node = $node->getParent();
+            $node = $node->parentNode;
             $depth++;
         }
 
