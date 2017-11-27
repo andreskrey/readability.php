@@ -282,14 +282,14 @@ trait NodeClassTrait
      * I'm not sure this works the same in PHP, so I created a mock function to check the actual content of the node.
      * Should serve the same porpuse as the original comparison.
      *
-     * @param Readability $node1
-     * @param Readability $node2
+     * @param DOMElement $node1
+     * @param DOMElement $node2
      *
      * @return bool
      */
     public function compareNodes($node1, $node2)
     {
-        if ($node1->getTagName() !== $node2->getTagName()) {
+        if ($node1->nodeName !== $node2->nodeName) {
             return false;
         }
 
