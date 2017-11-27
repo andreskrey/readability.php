@@ -29,7 +29,7 @@ trait NodeClassTrait
      */
     public function getAttribute($attributeName)
     {
-        if (property_exists($this, 'attributes')) {
+        if (!is_null($this->attributes)) {
             foreach ($this->attributes as $attribute) {
                 if ($attribute->name === $attributeName) {
                     return $attribute->value;
