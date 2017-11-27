@@ -526,8 +526,6 @@ class Readability
     }
 
 
-
-
     /**
      * Removes all the scripts of the html.
      *
@@ -618,6 +616,278 @@ class Readability
         for ($i = 0; $i < $length; $i++) {
             $font = $fonts->item($length - 1 - $i);
             NodeUtility::setNodeTag($font, 'span', true);
+        }
+    }
+
+
+    /**
+     * Assign scores to each node. This function will rate each node and return a DOMElement object for each one.
+     *
+     * @param array $nodes
+     *
+     * @return DOMDocument|bool
+     */
+    private function rateNodes($nodes)
+    {
+        $candidates = [];
+
+        /** @var DOMElement $node */
+        foreach ($nodes as $node) {
+            if (is_null($node->parentNode)) {
+                continue;
+            }
+            // Discard nodes with less than 25 characters, without blank space
+            if (mb_strlen($node->getTextContent(true)) < 25) {
+                continue;
+            }
+
+            $ancestors = $node->getNodeAncestors();
+
+            // Exclude nodes with no ancestor
+            if (count($ancestors) === 0) {
+                continue;
+            }
+
+            // Start with a point for the paragraph itself as a base.
+            $contentScore = 1;
+
+            // Add points for any commas within this paragraph.
+            $contentScore += count(explode(',', $node->getTextContent(true)));
+
+            // For every 100 characters in this paragraph, add another point. Up to 3 points.
+            $contentScore += min(floor(mb_strlen($node->getTextContent(true)) / 100), 3);
+
+            /** @var DOMElement $level */
+            foreach ($ancestors as $level => $ancestor) {
+                    $candidates[] = $ancestor;
+
+                /*
+                 * Node score divider:
+                 *  - parent:             1 (no division)
+                 *  - grandparent:        2
+                 *  - great grandparent+: ancestor level * 3
+                 */
+
+                if ($level === 0) {
+                    $scoreDivider = 1;
+                } elseif ($level === 1) {
+                    $scoreDivider = 2;
+                } else {
+                    $scoreDivider = $level * 3;
+                }
+
+                $currentScore = $ancestor->getContentScore();
+                $ancestor->setContentScore($currentScore + ($contentScore / $scoreDivider));
+            }
+        }
+
+        /*
+         * After we've calculated scores, loop through all of the possible
+         * candidate nodes we found and find the one with the highest score.
+         */
+
+        $topCandidates = [];
+        foreach ($candidates as $candidate) {
+
+            /*
+             * Scale the final candidates score based on link density. Good content
+             * should have a relatively small link density (5% or less) and be mostly
+             * unaffected by this operation.
+             */
+
+            $candidate->setContentScore($candidate->getContentScore() * (1 - $candidate->getLinkDensity()));
+
+            for ($i = 0; $i < $this->configuration->getMaxTopCandidates(); $i++) {
+                $aTopCandidate = isset($topCandidates[$i]) ? $topCandidates[$i] : null;
+
+                if (!$aTopCandidate || $candidate->getContentScore() > $aTopCandidate->getContentScore()) {
+                    array_splice($topCandidates, $i, 0, [$candidate]);
+                    if (count($topCandidates) > $this->configuration->getMaxTopCandidates()) {
+                        array_pop($topCandidates);
+                    }
+                    break;
+                }
+            }
+        }
+
+        $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
+        $neededToCreateTopCandidate = false;
+        $parentOfTopCandidate = null;
+
+        /*
+         * If we still have no top candidate, just use the body as a last resort.
+         * We also have to copy the body node so it is something we can modify.
+         */
+
+        if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
+            // Move all of the page's children into topCandidate
+            $topCandidate = new DOMDocument('1.0', 'utf-8');
+            $topCandidate->encoding = 'UTF-8';
+            $topCandidate->appendChild($topCandidate->createElement('div', ''));
+            $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
+
+            // Cannot be foreached, don't ask me why.
+            for ($i = 0; $i < $kids->length; $i++) {
+                $import = $topCandidate->importNode($kids->item($i), true);
+                $topCandidate->firstChild->appendChild($import);
+            }
+
+            // Readability must be created using firstChild to grab the DOMElement instead of the DOMDocument.
+            $topCandidate = new Readability($topCandidate->firstChild);
+            $topCandidate->initializeNode();
+
+            //TODO on the original code, $topCandidate is added to the page variable, which holds the whole HTML
+            // Should be done this here also? (line 823 in readability.js)
+        } elseif ($topCandidate) {
+            // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
+            // and whose scores are quite closed with current `topCandidate` node.
+            $alternativeCandidateAncestors = [];
+            for ($i = 1; $i < count($topCandidates); $i++) {
+                if ($topCandidates[$i]->getContentScore() / $topCandidate->getContentScore() >= 0.75) {
+                    array_push($alternativeCandidateAncestors, $topCandidates[$i]->getNodeAncestors(false));
+                }
+            }
+
+            $MINIMUM_TOPCANDIDATES = 3;
+            if (count($alternativeCandidateAncestors) >= $MINIMUM_TOPCANDIDATES) {
+                $parentOfTopCandidate = $topCandidate->getParent();
+                while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
+                    $listsContainingThisAncestor = 0;
+                    for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
+                        $listsContainingThisAncestor += (int)in_array($parentOfTopCandidate, $alternativeCandidateAncestors[$ancestorIndex]);
+                    }
+                    if ($listsContainingThisAncestor >= $MINIMUM_TOPCANDIDATES) {
+                        $topCandidate = $parentOfTopCandidate;
+                        break;
+                    }
+                    $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+                }
+            }
+
+            /*
+             * Because of our bonus system, parents of candidates might have scores
+             * themselves. They get half of the node. There won't be nodes with higher
+             * scores than our topCandidate, but if we see the score going *up* in the first
+             * few steps up the tree, that's a decent sign that there might be more content
+             * lurking in other places that we want to unify in. The sibling stuff
+             * below does some of that - but only if we've looked high enough up the DOM
+             * tree.
+             */
+
+            $parentOfTopCandidate = $topCandidate->getParent();
+            $lastScore = $topCandidate->getContentScore();
+
+            // The scores shouldn't get too low.
+            $scoreThreshold = $lastScore / 3;
+
+            /* @var Readability $parentOfTopCandidate */
+            while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
+                $parentScore = $parentOfTopCandidate->getContentScore();
+                if ($parentScore < $scoreThreshold) {
+                    break;
+                }
+
+                if ($parentScore > $lastScore) {
+                    // Alright! We found a better parent to use.
+                    $topCandidate = $parentOfTopCandidate;
+                    break;
+                }
+                $lastScore = $parentOfTopCandidate->getContentScore();
+                $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+            }
+
+            // If the top candidate is the only child, use parent instead. This will help sibling
+            // joining logic when adjacent content is actually located in parent's sibling node.
+            $parentOfTopCandidate = $topCandidate->getParent();
+            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren(true)) === 1) {
+                $topCandidate = $parentOfTopCandidate;
+                $parentOfTopCandidate = $topCandidate->getParent();
+            }
+        }
+
+        /*
+         * Now that we have the top candidate, look through its siblings for content
+         * that might also be related. Things like preambles, content split by ads
+         * that we removed, etc.
+         */
+
+        $articleContent = new DOMDocument('1.0', 'utf-8');
+        $articleContent->createElement('div');
+
+        $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
+        // Keep potential top candidate's parent node to try to get text direction of it later.
+        $parentOfTopCandidate = $topCandidate->getParent();
+        $siblings = $parentOfTopCandidate->getChildren();
+
+        $hasContent = false;
+
+        /** @var Readability $sibling */
+        foreach ($siblings as $sibling) {
+            $append = false;
+
+            if ($sibling->compareNodes($sibling, $topCandidate)) {
+                $append = true;
+            } else {
+                $contentBonus = 0;
+
+                // Give a bonus if sibling nodes and top candidates have the example same classname
+                if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
+                    $contentBonus += $topCandidate->getContentScore() * 0.2;
+                }
+                if ($sibling->getContentScore() + $contentBonus >= $siblingScoreThreshold) {
+                    $append = true;
+                } elseif ($sibling->tagNameEqualsTo('p')) {
+                    $linkDensity = $this->getLinkDensity($sibling);
+                    $nodeContent = $sibling->getTextContent(true);
+
+                    if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+                        $append = true;
+                    } elseif ($nodeContent && mb_strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
+                        $append = true;
+                    }
+                }
+            }
+
+            if ($append) {
+                $hasContent = true;
+
+                if (!in_array(strtolower($sibling->getTagName()), $this->alterToDIVExceptions)) {
+                    /*
+                     * We have a node that isn't a common block level element, like a form or td tag.
+                     * Turn it into a div so it doesn't get filtered out later by accident.
+                     */
+
+                    $sibling->setNodeTag('div');
+                }
+
+                $import = $articleContent->importNode($sibling->getDOMNode(), true);
+                $articleContent->appendChild($import);
+
+                /*
+                 * No node shifting needs to be check because when calling getChildren, an array is made with the
+                 * children of the parent node, instead of using the DOMElement childNodes function, which, when used
+                 * along with appendChild, would shift the nodes position and the current foreach will behave in
+                 * unpredictable ways.
+                 */
+            }
+        }
+
+        $articleContent = $this->prepArticle($articleContent);
+
+        if ($hasContent) {
+            // Find out text direction from ancestors of final top candidate.
+            $ancestors = array_merge([$parentOfTopCandidate, $topCandidate], $parentOfTopCandidate->getNodeAncestors());
+            foreach ($ancestors as $ancestor) {
+                $articleDir = $ancestor->getAttribute('dir');
+                if ($articleDir) {
+                    $this->metadata['articleDir'] = $articleDir;
+                    break;
+                }
+            }
+
+            return $articleContent;
+        } else {
+            return false;
         }
     }
 
