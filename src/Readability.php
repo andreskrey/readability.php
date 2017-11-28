@@ -185,7 +185,7 @@ class Readability
      */
     private function loadHTML($html)
     {
-        $dom = $this->createDOMDocument();
+        $dom = new DOMDocument('1.0', 'utf-8');
 
         if (!$this->configuration->getSubstituteEntities()) {
             // Keep the original HTML entities
@@ -208,26 +208,6 @@ class Readability
         $this->removeScripts($dom);
 
         $this->prepDocument($dom);
-
-        return $dom;
-    }
-
-    public function createDOMDocument()
-    {
-        $dom = new DOMDocument('1.0', 'utf-8');
-
-        $dom->registerNodeClass('DOMAttr', DOMAttr::class);
-        $dom->registerNodeClass('DOMCdataSection', DOMCdataSection::class);
-        $dom->registerNodeClass('DOMCharacterData', DOMCharacterData::class);
-        $dom->registerNodeClass('DOMComment', DOMComment::class);
-        $dom->registerNodeClass('DOMDocument', DOMDocument::class);
-        $dom->registerNodeClass('DOMDocumentFragment', DOMDocumentFragment::class);
-        $dom->registerNodeClass('DOMDocumentType', DOMDocumentType::class);
-        $dom->registerNodeClass('DOMElement', DOMElement::class);
-        $dom->registerNodeClass('DOMNode', DOMNode::class);
-        $dom->registerNodeClass('DOMNotation', DOMNotation::class);
-        $dom->registerNodeClass('DOMProcessingInstruction', DOMProcessingInstruction::class);
-        $dom->registerNodeClass('DOMText', DOMText::class);
 
         return $dom;
     }
@@ -729,7 +709,7 @@ class Readability
 
         if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
             // Move all of the page's children into topCandidate
-            $topCandidate = $this->createDOMDocument();
+            $topCandidate = new DOMDocument('1.0', 'utf-8');
             $topCandidate->encoding = 'UTF-8';
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
@@ -815,7 +795,7 @@ class Readability
          * that we removed, etc.
          */
 
-        $articleContent = $this->createDOMDocument();
+        $articleContent = new DOMDocument('1.0', 'utf-8');
         $articleContent->createElement('div');
 
         $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
@@ -893,6 +873,85 @@ class Readability
         } else {
             return false;
         }
+    }
+
+    /**
+     * TODO To be moved to Readability.
+     *
+     * @param DOMDocument $article
+     *
+     * @return DOMDocument
+     */
+    public function prepArticle(DOMDocument $article)
+    {
+        $this->_cleanStyles($article);
+        $this->_clean($article, 'style');
+
+        // Check for data tables before we continue, to avoid removing items in
+        // those tables, which will often be isolated even though they're
+        // visually linked to other content-ful elements (text, images, etc.).
+        $this->_markDataTables($article);
+
+        // Clean out junk from the article content
+        $this->_cleanConditionally($article, 'form');
+        $this->_cleanConditionally($article, 'fieldset');
+        $this->_clean($article, 'object');
+        $this->_clean($article, 'embed');
+        $this->_clean($article, 'h1');
+        $this->_clean($article, 'footer');
+
+        // Clean out elements have "share" in their id/class combinations from final top candidates,
+        // which means we don't remove the top candidates even they have "share".
+        foreach ($article->childNodes as $child) {
+            $this->_cleanMatchedNodes($child, '/share/i');
+        }
+
+        /*
+         * If there is only one h2 and its text content substantially equals article title,
+         * they are probably using it as a header and not a subheader,
+         * so remove it since we already extract the title separately.
+         */
+        $h2 = $article->getElementsByTagName('h2');
+        if ($h2->length === 1) {
+            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->metadata['title'])) / max(mb_strlen($this->metadata['title']), 1);
+
+            if (abs($lengthSimilarRate) < 0.5) {
+                if ($lengthSimilarRate > 0) {
+                    $titlesMatch = strpos($h2->item(0)->textContent, $this->metadata['title']) !== false;
+                } else {
+                    $titlesMatch = strpos($this->metadata['title'], $h2->item(0)->textContent) !== false;
+                }
+                if ($titlesMatch) {
+                    $this->_clean($article, 'h2');
+                }
+            }
+        }
+
+        $this->_clean($article, 'iframe');
+        $this->_clean($article, 'input');
+        $this->_clean($article, 'textarea');
+        $this->_clean($article, 'select');
+        $this->_clean($article, 'button');
+        $this->_cleanHeaders($article);
+
+        // Do these last as the previous stuff may have removed junk
+        // that will affect these
+        $this->_cleanConditionally($article, 'table');
+        $this->_cleanConditionally($article, 'ul');
+        $this->_cleanConditionally($article, 'div');
+
+        $this->_cleanExtraParagraphs($article);
+
+        $this->_cleanReadabilityTags($article);
+
+        foreach (iterator_to_array($article->getElementsByTagName('br')) as $br) {
+            $next = $br->nextSibling;
+            if ($next && $next->nodeName === 'p') {
+                $br->parentNode->removeChild($br);
+            }
+        }
+
+        return $article;
     }
 
 
