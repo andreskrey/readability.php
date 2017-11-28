@@ -22,6 +22,11 @@ use andreskrey\Readability\NodeClass\NodeClassTrait;
 class Readability
 {
     /**
+     * @var DOMDocument
+     */
+    protected $dom;
+
+    /**
      * @var string|null
      */
     protected $title = null;
@@ -83,9 +88,6 @@ class Readability
         // TODO, check if this is correct, #text elements do not exist in js
         '#text',
     ];
-
-
-    private $dom;
 
     /**
      * Readability constructor.
@@ -423,7 +425,7 @@ class Readability
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
             // Remove DOMComments nodes as we don't need them and mess up children counting
-            if ($node->nodeType ===XML_COMMENT_NODE) {
+            if ($node->nodeType === XML_COMMENT_NODE) {
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
             }
@@ -679,7 +681,7 @@ class Readability
 
             /** @var DOMElement $level */
             foreach ($ancestors as $level => $ancestor) {
-                    $candidates[] = $ancestor;
+                $candidates[] = $ancestor;
 
                 /*
                  * Node score divider:
