@@ -680,9 +680,12 @@ class Readability
             // For every 100 characters in this paragraph, add another point. Up to 3 points.
             $contentScore += min(floor(mb_strlen($node->getTextContent(true)) / 100), 3);
 
-            /** @var DOMElement $level */
+            /** @var $ancestor DOMElement */
             foreach ($ancestors as $level => $ancestor) {
-                $candidates[] = $ancestor;
+                if (!$ancestor->initialized) {
+                    $ancestor->initializeNode();
+                    $candidates[] = $ancestor;
+                }
 
                 /*
                  * Node score divider:
@@ -699,8 +702,8 @@ class Readability
                     $scoreDivider = $level * 3;
                 }
 
-                $currentScore = $ancestor->getContentScore();
-                $ancestor->setContentScore($currentScore + ($contentScore / $scoreDivider));
+                $currentScore = $ancestor->contentScore;
+                $ancestor->contentScore = $currentScore + ($contentScore / $scoreDivider);
             }
         }
 
@@ -718,12 +721,12 @@ class Readability
              * unaffected by this operation.
              */
 
-            $candidate->setContentScore($candidate->getContentScore() * (1 - $candidate->getLinkDensity()));
+            $candidate->contentScore = $candidate->contentScore * (1 - $candidate->getLinkDensity());
 
             for ($i = 0; $i < $this->configuration->getMaxTopCandidates(); $i++) {
                 $aTopCandidate = isset($topCandidates[$i]) ? $topCandidates[$i] : null;
 
-                if (!$aTopCandidate || $candidate->getContentScore() > $aTopCandidate->getContentScore()) {
+                if (!$aTopCandidate || $candidate->contentScore > $aTopCandidate->contentScore) {
                     array_splice($topCandidates, $i, 0, [$candidate]);
                     if (count($topCandidates) > $this->configuration->getMaxTopCandidates()) {
                         array_pop($topCandidates);
@@ -762,7 +765,7 @@ class Readability
             // and whose scores are quite closed with current `topCandidate` node.
             $alternativeCandidateAncestors = [];
             for ($i = 1; $i < count($topCandidates); $i++) {
-                if ($topCandidates[$i]->getContentScore() / $topCandidate->getContentScore() >= 0.75) {
+                if ($topCandidates[$i]->contentScore / $topCandidate->contentScore >= 0.75) {
                     array_push($alternativeCandidateAncestors, $topCandidates[$i]->getNodeAncestors(false));
                 }
             }
@@ -794,14 +797,14 @@ class Readability
              */
 
             $parentOfTopCandidate = $topCandidate->parentNode;
-            $lastScore = $topCandidate->getContentScore();
+            $lastScore = $topCandidate->contentScore;
 
             // The scores shouldn't get too low.
             $scoreThreshold = $lastScore / 3;
 
             /* @var DOMElement $parentOfTopCandidate */
             while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
-                $parentScore = $parentOfTopCandidate->getContentScore();
+                $parentScore = $parentOfTopCandidate->contentScore;
                 if ($parentScore < $scoreThreshold) {
                     break;
                 }
@@ -811,7 +814,7 @@ class Readability
                     $topCandidate = $parentOfTopCandidate;
                     break;
                 }
-                $lastScore = $parentOfTopCandidate->getContentScore();
+                $lastScore = $parentOfTopCandidate->contentScore;
                 $parentOfTopCandidate = $parentOfTopCandidate->parentNode;
             }
 
@@ -833,7 +836,7 @@ class Readability
         $articleContent = new DOMDocument('1.0', 'utf-8');
         $articleContent->createElement('div');
 
-        $siblingScoreThreshold = max(10, $topCandidate->getContentScore() * 0.2);
+        $siblingScoreThreshold = max(10, $topCandidate->contentScore * 0.2);
         // Keep potential top candidate's parent node to try to get text direction of it later.
         $parentOfTopCandidate = $topCandidate->parentNode;
         $siblings = $parentOfTopCandidate->getChildren();
@@ -851,9 +854,9 @@ class Readability
 
                 // Give a bonus if sibling nodes and top candidates have the example same classname
                 if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
-                    $contentBonus += $topCandidate->getContentScore() * 0.2;
+                    $contentBonus += $topCandidate->contentScore * 0.2;
                 }
-                if ($sibling->getContentScore() + $contentBonus >= $siblingScoreThreshold) {
+                if ($sibling->contentScore + $contentBonus >= $siblingScoreThreshold) {
                     $append = true;
                 } elseif ($sibling->tagNameEqualsTo('p')) {
                     $linkDensity = $siblings->getLinkDensity();
