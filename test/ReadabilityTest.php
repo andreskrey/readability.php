@@ -48,9 +48,16 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         if ($config) {
             $options = array_merge($options, $config);
         }
+        $configuration = new Configuration();
 
-        $readability = new HTMLParser($options);
+        foreach($options as $key => $value){
+            $name = 'set' . $key;
+            $configuration->$name($value);
+        }
+
+        $readability = new Readability($configuration);
         $result = $readability->parse($html);
+
         $this->assertEquals($expectedImages, json_encode($result['images']));
     }
 
