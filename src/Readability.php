@@ -477,7 +477,8 @@ class Readability
                     $node = $pNode;
                     $elementsToScore[] = $node;
                 } elseif (!NodeUtility::hasSingleChildBlockElement($node)) {
-                    $elementsToScore[] = NodeUtility::setNodeTag($node, 'p');
+                    $node = NodeUtility::setNodeTag($node, 'p');
+                    $elementsToScore[] = $node;
                 } else {
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
