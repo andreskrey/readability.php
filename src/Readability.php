@@ -14,6 +14,7 @@ use andreskrey\Readability\NodeClass\DOMNode;
 use andreskrey\Readability\NodeClass\DOMNotation;
 use andreskrey\Readability\NodeClass\DOMProcessingInstruction;
 use andreskrey\Readability\NodeClass\DOMText;
+use andreskrey\Readability\NodeClass\NodeClassTrait;
 
 /**
  * Class Readability
@@ -134,16 +135,16 @@ class Readability
             foreach ($result->getElementsByTagName('p') as $p) {
                 $length += mb_strlen($p->textContent);
             }
-            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->getConfig()->getOption('wordThreshold')) {
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->configuration->getWordThreshold()) {
                 $this->dom = $this->loadHTML($html);
                 $root = $this->dom->getElementsByTagName('body')->item(0);
 
-                if ($this->getConfig()->getOption('stripUnlikelyCandidates')) {
-                    $this->getConfig()->setOption('stripUnlikelyCandidates', false);
-                } elseif ($this->getConfig()->getOption('weightClasses')) {
-                    $this->getConfig()->setOption('weightClasses', false);
-                } elseif ($this->getConfig()->getOption('cleanConditionally')) {
-                    $this->getConfig()->setOption('cleanConditionally', false);
+                if ($this->configuration->getStripUnlikelyCandidates()) {
+                    $this->configuration->setStripUnlikelyCandidates(false);
+                } elseif ($this->configuration->getWeightClasses()) {
+                    $this->configuration->setWeightClasses(false);
+                } elseif ($this->configuration->getCleanConditionally()) {
+                    $this->configuration->setCleanConditionally(false);
                 } else {
                     $parseSuccessful = false;
                     break;
@@ -284,6 +285,37 @@ class Readability
 
         return $metadata;
     }
+
+    /**
+     * @return array
+     */
+    public function getImages()
+    {
+        $result = [];
+        if (!empty($this->metadata['image'])) {
+            $result[] = $this->metadata['image'];
+        }
+        if (null == $this->dom) {
+            return $result;
+        }
+
+        foreach ($this->dom->getElementsByTagName('img') as $img) {
+            if ($src = $img->getAttribute('src')) {
+                $result[] = $src;
+            }
+        }
+
+        if ($this->configuration->getFixRelativeURLs()) {
+            foreach ($result as &$imgSrc) {
+                $imgSrc = $this->toAbsoluteURI($imgSrc);
+            }
+        }
+
+        $result = array_unique(array_filter($result));
+
+        return $result;
+    }
+
 
     /**
      * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
@@ -758,13 +790,13 @@ class Readability
              * tree.
              */
 
-            $parentOfTopCandidate = $topCandidate->getParent();
+            $parentOfTopCandidate = $topCandidate->parentNode;
             $lastScore = $topCandidate->getContentScore();
 
             // The scores shouldn't get too low.
             $scoreThreshold = $lastScore / 3;
 
-            /* @var Readability $parentOfTopCandidate */
+            /* @var DOMElement $parentOfTopCandidate */
             while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
                 $parentScore = $parentOfTopCandidate->getContentScore();
                 if ($parentScore < $scoreThreshold) {
@@ -777,15 +809,15 @@ class Readability
                     break;
                 }
                 $lastScore = $parentOfTopCandidate->getContentScore();
-                $parentOfTopCandidate = $parentOfTopCandidate->getParent();
+                $parentOfTopCandidate = $parentOfTopCandidate->parentNode;
             }
 
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
-            $parentOfTopCandidate = $topCandidate->getParent();
+            $parentOfTopCandidate = $topCandidate->parentNode;
             while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren(true)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
-                $parentOfTopCandidate = $topCandidate->getParent();
+                $parentOfTopCandidate = $topCandidate->parentNode;
             }
         }
 
@@ -841,7 +873,7 @@ class Readability
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
 
-                    $sibling->setNodeTag('div');
+                    NodeUtility::setNodeTag($siblings, 'div');
                 }
 
                 $import = $articleContent->importNode($sibling, true);
@@ -942,12 +974,335 @@ class Readability
 
         $this->_cleanExtraParagraphs($article);
 
-        $this->_cleanReadabilityTags($article);
-
         foreach (iterator_to_array($article->getElementsByTagName('br')) as $br) {
             $next = $br->nextSibling;
             if ($next && $next->nodeName === 'p') {
                 $br->parentNode->removeChild($br);
+            }
+        }
+
+        return $article;
+    }
+
+    /**
+     * Look for 'data' (as opposed to 'layout') tables, for which we use
+     * similar checks as
+     * https://dxr.mozilla.org/mozilla-central/rev/71224049c0b52ab190564d3ea0eab089a159a4cf/accessible/html/HTMLTableAccessible.cpp#920.
+     *
+     * TODO To be moved to Readability. WARNING: check if we actually keep the "readabilityDataTable" param and
+     * maybe switch to a readability data-tag?
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _markDataTables(DOMDocument $article)
+    {
+        $tables = $article->getElementsByTagName('table');
+        foreach ($tables as $table) {
+            /** @var DOMElement $table */
+            $role = $table->getAttribute('role');
+            if ($role === 'presentation') {
+                $table->readabilityDataTable = false;
+                continue;
+            }
+            $datatable = $table->getAttribute('datatable');
+            if ($datatable == '0') {
+                $table->readabilityDataTable = false;
+                continue;
+            }
+            $summary = $table->getAttribute('summary');
+            if ($summary) {
+                $table->readabilityDataTable = true;
+                continue;
+            }
+
+            $caption = $table->getElementsByTagName('caption');
+            if ($caption->length > 0 && $caption->item(0)->childNodes->length > 0) {
+                $table->readabilityDataTable = true;
+                continue;
+            }
+
+            // If the table has a descendant with any of these tags, consider a data table:
+            foreach (['col', 'colgroup', 'tfoot', 'thead', 'th'] as $dataTableDescendants) {
+                if ($table->getElementsByTagName($dataTableDescendants)->length > 0) {
+                    $table->readabilityDataTable = true;
+                    continue 2;
+                }
+            }
+
+            // Nested tables indicate a layout table:
+            if ($table->getElementsByTagName('table')->length > 0) {
+                $table->readabilityDataTable = false;
+                continue;
+            }
+
+            $sizeInfo = $table->_getRowAndColumnCount();
+            if ($sizeInfo['rows'] >= 10 || $sizeInfo['columns'] > 4) {
+                $table->readabilityDataTable = true;
+                continue;
+            }
+            // Now just go by size entirely:
+            $table->readabilityDataTable = $sizeInfo['rows'] * $sizeInfo['columns'] > 10;
+        }
+    }
+
+
+    /**
+     * Remove the style attribute on every e and under.
+     * TODO: To be moved to Readability.
+     *
+     * @param $node \DOMDocument|\DOMNode
+     **/
+    public function _cleanStyles($node)
+    {
+        if (property_exists($node, 'tagName') && $node->tagName === 'svg') {
+            return;
+        }
+
+        // Do not bother if there's no method to remove an attribute
+        if (method_exists($node, 'removeAttribute')) {
+            $presentational_attributes = ['align', 'background', 'bgcolor', 'border', 'cellpadding', 'cellspacing', 'frame', 'hspace', 'rules', 'style', 'valign', 'vspace'];
+            // Remove `style` and deprecated presentational attributes
+            foreach ($presentational_attributes as $presentational_attribute) {
+                $node->removeAttribute($presentational_attribute);
+            }
+
+            $deprecated_size_attribute_elems = ['table', 'th', 'td', 'hr', 'pre'];
+            if (property_exists($node, 'tagName') && in_array($node->tagName, $deprecated_size_attribute_elems)) {
+                $node->removeAttribute('width');
+                $node->removeAttribute('height');
+            }
+        }
+
+        $cur = $node->firstChild;
+        while ($cur !== null) {
+            $this->_cleanStyles($cur);
+            $cur = $cur->nextSibling;
+        }
+    }
+
+    /**
+     * Clean out elements whose id/class combinations match specific string.
+     *
+     * TODO To be moved to readability
+     *
+     * @param $node DOMElement Node to clean
+     * @param $regex string Match id/class combination.
+     *
+     * @return void
+     **/
+    public function _cleanMatchedNodes($node, $regex)
+    {
+        $endOfSearchMarkerNode = $node->getNextNode($node, true);
+        $next = $node->getNextNode($node);
+        while ($next && $next !== $endOfSearchMarkerNode) {
+            if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
+                $next = NodeUtility::removeAndGetNext($node);
+            } else {
+                $next = $next->getNextNode($next);
+            }
+        }
+    }
+
+    /**
+     * TODO To be moved to Readability.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanExtraParagraphs(DOMDocument $article)
+    {
+        $paragraphs = $article->getElementsByTagName('p');
+        $length = $paragraphs->length;
+
+        for ($i = 0; $i < $length; $i++) {
+            $paragraph = $paragraphs->item($length - 1 - $i);
+
+            $imgCount = $paragraph->getElementsByTagName('img')->length;
+            $embedCount = $paragraph->getElementsByTagName('embed')->length;
+            $objectCount = $paragraph->getElementsByTagName('object')->length;
+            // At this point, nasty iframes have been removed, only remain embedded video ones.
+            $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
+            $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
+
+            if ($totalCount === 0 && !preg_replace($this->regexps['onlyWhitespace'], '', $paragraph->textContent)) {
+                // TODO must be done via readability
+                $paragraph->parentNode->removeChild($paragraph);
+            }
+        }
+    }
+
+    /**
+     * TODO To be moved to Readability.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanConditionally(DOMDocument $article, $tag)
+    {
+        if (!$this->configuration->getCleanConditionally()) {
+            return;
+        }
+
+        $isList = in_array($tag, ['ul', 'ol']);
+
+        /*
+         * Gather counts for other typical elements embedded within.
+         * Traverse backwards so we can remove nodes at the same time
+         * without effecting the traversal.
+         */
+
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+            /** @var $node DOMElement */
+            $node = $DOMNodeList->item($length - 1 - $i);
+
+            // First check if we're in a data table, in which case don't remove us.
+            if ($node->hasAncestorTag($node, 'table', -1) && isset($node->readabilityDataTable)) {
+                continue;
+            }
+
+            $weight = $node->getClassWeight();
+
+            if ($weight < 0) {
+                NodeUtility::removeNode($node);
+                continue;
+            }
+
+            if (substr_count($node->getTextContent(), ',') < 10) {
+                /*
+                 * If there are not very many commas, and the number of
+                 * non-paragraph elements is more than paragraphs or other
+                 * ominous signs, remove the element.
+                 */
+
+                // TODO Horrible hack, must be removed once this function is inside Readability
+                $p = $node->getElementsByTagName('p')->length;
+                $img = $node->getElementsByTagName('img')->length;
+                $li = $node->getElementsByTagName('li')->length - 100;
+                $input = $node->getElementsByTagName('input')->length;
+
+                $embedCount = 0;
+                $embeds = $node->getElementsByTagName('embed');
+
+                foreach ($embeds as $embedNode) {
+                    if (preg_match($this->regexps['videos'], $embedNode->C14N())) {
+                        $embedCount++;
+                    }
+                }
+
+                $linkDensity = $node->getLinkDensity();
+                $contentLength = mb_strlen($node->getTextContent(true));
+
+                $haveToRemove =
+                    ($img > 1 && $p / $img < 0.5 && !$node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $li > $p) ||
+                    ($input > floor($p / 3)) ||
+                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $weight < 25 && $linkDensity > 0.2) ||
+                    ($weight >= 25 && $linkDensity > 0.5) ||
+                    (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
+
+                if ($haveToRemove) {
+                    NodeUtility::removeNode($node);
+                }
+            }
+        }
+    }
+
+    /**
+     * Clean a node of all elements of type "tag".
+     * (Unless it's a youtube/vimeo video. People love movies.).
+     *
+     * TODO To be moved to Readability
+     *
+     * @param $article DOMDocument
+     * @param $tag string tag to clean
+     *
+     * @return void
+     **/
+    public function _clean(DOMDocument $article, $tag)
+    {
+        $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
+
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+            $item = $DOMNodeList->item($length - 1 - $i);
+
+            // Allow youtube and vimeo videos through as people usually want to see those.
+            if ($isEmbed) {
+                $attributeValues = [];
+                foreach ($item->attributes as $name => $value) {
+                    $attributeValues[] = $value->nodeValue;
+                }
+                $attributeValues = implode('|', $attributeValues);
+
+                // First, check the elements attributes to see if any of them contain youtube or vimeo
+                if (preg_match($this->regexps['videos'], $attributeValues)) {
+                    continue;
+                }
+
+                // Then check the elements inside this element for the same.
+                if (preg_match($this->regexps['videos'], $item->C14N())) {
+                    continue;
+                }
+            }
+            NodeUtility::removeNode($item);
+        }
+    }
+
+    /**
+     * Clean out spurious headers from an Element. Checks things like classnames and link density.
+     *
+     * TODO To be moved to Readability
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     **/
+    public function _cleanHeaders(DOMDocument $article)
+    {
+        for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
+            $headers = $article->getElementsByTagName('h' . $headerIndex);
+            /** @var $header DOMElement */
+            foreach ($headers as $header) {
+                if ($header->getClassWeight() < 0) {
+                    NodeUtility::removeNode($header);
+                }
+            }
+        }
+    }
+
+    public function postProcessContent(DOMDocument $article)
+    {
+        // Readability cannot open relative uris so we convert them to absolute uris.
+        if ($this->configuration->getFixRelativeURLs()) {
+            foreach (iterator_to_array($article->getElementsByTagName('a')) as $link) {
+                /** @var DOMElement $link */
+                $href = $link->getAttribute('href');
+                if ($href) {
+                    // Replace links with javascript: URIs with text content, since
+                    // they won't work after scripts have been removed from the page.
+                    if (strpos($href, 'javascript:') === 0) {
+                        $text = $article->createTextNode($link->textContent);
+                        $link->parentNode->replaceChild($text, $link);
+                    } else {
+                        $link->setAttribute('href', $this->toAbsoluteURI($href));
+                    }
+                }
+            }
+
+            foreach ($article->getElementsByTagName('img') as $img) {
+                /** @var DOMElement $img */
+                $src = $img->getAttribute('src');
+                if ($src) {
+                    $img->setAttribute('src', $this->toAbsoluteURI($src));
+                }
             }
         }
 

@@ -2,6 +2,7 @@
 
 namespace andreskrey\Readability;
 use andreskrey\Readability\NodeClass\DOMDocument;
+use andreskrey\Readability\NodeClass\DOMElement;
 use andreskrey\Readability\NodeClass\DOMNode;
 
 /**
@@ -100,6 +101,22 @@ class NodeUtility
     }
 
     /**
+     * Remove the passed node.
+     *
+     * @param DOMElement $node
+     *
+     * @return void
+     **/
+    public static function removeNode(DOMElement $node)
+    {
+        $parent = $node->parentNode;
+        if ($parent) {
+            $parent->removeChild($node);
+        }
+    }
+
+
+    /**
      * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
      * for parents.
      *
@@ -132,7 +149,7 @@ class NodeUtility
         // (because this is depth-first traversal, we will have already
         // seen the parent nodes themselves).
         do {
-            $originalNode = $originalNode->getParent();
+            $originalNode = $originalNode->parentNode;
         } while ($originalNode && !$originalNode->nextSibling);
 
         return ($originalNode) ? $originalNode->nextSibling : $originalNode;
@@ -189,7 +206,7 @@ class NodeUtility
     /**
      * Returns the full text of the node.
      *
-     * @param $node DOMNode
+     * @param $node DOMNode|DOMElement
      * @param bool $normalize Normalize white space?
      * @return string
      */
