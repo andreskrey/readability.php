@@ -471,7 +471,7 @@ class Readability
                  */
                 if (NodeUtility::hasSinglePNode($node)) {
                     $pNode = $node->getChildren(true)[0];
-                    $node->replaceChild($pNode, $node);
+                    $node->parentNode->replaceChild($pNode, $node);
                     $node = $pNode;
                     $elementsToScore[] = $node;
                 } elseif (!NodeUtility::hasSingleChildBlockElement($node)) {
@@ -853,7 +853,7 @@ class Readability
                 if ($sibling->getContentScore() + $contentBonus >= $siblingScoreThreshold) {
                     $append = true;
                 } elseif ($sibling->tagNameEqualsTo('p')) {
-                    $linkDensity = $this->getLinkDensity($sibling);
+                    $linkDensity = $siblings->getLinkDensity();
                     $nodeContent = $sibling->getTextContent(true);
 
                     if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
@@ -873,7 +873,7 @@ class Readability
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
 
-                    NodeUtility::setNodeTag($siblings, 'div');
+                    NodeUtility::setNodeTag($sibling, 'div');
                 }
 
                 $import = $articleContent->importNode($sibling, true);
