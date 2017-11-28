@@ -859,7 +859,7 @@ class Readability
                 if ($sibling->contentScore + $contentBonus >= $siblingScoreThreshold) {
                     $append = true;
                 } elseif ($sibling->tagNameEqualsTo('p')) {
-                    $linkDensity = $siblings->getLinkDensity();
+                    $linkDensity = $sibling->getLinkDensity();
                     $nodeContent = $sibling->getTextContent(true);
 
                     if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
