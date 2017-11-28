@@ -10,7 +10,12 @@ trait NodeClassTrait
     /**
      * @var int
      */
-    protected $contentScore = 0;
+    public $contentScore = 0;
+
+    /**
+     * @var bool
+     */
+    public $initialized = false;
 
     /**
      * @var array
@@ -19,6 +24,57 @@ trait NodeClassTrait
         'positive' => '/article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story/i',
         'negative' => '/hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|foot|footer|footnote|masthead|media|meta|modal|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|tool|widget/i',
     ];
+
+    /**
+     * Initializer. Calculates the current score of the node and returns a full Readability object.
+     *
+     * @return self
+     */
+    public function initializeNode()
+    {
+        if (!$this->initialized) {
+            $contentScore = 0;
+
+            switch ($this->nodeName) {
+                case 'div':
+                    $contentScore += 5;
+                    break;
+
+                case 'pre':
+                case 'td':
+                case 'blockquote':
+                    $contentScore += 3;
+                    break;
+
+                case 'address':
+                case 'ol':
+                case 'ul':
+                case 'dl':
+                case 'dd':
+                case 'dt':
+                case 'li':
+                case 'form':
+                    $contentScore -= 3;
+                    break;
+
+                case 'h1':
+                case 'h2':
+                case 'h3':
+                case 'h4':
+                case 'h5':
+                case 'h6':
+                case 'th':
+                    $contentScore -= 5;
+                    break;
+            }
+
+            $this->contentScore = $contentScore + $this->getClassWeight();
+
+            $this->initialized = true;
+        }
+
+        return $this;
+    }
 
     /**
      * Placeholder for getAttribute method. Some nodes have the getAttribute method, some don't.
@@ -173,27 +229,6 @@ trait NodeClassTrait
 
         return $weight;
     }
-
-    /**
-     * Returns the current score of the Readability object.
-     *
-     * @return int
-     */
-    public function getContentScore()
-    {
-        return $this->contentScore;
-    }
-
-    /**
-     * Returns the current score of the Readability object.
-     *
-     * @param int $score
-     */
-    public function setContentScore($score)
-    {
-        $this->contentScore = $score;
-    }
-
 
     /**
      * Returns the full text of the node.
