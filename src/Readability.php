@@ -658,6 +658,7 @@ class Readability
             if (is_null($node->parentNode)) {
                 continue;
             }
+
             // Discard nodes with less than 25 characters, without blank space
             if (mb_strlen($node->getTextContent(true)) < 25) {
                 continue;
