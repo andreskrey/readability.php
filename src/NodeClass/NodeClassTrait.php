@@ -282,12 +282,12 @@ trait NodeClassTrait
     /**
      * Creates a new node based on the text content of the original node.
      *
-     * @param $originalNode self
+     * @param $originalNode DOMElement
      * @param $tagName string
      *
-     * @return self
+     * @return DOMElement
      */
-    public function createNode(self $originalNode, $tagName)
+    public function createNode($originalNode, $tagName)
     {
         $text = NodeUtility::getTextContent($originalNode);
         $newNode = $originalNode->ownerDocument->createElement($tagName, $text);
@@ -370,4 +370,31 @@ trait NodeClassTrait
             );
     }
 
+    /**
+     * Return an array indicating how many rows and columns this table has.
+     *
+     * @return array
+     */
+    public function _getRowAndColumnCount()
+    {
+        $rows = $columns = 0;
+        $trs = $this->getElementsByTagName('tr');
+        foreach ($trs as $tr) {
+            /** @var \DOMElement $tr */
+            $rowspan = $tr->getAttribute('rowspan');
+            $rows += ($rowspan || 1);
+
+            // Now look for column-related info
+            $columnsInThisRow = 0;
+            $cells = $tr->getElementsByTagName('td');
+            foreach ($cells as $cell) {
+                /** @var \DOMElement $cell */
+                $colspan = $cell->getAttribute('colspan');
+                $columnsInThisRow += ($colspan || 1);
+            }
+            $columns = max($columns, $columnsInThisRow);
+        }
+
+        return ['rows' => $rows, 'columns' => $columns];
+    }
 }
