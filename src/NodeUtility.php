@@ -59,7 +59,7 @@ class NodeUtility
      */
     public static function setNodeTag($node, $value, $importAttributes = false)
     {
-        $new = new DOMDocument();
+        $new = new DOMDocument('1.0', 'utf-8');
         $new->appendChild($new->createElement($value));
 
         $children = $node->childNodes;
