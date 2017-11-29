@@ -138,7 +138,7 @@ trait NodeClassTrait
     /**
      * Returns all links from the current element.
      *
-     * @return array|null
+     * @return array
      */
     public function getAllLinks()
     {
