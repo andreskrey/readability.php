@@ -44,9 +44,10 @@ trait NodeClassTrait
     /**
      * Initializer. Calculates the current score of the node and returns a full Readability object.
      *
-     * @return self
+     * @param $weightClasses bool Weight classes?
+     * @return static
      */
-    public function initializeNode()
+    public function initializeNode($weightClasses)
     {
         if (!$this->isInitialized()) {
             $contentScore = 0;
@@ -84,7 +85,7 @@ trait NodeClassTrait
                     break;
             }
 
-            $this->contentScore = $contentScore + $this->getClassWeight();
+            $this->contentScore = $contentScore + ($weightClasses ? $this->getClassWeight() : 0);
 
             $this->initialized = true;
         }
@@ -176,17 +177,10 @@ trait NodeClassTrait
     /**
      * Calculates the weight of the class/id of the current element.
      *
-     * @todo check for flag that lets this function run or not
-     *
      * @return int
      */
     public function getClassWeight()
     {
-        //        TODO To implement. How to get config from html parser from readability
-//        if ($this->getConfig()->getOption('weightClasses')) {
-//            return 0;
-//        }
-//
         $weight = 0;
 
         // Look for a special classname

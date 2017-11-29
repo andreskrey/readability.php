@@ -773,7 +773,7 @@ class Readability
             /** @var $ancestor DOMElement */
             foreach ($ancestors as $level => $ancestor) {
                 if (!$ancestor->isInitialized()) {
-                    $ancestor->initializeNode();
+                    $ancestor->initializeNode($this->configuration->getWeightClasses());
                     $candidates[] = $ancestor;
                 }
 
@@ -1262,7 +1262,10 @@ class Readability
                 continue;
             }
 
-            $weight = $node->getClassWeight();
+            $weight = 0;
+            if ($this->configuration->getWeightClasses()) {
+                $weight = $node->getClassWeight();
+            }
 
             if ($weight < 0) {
                 NodeUtility::removeNode($node);
@@ -1367,7 +1370,12 @@ class Readability
             $headers = $article->getElementsByTagName('h' . $headerIndex);
             /** @var $header DOMElement */
             foreach ($headers as $header) {
-                if ($header->getClassWeight() < 0) {
+                $weight = 0;
+                if ($this->configuration->getWeightClasses()) {
+                    $weight = $header->getClassWeight();
+                }
+
+                if ($weight < 0) {
                     NodeUtility::removeNode($header);
                 }
             }
