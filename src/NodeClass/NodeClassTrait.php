@@ -145,13 +145,7 @@ trait NodeClassTrait
         if ($this->nodeType === XML_TEXT_NODE) {
             return null;
         } else {
-            $links = [];
-            // TODO Better way to do this loop
-            foreach ($this->getElementsByTagName('a') as $link) {
-                $links[] = $link;
-            }
-
-            return $links;
+            return iterator_to_array($this->getElementsByTagName('a'));
         }
     }
 
