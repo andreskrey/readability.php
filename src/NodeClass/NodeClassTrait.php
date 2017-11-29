@@ -142,11 +142,7 @@ trait NodeClassTrait
      */
     public function getAllLinks()
     {
-        if ($this->nodeType === XML_TEXT_NODE) {
-            return null;
-        } else {
-            return iterator_to_array($this->getElementsByTagName('a'));
-        }
+        return iterator_to_array($this->getElementsByTagName('a'));
     }
 
     /**
