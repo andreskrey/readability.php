@@ -8,16 +8,22 @@ trait NodeClassTrait
 {
 
     /**
+     * Content score of the node. Used to determine the value of the content
+     *
      * @var int
      */
     public $contentScore = 0;
 
     /**
+     * Flag for initialized status
+     *
      * @var bool
      */
     private $initialized = false;
 
     /**
+     * Collection of regexps to check the node usability
+     *
      * @var array
      */
     private $regexps = [
@@ -104,23 +110,6 @@ trait NodeClassTrait
         }
 
         return '';
-    }
-
-
-    /**
-     * Checks for the tag name. Case insensitive.
-     *
-     * @param string $value Name to compare to the current tag
-     *
-     * @return bool
-     */
-    public function tagNameEqualsTo($value)
-    {
-        if (strtolower($value) === strtolower($this->nodeName)) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -357,7 +346,7 @@ trait NodeClassTrait
             if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;
             }
-            if ($node->parentNode->tagNameEqualsTo($tagName)) {
+            if ($node->parentNode->nodeName === $tagName) {
                 return true;
             }
             $node = $node->parentNode;
