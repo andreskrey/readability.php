@@ -485,7 +485,7 @@ class Readability
                         /** @var $child DOMNode */
                         if ($child->nodeType === XML_TEXT_NODE && mb_strlen(trim(NodeUtility::getTextContent($child))) > 0) {
                             $newNode = $node->createNode($child, 'p');
-                            $child->replaceChild($newNode, $child);
+                            $child->parentNode->replaceChild($newNode, $child);
                         }
                     }
                 }
