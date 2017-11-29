@@ -772,7 +772,7 @@ class Readability
 
             /** @var $ancestor DOMElement */
             foreach ($ancestors as $level => $ancestor) {
-                if (!$ancestor->initialized) {
+                if (!$ancestor->isInitialized()) {
                     $ancestor->initializeNode();
                     $candidates[] = $ancestor;
                 }

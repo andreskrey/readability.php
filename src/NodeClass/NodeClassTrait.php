@@ -15,7 +15,7 @@ trait NodeClassTrait
     /**
      * @var bool
      */
-    public $initialized = false;
+    private $initialized = false;
 
     /**
      * @var array
@@ -26,13 +26,23 @@ trait NodeClassTrait
     ];
 
     /**
+     * initialized getter
+     *
+     * @return bool
+     */
+    public function isInitialized()
+    {
+        return $this->initialized;
+    }
+
+    /**
      * Initializer. Calculates the current score of the node and returns a full Readability object.
      *
      * @return self
      */
     public function initializeNode()
     {
-        if (!$this->initialized) {
+        if (!$this->isInitialized()) {
             $contentScore = 0;
 
             switch ($this->nodeName) {
