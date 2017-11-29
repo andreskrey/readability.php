@@ -93,7 +93,8 @@ trait NodeClassTrait
     }
 
     /**
-     * Placeholder for getAttribute method. Some nodes have the getAttribute method, some don't.
+     * Override for native getAttribute method. Some nodes have the getAttribute method, some don't, so we need
+     * to check first the existence of the attributes property.
      *
      * @param $attributeName string Attribute to retrieve
      *
@@ -102,11 +103,7 @@ trait NodeClassTrait
     public function getAttribute($attributeName)
     {
         if (!is_null($this->attributes)) {
-            foreach ($this->attributes as $attribute) {
-                if ($attribute->name === $attributeName) {
-                    return $attribute->value;
-                }
-            }
+            return parent::getAttribute($attributeName);
         }
 
         return '';
