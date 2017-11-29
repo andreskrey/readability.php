@@ -937,7 +937,7 @@ class Readability
         foreach ($siblings as $sibling) {
             $append = false;
 
-            if ($sibling->compareNodes($sibling, $topCandidate)) {
+            if ($sibling === $topCandidate) {
                 $append = true;
             } else {
                 $contentBonus = 0;
