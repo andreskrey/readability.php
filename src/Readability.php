@@ -879,7 +879,7 @@ class Readability
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
 
-                    NodeUtility::setNodeTag($sibling, 'div');
+                    $sibling = NodeUtility::setNodeTag($sibling, 'div');
                 }
 
                 $import = $articleContent->importNode($sibling, true);
