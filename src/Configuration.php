@@ -55,7 +55,7 @@ class Configuration
     /**
      * @return int
      */
-    public function getMaxTopCandidates(): int
+    public function getMaxTopCandidates()
     {
         return $this->maxTopCandidates;
     }
@@ -64,7 +64,7 @@ class Configuration
      * @param int $maxTopCandidates
      * @return $this
      */
-    public function setMaxTopCandidates(int $maxTopCandidates)
+    public function setMaxTopCandidates($maxTopCandidates)
     {
         $this->maxTopCandidates = $maxTopCandidates;
         return $this;
@@ -73,7 +73,7 @@ class Configuration
     /**
      * @return int
      */
-    public function getWordThreshold(): int
+    public function getWordThreshold()
     {
         return $this->wordThreshold;
     }
@@ -82,7 +82,7 @@ class Configuration
      * @param int $wordThreshold
      * @return $this
      */
-    public function setWordThreshold(int $wordThreshold)
+    public function setWordThreshold($wordThreshold)
     {
         $this->wordThreshold = $wordThreshold;
         return $this;
@@ -91,7 +91,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getArticleByLine(): bool
+    public function getArticleByLine()
     {
         return $this->articleByLine;
     }
@@ -100,7 +100,7 @@ class Configuration
      * @param bool $articleByLine
      * @return $this
      */
-    public function setArticleByLine(bool $articleByLine)
+    public function setArticleByLine($articleByLine)
     {
         $this->articleByLine = $articleByLine;
         return $this;
@@ -109,7 +109,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getStripUnlikelyCandidates(): bool
+    public function getStripUnlikelyCandidates()
     {
         return $this->stripUnlikelyCandidates;
     }
@@ -118,7 +118,7 @@ class Configuration
      * @param bool $stripUnlikelyCandidates
      * @return $this
      */
-    public function setStripUnlikelyCandidates(bool $stripUnlikelyCandidates)
+    public function setStripUnlikelyCandidates($stripUnlikelyCandidates)
     {
         $this->stripUnlikelyCandidates = $stripUnlikelyCandidates;
         return $this;
@@ -127,7 +127,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getCleanConditionally(): bool
+    public function getCleanConditionally()
     {
         return $this->cleanConditionally;
     }
@@ -136,7 +136,7 @@ class Configuration
      * @param bool $cleanConditionally
      * @return $this
      */
-    public function setCleanConditionally(bool $cleanConditionally)
+    public function setCleanConditionally($cleanConditionally)
     {
         $this->cleanConditionally = $cleanConditionally;
         return $this;
@@ -145,7 +145,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getWeightClasses(): bool
+    public function getWeightClasses()
     {
         return $this->weightClasses;
     }
@@ -154,7 +154,7 @@ class Configuration
      * @param bool $weightClasses
      * @return $this
      */
-    public function setWeightClasses(bool $weightClasses)
+    public function setWeightClasses($weightClasses)
     {
         $this->weightClasses = $weightClasses;
         return $this;
@@ -163,7 +163,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getRemoveReadabilityTags(): bool
+    public function getRemoveReadabilityTags()
     {
         return $this->removeReadabilityTags;
     }
@@ -172,7 +172,7 @@ class Configuration
      * @param bool $removeReadabilityTags
      * @return $this
      */
-    public function setRemoveReadabilityTags(bool $removeReadabilityTags)
+    public function setRemoveReadabilityTags($removeReadabilityTags)
     {
         $this->removeReadabilityTags = $removeReadabilityTags;
         return $this;
@@ -181,7 +181,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getFixRelativeURLs(): bool
+    public function getFixRelativeURLs()
     {
         return $this->fixRelativeURLs;
     }
@@ -190,7 +190,7 @@ class Configuration
      * @param bool $fixRelativeURLs
      * @return $this
      */
-    public function setFixRelativeURLs(bool $fixRelativeURLs)
+    public function setFixRelativeURLs($fixRelativeURLs)
     {
         $this->fixRelativeURLs = $fixRelativeURLs;
         return $this;
@@ -199,7 +199,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getSubstituteEntities(): bool
+    public function getSubstituteEntities()
     {
         return $this->substituteEntities;
     }
@@ -208,7 +208,7 @@ class Configuration
      * @param bool $substituteEntities
      * @return $this
      */
-    public function setSubstituteEntities(bool $substituteEntities)
+    public function setSubstituteEntities($substituteEntities)
     {
         $this->substituteEntities = $substituteEntities;
         return $this;
@@ -217,7 +217,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getNormalizeEntities(): bool
+    public function getNormalizeEntities()
     {
         return $this->normalizeEntities;
     }
@@ -226,7 +226,7 @@ class Configuration
      * @param bool $normalizeEntities
      * @return $this
      */
-    public function setNormalizeEntities(bool $normalizeEntities)
+    public function setNormalizeEntities($normalizeEntities)
     {
         $this->normalizeEntities = $normalizeEntities;
         return $this;
@@ -235,7 +235,7 @@ class Configuration
     /**
      * @return string
      */
-    public function getOriginalURL(): string
+    public function getOriginalURL()
     {
         return $this->originalURL;
     }
@@ -244,7 +244,7 @@ class Configuration
      * @param string $originalURL
      * @return $this
      */
-    public function setOriginalURL(string $originalURL)
+    public function setOriginalURL($originalURL)
     {
         $this->originalURL = $originalURL;
         return $this;
@@ -253,7 +253,7 @@ class Configuration
     /**
      * @return bool
      */
-    public function getSummonCthulhu(): bool
+    public function getSummonCthulhu()
     {
         return $this->summonCthulhu;
     }
@@ -262,7 +262,7 @@ class Configuration
      * @param bool $summonCthulhu
      * @return $this
      */
-    public function setSummonCthulhu(bool $summonCthulhu)
+    public function setSummonCthulhu($summonCthulhu)
     {
         $this->summonCthulhu = $summonCthulhu;
         return $this;
