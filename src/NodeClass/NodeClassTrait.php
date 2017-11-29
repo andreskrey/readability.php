@@ -98,7 +98,7 @@ trait NodeClassTrait
      *
      * @param $attributeName string Attribute to retrieve
      *
-     * @return string|null
+     * @return string
      */
     public function getAttribute($attributeName)
     {
