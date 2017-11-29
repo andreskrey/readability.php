@@ -228,7 +228,7 @@ trait NodeClassTrait
     }
 
     /**
-     * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
+     * Returns the next node. First checks for children (if the flag allows it), then for siblings, and finally
      * for parents.
      *
      * @param DOMNode|DOMText $originalNode
@@ -264,34 +264,6 @@ trait NodeClassTrait
         } while ($originalNode && !$originalNode->nextSibling);
 
         return ($originalNode) ? $originalNode->nextSibling : $originalNode;
-    }
-
-    /**
-     * Compares nodes. Checks for tag name and text content.
-     *
-     * It's a replacement of the original JS code, which looked like this:
-     *
-     * $node1 == $node2
-     *
-     * I'm not sure this works the same in PHP, so I created a mock function to check the actual content of the node.
-     * Should serve the same porpuse as the original comparison.
-     *
-     * @param DOMElement $node1
-     * @param DOMElement $node2
-     *
-     * @return bool
-     */
-    public function compareNodes($node1, $node2)
-    {
-        if ($node1->nodeName !== $node2->nodeName) {
-            return false;
-        }
-
-        if ($node1->getTextContent(true) !== $node2->getTextContent(true)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
