@@ -1104,7 +1104,7 @@ class Readability
         $next = $node->getNextNode($node);
         while ($next && $next !== $endOfSearchMarkerNode) {
             if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
-                $next = NodeUtility::removeAndGetNext($node);
+                $next = NodeUtility::removeAndGetNext($next);
             } else {
                 $next = $next->getNextNode($next);
             }
