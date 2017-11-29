@@ -531,8 +531,8 @@ class Readability
                 if (
                     preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
                     !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
-                    !$node->tagNameEqualsTo('body') &&
-                    !$node->tagNameEqualsTo('a')
+                    $node->nodeName !== 'body' &&
+                    $node->nodeName !== 'a'
                 ) {
                     $node = NodeUtility::removeAndGetNext($node);
                     continue;
@@ -540,10 +540,10 @@ class Readability
             }
 
             // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
-            if (($node->tagNameEqualsTo('div') || $node->tagNameEqualsTo('section') || $node->tagNameEqualsTo('header') ||
-                    $node->tagNameEqualsTo('h1') || $node->tagNameEqualsTo('h2') || $node->tagNameEqualsTo('h3') ||
-                    $node->tagNameEqualsTo('h4') || $node->tagNameEqualsTo('h5') || $node->tagNameEqualsTo('h6') ||
-                    $node->tagNameEqualsTo('p')) &&
+            if (($node->nodeName === 'div' || $node->nodeName === 'section' || $node->nodeName === 'header' ||
+                    $node->nodeName === 'h1' || $node->nodeName === 'h2' || $node->nodeName === 'h3' ||
+                    $node->nodeName === 'h4' || $node->nodeName === 'h5' || $node->nodeName === 'h6' ||
+                    $node->nodeName === 'p') &&
                 $node->isElementWithoutContent()) {
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
@@ -554,7 +554,7 @@ class Readability
             }
 
             // Turn all divs that don't have children block level elements into p's
-            if ($node->tagNameEqualsTo('div')) {
+            if ($node->nodeName === 'div') {
                 /*
                  * Sites like http://mobile.slate.com encloses each paragraph with a DIV
                  * element. DIVs with only a P element inside and no text content can be
@@ -835,7 +835,7 @@ class Readability
          * We also have to copy the body node so it is something we can modify.
          */
 
-        if ($topCandidate === null || $topCandidate->tagNameEqualsTo('body')) {
+        if ($topCandidate === null || $topCandidate->nodeName === 'body') {
             // Move all of the page's children into topCandidate
             $topCandidate = new DOMDocument('1.0', 'utf-8');
             $topCandidate->encoding = 'UTF-8';
@@ -863,7 +863,7 @@ class Readability
             $MINIMUM_TOPCANDIDATES = 3;
             if (count($alternativeCandidateAncestors) >= $MINIMUM_TOPCANDIDATES) {
                 $parentOfTopCandidate = $topCandidate->parentNode;
-                while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
+                while ($parentOfTopCandidate->nodeName !== 'body') {
                     $listsContainingThisAncestor = 0;
                     for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
                         $listsContainingThisAncestor += (int)in_array($parentOfTopCandidate, $alternativeCandidateAncestors[$ancestorIndex]);
@@ -893,7 +893,7 @@ class Readability
             $scoreThreshold = $lastScore / 3;
 
             /* @var DOMElement $parentOfTopCandidate */
-            while (!$parentOfTopCandidate->tagNameEqualsTo('body')) {
+            while ($parentOfTopCandidate->nodeName !== 'body') {
                 $parentScore = $parentOfTopCandidate->contentScore;
                 if ($parentScore < $scoreThreshold) {
                     break;
@@ -911,7 +911,7 @@ class Readability
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->parentNode;
-            while (!$parentOfTopCandidate->tagNameEqualsTo('body') && count($parentOfTopCandidate->getChildren(true)) === 1) {
+            while ($parentOfTopCandidate->nodeName !== 'body' && count($parentOfTopCandidate->getChildren(true)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->parentNode;
             }
@@ -948,7 +948,7 @@ class Readability
                 }
                 if ($sibling->contentScore + $contentBonus >= $siblingScoreThreshold) {
                     $append = true;
-                } elseif ($sibling->tagNameEqualsTo('p')) {
+                } elseif ($sibling->nodeName === 'p') {
                     $linkDensity = $sibling->getLinkDensity();
                     $nodeContent = $sibling->getTextContent(true);
 
