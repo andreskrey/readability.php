@@ -110,9 +110,6 @@ class Readability
     public function __construct(Configuration $configuration)
     {
         $this->configuration = $configuration;
-
-        // To avoid having a gazillion of errors on malformed HTMLs
-        libxml_use_internal_errors(true);
     }
 
     /**
@@ -201,6 +198,9 @@ class Readability
      */
     private function loadHTML($html)
     {
+        // To avoid having a gazillion of errors on malformed HTMLs
+        libxml_use_internal_errors(true);
+
         $dom = new DOMDocument('1.0', 'utf-8');
 
         if (!$this->configuration->getSubstituteEntities()) {
