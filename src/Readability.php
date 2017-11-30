@@ -563,7 +563,7 @@ class Readability
                 }
             }
 
-            $node = $node->getNextNode($node);
+            $node = NodeUtility::getNextNode($node);
         }
 
         return $elementsToScore;
@@ -1172,13 +1172,13 @@ class Readability
      **/
     public function _cleanMatchedNodes($node, $regex)
     {
-        $endOfSearchMarkerNode = $node->getNextNode($node, true);
-        $next = $node->getNextNode($node);
+        $endOfSearchMarkerNode = NodeUtility::getNextNode($node, true);
+        $next = NodeUtility::getNextNode($node);
         while ($next && $next !== $endOfSearchMarkerNode) {
             if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
                 $next = NodeUtility::removeAndGetNext($next);
             } else {
-                $next = $next->getNextNode($next);
+                $next = NodeUtility::getNextNode($next);
             }
         }
     }
