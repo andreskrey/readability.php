@@ -22,16 +22,6 @@ trait NodeClassTrait
     private $initialized = false;
 
     /**
-     * Collection of regexps to check the node usability
-     *
-     * @var array
-     */
-    private $regexps = [
-        'positive' => '/article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story/i',
-        'negative' => '/hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|foot|footer|footnote|masthead|media|meta|modal|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|tool|widget/i',
-    ];
-
-    /**
      * initialized getter
      *
      * @return bool
@@ -188,11 +178,11 @@ trait NodeClassTrait
         // Look for a special classname
         $class = $this->getAttribute('class');
         if (trim($class)) {
-            if (preg_match($this->regexps['negative'], $class)) {
+            if (preg_match(NodeUtility::$regexps['negative'], $class)) {
                 $weight -= 25;
             }
 
-            if (preg_match($this->regexps['positive'], $class)) {
+            if (preg_match(NodeUtility::$regexps['positive'], $class)) {
                 $weight += 25;
             }
         }
@@ -200,11 +190,11 @@ trait NodeClassTrait
         // Look for a special ID
         $id = $this->getAttribute('id');
         if (trim($id)) {
-            if (preg_match($this->regexps['negative'], $id)) {
+            if (preg_match(NodeUtility::$regexps['negative'], $id)) {
                 $weight -= 25;
             }
 
-            if (preg_match($this->regexps['positive'], $id)) {
+            if (preg_match(NodeUtility::$regexps['positive'], $id)) {
                 $weight += 25;
             }
         }
