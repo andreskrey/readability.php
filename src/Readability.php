@@ -47,24 +47,6 @@ class Readability
      */
     private $configuration;
 
-    /**
-     * @var array
-     */
-    private $regexps = [
-        'unlikelyCandidates' => '/banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|foot|header|legends|menu|modal|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote/i',
-        'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
-        'extraneous' => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
-        'byline' => '/byline|author|dateline|writtenby|p-author/i',
-        'replaceFonts' => '/<(\/?)font[^>]*>/gi',
-        'normalize' => '/\s{2,}/',
-        'videos' => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
-        'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
-        'prevLink' => '/(prev|earl|old|new|<|«)/i',
-        'whitespace' => '/^\s*$/',
-        'hasContent' => '/\S$/',
-        // \x{00A0} is the unicode version of &nbsp;
-        'onlyWhitespace' => '/\x{00A0}|\s+/u'
-    ];
     private $defaultTagsToScore = [
         'section',
         'h2',
@@ -529,8 +511,8 @@ class Readability
             // Remove unlikely candidates
             if ($stripUnlikelyCandidates) {
                 if (
-                    preg_match($this->regexps['unlikelyCandidates'], $matchString) &&
-                    !preg_match($this->regexps['okMaybeItsACandidate'], $matchString) &&
+                    preg_match(NodeUtility::$regexps['unlikelyCandidates'], $matchString) &&
+                    !preg_match(NodeUtility::$regexps['okMaybeItsACandidate'], $matchString) &&
                     $node->nodeName !== 'body' &&
                     $node->nodeName !== 'a'
                 ) {
@@ -610,7 +592,7 @@ class Readability
 
         $rel = $node->getAttribute('rel');
 
-        if ($rel === 'author' || preg_match($this->regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
+        if ($rel === 'author' || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
             $this->metadata['byline'] = trim($node->getTextContent());
 
             return true;
@@ -1223,7 +1205,7 @@ class Readability
             $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
             $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
 
-            if ($totalCount === 0 && !preg_replace($this->regexps['onlyWhitespace'], '', $paragraph->textContent)) {
+            if ($totalCount === 0 && !preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $paragraph->textContent)) {
                 // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
@@ -1289,7 +1271,7 @@ class Readability
                 $embeds = $node->getElementsByTagName('embed');
 
                 foreach ($embeds as $embedNode) {
-                    if (preg_match($this->regexps['videos'], $embedNode->C14N())) {
+                    if (preg_match(NodeUtility::$regexps['videos'], $embedNode->C14N())) {
                         $embedCount++;
                     }
                 }
@@ -1342,12 +1324,12 @@ class Readability
                 $attributeValues = implode('|', $attributeValues);
 
                 // First, check the elements attributes to see if any of them contain youtube or vimeo
-                if (preg_match($this->regexps['videos'], $attributeValues)) {
+                if (preg_match(NodeUtility::$regexps['videos'], $attributeValues)) {
                     continue;
                 }
 
                 // Then check the elements inside this element for the same.
-                if (preg_match($this->regexps['videos'], $item->C14N())) {
+                if (preg_match(NodeUtility::$regexps['videos'], $item->C14N())) {
                     continue;
                 }
             }
