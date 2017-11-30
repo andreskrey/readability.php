@@ -30,9 +30,9 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         }
 
         $readability = new Readability($configuration);
-        $result = $readability->parse($html);
+        $readability->parse($html);
 
-        $this->assertEquals($expectedResult, $result['html']);
+        $this->assertEquals($expectedResult, $readability->getContent());
     }
 
     /**
@@ -40,7 +40,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
      */
     public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
     {
-        $options = ['originalURL' => 'http://fakehost/test/test.html',
+        $options = ['originalURL' => 'http://fakehost/test.html',
             'fixRelativeURLs' => true,
             'substituteEntities' => true,
         ];
@@ -56,9 +56,9 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         }
 
         $readability = new Readability($configuration);
-        $result = $readability->parse($html);
+        $readability->parse($html);
 
-        $this->assertEquals($expectedImages, json_encode($result['images']));
+        $this->assertEquals($expectedImages, json_encode($readability->getImages()));
     }
 
     public function getSamplePages()
