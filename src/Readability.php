@@ -555,7 +555,7 @@ class Readability
                     // EXPERIMENTAL
                     foreach ($node->getChildren() as $child) {
                         /** @var $child DOMNode */
-                        if ($child->nodeType === XML_TEXT_NODE && mb_strlen(trim(NodeUtility::getTextContent($child))) > 0) {
+                        if ($child->nodeType === XML_TEXT_NODE && mb_strlen(trim($child->getTextContent())) > 0) {
                             $newNode = $node->createNode($child, 'p');
                             $child->parentNode->replaceChild($newNode, $child);
                         }
