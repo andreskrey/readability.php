@@ -1115,7 +1115,7 @@ class Readability
                 continue;
             }
 
-            $sizeInfo = $table->_getRowAndColumnCount();
+            $sizeInfo = $table->getRowAndColumnCount();
             if ($sizeInfo['rows'] >= 10 || $sizeInfo['columns'] > 4) {
                 $table->readabilityDataTable = true;
                 continue;
