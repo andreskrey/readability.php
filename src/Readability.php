@@ -301,7 +301,7 @@ class Readability
     public function getImages()
     {
         $result = [];
-        if (!$this->getImage()) {
+        if ($this->getImage()) {
             $result[] = $this->getImage();
         }
 

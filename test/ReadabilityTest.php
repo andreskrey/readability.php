@@ -40,7 +40,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
      */
     public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
     {
-        $options = ['originalURL' => 'http://fakehost/test.html',
+        $options = ['originalURL' => 'http://fakehost/test/test.html',
             'fixRelativeURLs' => true,
             'substituteEntities' => true,
         ];
