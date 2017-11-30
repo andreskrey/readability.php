@@ -6,7 +6,6 @@ use andreskrey\Readability\NodeUtility;
 
 trait NodeClassTrait
 {
-
     /**
      * Content score of the node. Used to determine the value of the content
      *
@@ -237,6 +236,55 @@ trait NodeClassTrait
     }
 
     /**
+     * Returns the children of the current node.
+     *
+     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
+     *
+     * @return array
+     */
+    public function getChildren($filterEmptyDOMText = false)
+    {
+        $ret = iterator_to_array($this->childNodes);
+        if ($filterEmptyDOMText) {
+            // Array values is used to discard the key order. Needs to be 0 to whatever without skipping any number
+            $ret = array_values(array_filter($ret, function ($node) {
+                return $node->nodeName !== '#text' || mb_strlen(trim($node->nodeValue));
+            }));
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Return an array indicating how many rows and columns this table has.
+     *
+     * @return array
+     */
+    public function getRowAndColumnCount()
+    {
+        $rows = $columns = 0;
+        $trs = $this->getElementsByTagName('tr');
+        foreach ($trs as $tr) {
+            /** @var \DOMElement $tr */
+            $rowspan = $tr->getAttribute('rowspan');
+            $rows += ($rowspan || 1);
+
+            // Now look for column-related info
+            $columnsInThisRow = 0;
+            $cells = $tr->getElementsByTagName('td');
+            foreach ($cells as $cell) {
+                /** @var \DOMElement $cell */
+                $colspan = $cell->getAttribute('colspan');
+                $columnsInThisRow += ($colspan || 1);
+            }
+            $columns = max($columns, $columnsInThisRow);
+        }
+
+        return ['rows' => $rows, 'columns' => $columns];
+    }
+
+
+    /**
      * Creates a new node based on the text content of the original node.
      *
      * @param $originalNode DOMElement
@@ -307,7 +355,9 @@ trait NodeClassTrait
     }
 
     /**
-     * @param $node DOMNode
+     * Check if the current element has a single child block element.
+     * Block elements are the ones defined in the divToPElements array.
+     *
      * @return bool
      */
     public function hasSingleChildBlockElement()
@@ -319,32 +369,13 @@ trait NodeClassTrait
                     $result = true;
                 } else {
                     // If any of the hasSingleChildBlockElement calls return true, return true then.
+                    /** @var $child DOMElement */
                     $result = ($result || $child->hasSingleChildBlockElement());
                 }
             }
         }
 
         return $result;
-    }
-
-    /**
-     * Returns the children of the current node.
-     *
-     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
-     *
-     * @return array
-     */
-    public function getChildren($filterEmptyDOMText = false)
-    {
-        $ret = iterator_to_array($this->childNodes);
-        if ($filterEmptyDOMText) {
-            // Array values is used to discard the key order. Needs to be 0 to whatever without skipping any number
-            $ret = array_values(array_filter($ret, function ($node) {
-                return $node->nodeName !== '#text' || mb_strlen(trim($node->nodeValue));
-            }));
-        }
-
-        return $ret;
     }
 
     /**
@@ -371,33 +402,5 @@ trait NodeClassTrait
                 }))
 
             );
-    }
-
-    /**
-     * Return an array indicating how many rows and columns this table has.
-     *
-     * @return array
-     */
-    public function _getRowAndColumnCount()
-    {
-        $rows = $columns = 0;
-        $trs = $this->getElementsByTagName('tr');
-        foreach ($trs as $tr) {
-            /** @var \DOMElement $tr */
-            $rowspan = $tr->getAttribute('rowspan');
-            $rows += ($rowspan || 1);
-
-            // Now look for column-related info
-            $columnsInThisRow = 0;
-            $cells = $tr->getElementsByTagName('td');
-            foreach ($cells as $cell) {
-                /** @var \DOMElement $cell */
-                $colspan = $cell->getAttribute('colspan');
-                $columnsInThisRow += ($colspan || 1);
-            }
-            $columns = max($columns, $columnsInThisRow);
-        }
-
-        return ['rows' => $rows, 'columns' => $columns];
     }
 }
