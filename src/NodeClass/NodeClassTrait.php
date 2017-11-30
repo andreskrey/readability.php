@@ -44,6 +44,8 @@ trait NodeClassTrait
     /**
      * Initializer. Calculates the current score of the node and returns a full Readability object.
      *
+     * @ TODO: I don't like the weightClasses param. How can we get the config here?
+     *
      * @param $weightClasses bool Weight classes?
      * @return static
      */
@@ -286,13 +288,13 @@ trait NodeClassTrait
      * Check if a given node has one of its ancestor tag name matching the
      * provided one.
      *
-     * @param Readability $node
+     * @param DOMElement $node
      * @param string $tagName
      * @param int $maxDepth
      *
      * @return bool
      */
-    public function hasAncestorTag(self $node, $tagName, $maxDepth = 3)
+    public function hasAncestorTag($node, $tagName, $maxDepth = 3)
     {
         $depth = 0;
         while ($node->parentNode) {
