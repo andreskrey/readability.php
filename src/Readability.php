@@ -22,31 +22,64 @@ use andreskrey\Readability\NodeClass\NodeClassTrait;
 class Readability
 {
     /**
+     * Main DOMDocument where all the magic happens.
+     *
      * @var DOMDocument
      */
     protected $dom;
 
     /**
+     * Title of the article
+     *
      * @var string|null
      */
     protected $title = null;
+
     /**
+     * HTML content article
+     *
      * @var string|null
      */
     protected $content = null;
+
     /**
+     * Excerpt of the article
+     *
+     * @var string|null
+     */
+    protected $excerpt = null;
+
+    /**
+     * Main image of the article
+     *
      * @var string|null
      */
     protected $image = null;
+
     /**
+     * Author of the article. Extracted from the byline tags and other social media properties
+     *
      * @var string|null
      */
     protected $author = null;
+
     /**
+     * Direction of the text
+     *
+     * @var string|null
+     */
+    protected $direction = null;
+
+    /**
+     * Configuration object
+     *
      * @var Configuration
      */
     private $configuration;
 
+    /**
+     * @var array
+     */
     private $defaultTagsToScore = [
         'section',
         'h2',
@@ -67,8 +100,6 @@ class Readability
         'article',
         'section',
         'p',
-        // TODO, check if this is correct, #text elements do not exist in js
-        '#text',
     ];
 
     /**
@@ -84,13 +115,20 @@ class Readability
         libxml_use_internal_errors(true);
     }
 
+    /**
+     * Main parse function
+     *
+     * @param $html
+     *
+     * @return array|bool
+     */
     public function parse($html)
     {
         $this->dom = $this->loadHTML($html);
 
-        $this->metadata = $this->getMetadata();
+        $this->getMetadata();
 
-        $this->metadata['image'] = $this->getMainImage();
+        $this->getMainImage();
 
         // Checking for minimum HTML to work with.
         if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
@@ -144,16 +182,9 @@ class Readability
 
         $result = $this->postProcessContent($result);
 
-        // Todo, fix return, check for values, maybe create a function to create the return object
-        return [
-            'title' => isset($this->metadata['title']) ? $this->metadata['title'] : null,
-            'author' => isset($this->metadata['author']) ? $this->metadata['author'] : null,
-            'image' => isset($this->metadata['image']) ? $this->metadata['image'] : null,
-            'images' => $this->getImages(),
-            'article' => $result,
-            'html' => $result->C14N(),
-            'dir' => isset($this->metadata['articleDir']) ? $this->metadata['articleDir'] : null,
-        ];
+        $this->setContent($result->C14N());
+
+        return true;
     }
 
     /**
@@ -198,13 +229,11 @@ class Readability
     }
 
     /**
-     * Tries to guess relevant info from metadata of the html.
-     *
-     * @return array Metadata info. May have title, excerpt and or byline.
+     * Tries to guess relevant info from metadata of the html. Sets the results in the Readability properties
      */
     private function getMetadata()
     {
-        $metadata = $values = [];
+        $values = [];
         // Match "description", or Twitter's "twitter:description" (Cards)
         // in name attribute.
         $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title|image)\s*$/i';
@@ -218,7 +247,7 @@ class Readability
             $elementProperty = $meta->getAttribute('property');
 
             if (in_array('author', [$elementName, $elementProperty])) {
-                $metadata['byline'] = $meta->getAttribute('content');
+                $this->setAuthor($meta->getAttribute('content'));
                 continue;
             }
 
@@ -240,34 +269,30 @@ class Readability
             }
         }
         if (array_key_exists('description', $values)) {
-            $metadata['excerpt'] = $values['description'];
+            $this->setExcerpt($values['description']);
         } elseif (array_key_exists('og:description', $values)) {
             // Use facebook open graph description.
-            $metadata['excerpt'] = $values['og:description'];
+            $this->setExcerpt($values['og:description']);
         } elseif (array_key_exists('twitter:description', $values)) {
             // Use twitter cards description.
-            $metadata['excerpt'] = $values['twitter:description'];
+            $this->setExcerpt($values['twitter:description']);
         }
 
-        $metadata['title'] = $this->getArticleTitle();
+        $this->setTitle($this->getArticleTitle());
 
-        if (!$metadata['title']) {
+        if (!$this->getTitle()) {
             if (array_key_exists('og:title', $values)) {
                 // Use facebook open graph title.
-                $metadata['title'] = $values['og:title'];
+                $this->setTitle($values['og:title']);
             } elseif (array_key_exists('twitter:title', $values)) {
                 // Use twitter cards title.
-                $metadata['title'] = $values['twitter:title'];
+                $this->setTitle($values['twitter:title']);
             }
         }
 
         if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
-            $metadata['image'] = array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image'];
-        } else {
-            $metadata['image'] = null;
+            $this->setImage(array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image']);
         }
-
-        return $metadata;
     }
 
     /**
@@ -276,9 +301,10 @@ class Readability
     public function getImages()
     {
         $result = [];
-        if (!empty($this->metadata['image'])) {
-            $result[] = $this->metadata['image'];
+        if (!$this->getImage()) {
+            $result[] = $this->getImage();
         }
+
         if (null == $this->dom) {
             return $result;
         }
@@ -304,15 +330,13 @@ class Readability
     /**
      * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
      * find a correct image.
-     *
-     * @return bool|string URL of the top image or false if unsuccessful.
      */
     public function getMainImage()
     {
         $imgUrl = false;
 
-        if ($this->metadata['image'] !== null) {
-            $imgUrl = $this->metadata['image'];
+        if ($this->getImage() !== null) {
+            $imgUrl = $this->getImage();
         }
 
         if (!$imgUrl) {
@@ -330,10 +354,8 @@ class Readability
         }
 
         if (!empty($imgUrl) && $this->configuration->getFixRelativeURLs()) {
-            $imgUrl = $this->toAbsoluteURI($imgUrl);
+            $this->setImage($this->toAbsoluteURI($imgUrl));
         }
-
-        return $imgUrl;
     }
 
     /**
@@ -345,8 +367,8 @@ class Readability
     {
         $originalTitle = null;
 
-        if (isset($this->metadata['title'])) {
-            $originalTitle = $this->metadata['title'];
+        if ($this->getTitle()) {
+            $originalTitle = $this->getTitle();
         } else {
             $titleTag = $this->dom->getElementsByTagName('title');
             if ($titleTag->length > 0) {
@@ -974,7 +996,7 @@ class Readability
             foreach ($ancestors as $ancestor) {
                 $articleDir = $ancestor->getAttribute('dir');
                 if ($articleDir) {
-                    $this->metadata['articleDir'] = $articleDir;
+                    $this->setDirection($articleDir);
                     break;
                 }
             }
@@ -1023,13 +1045,13 @@ class Readability
          */
         $h2 = $article->getElementsByTagName('h2');
         if ($h2->length === 1) {
-            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->metadata['title'])) / max(mb_strlen($this->metadata['title']), 1);
+            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->getTitle())) / max(mb_strlen($this->getTitle()), 1);
 
             if (abs($lengthSimilarRate) < 0.5) {
                 if ($lengthSimilarRate > 0) {
-                    $titlesMatch = strpos($h2->item(0)->textContent, $this->metadata['title']) !== false;
+                    $titlesMatch = strpos($h2->item(0)->textContent, $this->getTitle()) !== false;
                 } else {
-                    $titlesMatch = strpos($this->metadata['title'], $h2->item(0)->textContent) !== false;
+                    $titlesMatch = strpos($this->getTitle(), $h2->item(0)->textContent) !== false;
                 }
                 if ($titlesMatch) {
                     $this->_clean($article, 'h2');
@@ -1437,6 +1459,22 @@ class Readability
     }
 
     /**
+     * @return null|string
+     */
+    public function getExcerpt()
+    {
+        return $this->excerpt;
+    }
+
+    /**
+     * @param null|string $excerpt
+     */
+    public function setExcerpt($excerpt)
+    {
+        $this->excerpt = $excerpt;
+    }
+
+    /**
      * @return string|null
      */
     public function getImage()
@@ -1468,4 +1506,19 @@ class Readability
         $this->author = $author;
     }
 
+    /**
+     * @return null|string
+     */
+    public function getDirection()
+    {
+        return $this->direction;
+    }
+
+    /**
+     * @param null|string $direction
+     */
+    public function setDirection($direction)
+    {
+        $this->direction = $direction;
+    }
 }
