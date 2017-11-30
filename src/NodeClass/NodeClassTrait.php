@@ -320,13 +320,12 @@ trait NodeClassTrait
      */
     public function getChildren($filterEmptyDOMText = false)
     {
-        $ret = [];
-        foreach ($this->childNodes as $node) {
-            if ($filterEmptyDOMText && $node->nodeName === '#text' && !trim($node->nodeValue)) {
-                continue;
-            }
-
-            $ret[] = $node;
+        $ret = iterator_to_array($this->childNodes);
+        if ($filterEmptyDOMText) {
+            // Array values is used to discard the key order. Needs to be 0 to whatever without skipping any number
+            $ret = array_values(array_filter($ret, function ($node) {
+                return $node->nodeName !== '#text' || mb_strlen(trim($node->nodeValue));
+            }));
         }
 
         return $ret;
