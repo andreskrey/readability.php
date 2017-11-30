@@ -220,45 +220,6 @@ trait NodeClassTrait
     }
 
     /**
-     * Returns the next node. First checks for children (if the flag allows it), then for siblings, and finally
-     * for parents.
-     *
-     * @param DOMNode|DOMText $originalNode
-     * @param bool $ignoreSelfAndKids
-     *
-     * @return DOMNode
-     */
-    public function getNextNode($originalNode, $ignoreSelfAndKids = false)
-    {
-        /*
-         * Traverse the DOM from node to node, starting at the node passed in.
-         * Pass true for the second parameter to indicate this node itself
-         * (and its kids) are going away, and we want the next node over.
-         *
-         * Calling this in a loop will traverse the DOM depth-first.
-         */
-
-        // First check for kids if those aren't being ignored
-        if (!$ignoreSelfAndKids && $originalNode->firstChild) {
-            return $originalNode->firstChild;
-        }
-
-        // Then for siblings...
-        if ($originalNode->nextSibling) {
-            return $originalNode->nextSibling;
-        }
-
-        // And finally, move up the parent chain *and* find a sibling
-        // (because this is depth-first traversal, we will have already
-        // seen the parent nodes themselves).
-        do {
-            $originalNode = $originalNode->parentNode;
-        } while ($originalNode && !$originalNode->nextSibling);
-
-        return ($originalNode) ? $originalNode->nextSibling : $originalNode;
-    }
-
-    /**
      * Creates a new node based on the text content of the original node.
      *
      * @param $originalNode DOMElement

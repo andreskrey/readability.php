@@ -58,7 +58,7 @@ class NodeUtility
      * Imported from the Element class on league\html-to-markdown
      *
      * @param $node
-     * @return mixed
+     * @return DOMElement
      */
     public static function nextElement($node)
     {
@@ -124,13 +124,13 @@ class NodeUtility
     }
 
     /**
-     * Remove the passed node.
+     * Remove the selected node.
      *
-     * @param DOMElement $node
+     * @param $node DOMElement
      *
      * @return void
      **/
-    public static function removeNode(DOMElement $node)
+    public static function removeNode($node)
     {
         $parent = $node->parentNode;
         if ($parent) {
@@ -140,7 +140,7 @@ class NodeUtility
 
 
     /**
-     * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
+     * Returns the next node. First checks for children (if the flag allows it), then for siblings, and finally
      * for parents.
      *
      * @param DOMNode $originalNode
