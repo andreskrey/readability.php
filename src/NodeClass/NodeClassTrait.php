@@ -329,12 +329,11 @@ trait NodeClassTrait
     public function isElementWithoutContent()
     {
         return $this instanceof DOMElement &&
-            // /\x{00A0}|\s+/u TODO to be replaced with regexps array
-            mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->textContent)) === 0 &&
+            mb_strlen(preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $this->textContent)) === 0 &&
             ($this->childNodes->length === 0 ||
                 $this->childNodes->length === $this->getElementsByTagName('br')->length + $this->getElementsByTagName('hr')->length
                 /*
-                 * Special DOMDocument case: We also need to count how many DOMText we have inside the node.
+                 * Special PHP DOMDocument case: We also need to count how many DOMText we have inside the node.
                  * If there's an empty tag with an space inside and a BR (for example "<p> <br/></p>) counting only BRs and
                  * HRs will will say that the example has 2 nodes, instead of one. This happens because in DOMDocument,
                  * DOMTexts are also nodes (which doesn't happen in JS). So we need to also count how many DOMText we
