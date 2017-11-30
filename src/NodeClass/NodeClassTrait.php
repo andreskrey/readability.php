@@ -22,6 +22,23 @@ trait NodeClassTrait
     private $initialized = false;
 
     /**
+     * @var array
+     */
+    private $divToPElements = [
+        'a',
+        'blockquote',
+        'dl',
+        'div',
+        'img',
+        'ol',
+        'p',
+        'pre',
+        'table',
+        'ul',
+        'select',
+    ];
+
+    /**
      * initialized getter
      *
      * @return bool
@@ -260,6 +277,54 @@ trait NodeClassTrait
         }
 
         return false;
+    }
+
+    /**
+     * Checks if the current node has a single child and if that child is a P node.
+     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
+     * tags are, in practice, paragraphs.
+     *
+     * @param DOMNode $node
+     *
+     * @return bool
+     */
+    public function hasSinglePNode()
+    {
+        // There should be exactly 1 element child which is a P:
+        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== 'p') {
+            return false;
+        }
+
+        // And there should be no text nodes with real content (param true on ->getChildren)
+        foreach ($children as $child) {
+            /** @var $child DOMNode */
+            if ($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param $node DOMNode
+     * @return bool
+     */
+    public function hasSingleChildBlockElement()
+    {
+        $result = false;
+        if ($this->hasChildNodes()) {
+            foreach ($this->getChildren() as $child) {
+                if (in_array($child->nodeName, $this->divToPElements)) {
+                    $result = true;
+                } else {
+                    // If any of the hasSingleChildBlockElement calls return true, return true then.
+                    $result = ($result || $child->hasSingleChildBlockElement());
+                }
+            }
+        }
+
+        return $result;
     }
 
     /**

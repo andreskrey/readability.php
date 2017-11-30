@@ -543,12 +543,12 @@ class Readability
                  * safely converted into plain P elements to avoid confusing the scoring
                  * algorithm with DIVs with are, in practice, paragraphs.
                  */
-                if (NodeUtility::hasSinglePNode($node)) {
+                if ($node->hasSinglePNode()) {
                     $pNode = $node->getChildren(true)[0];
                     $node->parentNode->replaceChild($pNode, $node);
                     $node = $pNode;
                     $elementsToScore[] = $node;
-                } elseif (!NodeUtility::hasSingleChildBlockElement($node)) {
+                } elseif (!$node->hasSingleChildBlockElement()) {
                     $node = NodeUtility::setNodeTag($node, 'p');
                     $elementsToScore[] = $node;
                 } else {
