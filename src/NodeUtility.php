@@ -225,22 +225,4 @@ class NodeUtility
 
         return $result;
     }
-
-    /**
-     * Returns the full text of the node.
-     *
-     * @param $node DOMNode|DOMElement
-     * @param bool $normalize Normalize white space?
-     * @return string
-     */
-    public static function getTextContent($node, $normalize = false)
-    {
-        $nodeValue = $node->nodeValue;
-        if ($normalize) {
-            $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
-        }
-
-        return $nodeValue;
-    }
-
 }

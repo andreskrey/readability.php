@@ -229,7 +229,7 @@ trait NodeClassTrait
      */
     public function createNode($originalNode, $tagName)
     {
-        $text = NodeUtility::getTextContent($originalNode);
+        $text = $originalNode->getTextContent();
         $newNode = $originalNode->ownerDocument->createElement($tagName, $text);
 
         return $newNode;
