@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v1.0.0](https://github.com/andreskrey/readability.php/releases/tag/v1.0.0)
+
+- Node encapsulation is gone. Pre v1 all nodes where encapsulated in a Readability class, which created lots of trouble with dependencies, responsibilities, and properties. Now all the encapsulation is gone: all the DOMNodes inside the Readability class are extensions of the original DOM classes, which allows the system to take advantage of the functions and properties of DOMDocument.
+- HTMLParser is gone, Readability is the new main class. Switched things a bit for this release. Pre v1 you had to create an HTMLParser class to parse the HTML. Now you have to create a Readability class, feed it the text, and check the result.
+- No more dumb arrays as a result. If you want to get the title, content, images, or anything else you'll have to use the getters of the Readability class.
+- Environment class is gone. Now you have to create a configuration class and use setters to set your configuration options.
+- Exceptions. Make sure you wrap your Readability class in a try catch block, because if it fails to parse your HTML, it will throw a `ParseException`.
+
 ## [v0.3.1](https://github.com/andreskrey/readability.php/releases/tag/v0.3.1)
 
 - Trim titles when detecting hierarchical separators to avoid false negatives on strings with spaces.
