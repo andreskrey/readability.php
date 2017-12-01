@@ -1,12 +1,11 @@
 <?php
 
-namespace andreskrey\Readability\Nodes;
+namespace andreskrey\Readability\Nodes\DOM;
+
+use andreskrey\Readability\Nodes\NodeTrait;
 
 /**
- * Class DOMNode
- *
  * @method getAttribute($attribute)
- * @package andreskrey\Readability\Nodes
  */
 class DOMNode extends \DOMNode
 {
