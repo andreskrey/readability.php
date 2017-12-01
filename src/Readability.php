@@ -281,6 +281,8 @@ class Readability
     }
 
     /**
+     * Returns all the images of the parsed article.
+     *
      * @return array
      */
     public function getImages()
@@ -431,6 +433,13 @@ class Readability
         return $curTitle;
     }
 
+    /**
+     * Convert URI to an absolute URI
+     *
+     * @param $uri string URI to convert
+     *
+     * @return string
+     */
     private function toAbsoluteURI($uri)
     {
         list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->configuration->getOriginalURL());
@@ -465,9 +474,11 @@ class Readability
     }
 
     /**
+     * Returns full path info of an URL
+     *
      * @param  string $url
      *
-     * @return array  [$pathBase, $scheme, $prePath]
+     * @return array [$pathBase, $scheme, $prePath]
      */
     public function getPathInfo($url)
     {
@@ -717,7 +728,7 @@ class Readability
     }
 
     /**
-     * Assign scores to each node. This function will rate each node and return a DOMElement object for each one.
+     * Assign scores to each node. Returns full article parsed or false on error.
      *
      * @param array $nodes
      *
@@ -987,7 +998,7 @@ class Readability
     }
 
     /**
-     * TODO To be moved to Readability.
+     * Cleans up the final article.
      *
      * @param DOMDocument $article
      *
@@ -1068,9 +1079,6 @@ class Readability
      * similar checks as
      * https://dxr.mozilla.org/mozilla-central/rev/71224049c0b52ab190564d3ea0eab089a159a4cf/accessible/html/HTMLTableAccessible.cpp#920.
      *
-     * TODO To be moved to Readability. WARNING: check if we actually keep the "readabilityDataTable" param and
-     * maybe switch to a readability data-tag?
-     *
      * @param DOMDocument $article
      *
      * @return void
@@ -1128,7 +1136,6 @@ class Readability
 
     /**
      * Remove the style attribute on every e and under.
-     * TODO: To be moved to Readability.
      *
      * @param $node DOMDocument|DOMNode
      **/
@@ -1163,8 +1170,6 @@ class Readability
     /**
      * Clean out elements whose id/class combinations match specific string.
      *
-     * TODO To be moved to readability
-     *
      * @param $node DOMElement Node to clean
      * @param $regex string Match id/class combination.
      *
@@ -1184,8 +1189,6 @@ class Readability
     }
 
     /**
-     * TODO To be moved to Readability.
-     *
      * @param DOMDocument $article
      *
      * @return void
@@ -1212,8 +1215,6 @@ class Readability
     }
 
     /**
-     * TODO To be moved to Readability.
-     *
      * @param DOMDocument $article
      *
      * @return void
@@ -1297,8 +1298,6 @@ class Readability
      * Clean a node of all elements of type "tag".
      * (Unless it's a youtube/vimeo video. People love movies.).
      *
-     * TODO To be moved to Readability
-     *
      * @param $article DOMDocument
      * @param $tag string tag to clean
      *
@@ -1362,6 +1361,10 @@ class Readability
         }
     }
 
+    /**
+     * @param DOMDocument $article
+     * @return DOMDocument
+     */
     public function postProcessContent(DOMDocument $article)
     {
         // Readability cannot open relative uris so we convert them to absolute uris.
