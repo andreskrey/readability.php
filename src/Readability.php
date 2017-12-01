@@ -1088,47 +1088,47 @@ class Readability
             /** @var DOMElement $table */
             $role = $table->getAttribute('role');
             if ($role === 'presentation') {
-                $table->readabilityDataTable = false;
+                $table->setReadabilityDataTable(false);
                 continue;
             }
             $datatable = $table->getAttribute('datatable');
             if ($datatable == '0') {
-                $table->readabilityDataTable = false;
+                $table->setReadabilityDataTable(false);
                 continue;
             }
             $summary = $table->getAttribute('summary');
             if ($summary) {
-                $table->readabilityDataTable = true;
+                $table->setReadabilityDataTable(true);
                 continue;
             }
 
             $caption = $table->getElementsByTagName('caption');
             if ($caption->length > 0 && $caption->item(0)->childNodes->length > 0) {
-                $table->readabilityDataTable = true;
+                $table->setReadabilityDataTable(true);
                 continue;
             }
 
             // If the table has a descendant with any of these tags, consider a data table:
             foreach (['col', 'colgroup', 'tfoot', 'thead', 'th'] as $dataTableDescendants) {
                 if ($table->getElementsByTagName($dataTableDescendants)->length > 0) {
-                    $table->readabilityDataTable = true;
+                    $table->setReadabilityDataTable(true);
                     continue 2;
                 }
             }
 
             // Nested tables indicate a layout table:
             if ($table->getElementsByTagName('table')->length > 0) {
-                $table->readabilityDataTable = false;
+                $table->setReadabilityDataTable(false);
                 continue;
             }
 
             $sizeInfo = $table->getRowAndColumnCount();
             if ($sizeInfo['rows'] >= 10 || $sizeInfo['columns'] > 4) {
-                $table->readabilityDataTable = true;
+                $table->setReadabilityDataTable(true);
                 continue;
             }
             // Now just go by size entirely:
-            $table->readabilityDataTable = $sizeInfo['rows'] * $sizeInfo['columns'] > 10;
+            $table->setReadabilityDataTable($sizeInfo['rows'] * $sizeInfo['columns'] > 10);
         }
     }
 
@@ -1245,7 +1245,7 @@ class Readability
             $node = $DOMNodeList->item($length - 1 - $i);
 
             // First check if we're in a data table, in which case don't remove us.
-            if ($node->hasAncestorTag($node, 'table', -1) && isset($node->readabilityDataTable)) {
+            if ($node->hasAncestorTag($node, 'table', -1) && $node->isReadabilityDataTable()) {
                 continue;
             }
 

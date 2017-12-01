@@ -21,6 +21,13 @@ trait NodeClassTrait
     private $initialized = false;
 
     /**
+     * Flag data tables.
+     *
+     * @var bool
+     */
+    private $readabilityDataTable = false;
+
+    /**
      * @var array
      */
     private $divToPElements = [
@@ -45,6 +52,22 @@ trait NodeClassTrait
     public function isInitialized()
     {
         return $this->initialized;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isReadabilityDataTable()
+    {
+        return $this->readabilityDataTable;
+    }
+
+    /**
+     * @param bool $param
+     */
+    public function setReadabilityDataTable($param)
+    {
+        $this->readabilityDataTable = $param;
     }
 
     /**
