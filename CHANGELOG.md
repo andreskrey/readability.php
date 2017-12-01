@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v0.3.1](https://github.com/andreskrey/readability.php/releases/tag/v0.3.1)
+
 - Trim titles when detecting hierarchical separators to avoid false negatives on strings with spaces.
 - Fix issue when converting divs to p nodes and never rating them (issue #29)
 - Fix "Unsupported operand types" (PR #31) 
