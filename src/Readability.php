@@ -1419,7 +1419,7 @@ class Readability
     }
 
     /**
-     * @param null $title
+     * @param string $title
      */
     protected function setTitle($title)
     {
@@ -1435,7 +1435,7 @@ class Readability
     }
 
     /**
-     * @param null $content
+     * @param string $content
      */
     protected function setContent($content)
     {
@@ -1467,7 +1467,7 @@ class Readability
     }
 
     /**
-     * @param null $image
+     * @param string $image
      */
     protected function setImage($image)
     {
@@ -1483,7 +1483,7 @@ class Readability
     }
 
     /**
-     * @param null $author
+     * @param string $author
      */
     protected function setAuthor($author)
     {
