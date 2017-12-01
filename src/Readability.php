@@ -105,50 +105,6 @@ class Readability
     }
 
     /**
-     * Creates a DOM Document object and loads the provided HTML on it.
-     *
-     * Used for the first load of Readability and subsequent reloads (when disabling flags and rescanning the text)
-     * Previous versions of Readability used this method one time and cloned the DOM to keep a backup. This caused bugs
-     * because cloning the DOM object keeps a relation between the clone and the original one, doing changes in both
-     * objects and ruining the backup.
-     *
-     * @param string $html
-     *
-     * @return DOMDocument
-     */
-    private function loadHTML($html)
-    {
-        // To avoid having a gazillion of errors on malformed HTMLs
-        libxml_use_internal_errors(true);
-
-        $dom = new DOMDocument('1.0', 'utf-8');
-
-        if (!$this->configuration->getSubstituteEntities()) {
-            // Keep the original HTML entities
-            $dom->substituteEntities = false;
-        }
-
-        if ($this->configuration->getNormalizeEntities()) {
-            // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
-            $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
-        }
-
-        if ($this->configuration->getSummonCthulhu()) {
-            $html = preg_replace('/<script\b[^>]*>([\s\S]*?)<\/script>/', '', $html);
-        }
-
-        // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
-        $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
-        $dom->encoding = 'UTF-8';
-
-        $this->removeScripts($dom);
-
-        $this->prepDocument($dom);
-
-        return $dom;
-    }
-
-    /**
      * Main parse function.
      *
      * @param $html
@@ -211,6 +167,50 @@ class Readability
         $this->setContent($result->C14N());
 
         return true;
+    }
+
+    /**
+     * Creates a DOM Document object and loads the provided HTML on it.
+     *
+     * Used for the first load of Readability and subsequent reloads (when disabling flags and rescanning the text)
+     * Previous versions of Readability used this method one time and cloned the DOM to keep a backup. This caused bugs
+     * because cloning the DOM object keeps a relation between the clone and the original one, doing changes in both
+     * objects and ruining the backup.
+     *
+     * @param string $html
+     *
+     * @return DOMDocument
+     */
+    private function loadHTML($html)
+    {
+        // To avoid throwing a gazillion of errors on malformed HTMLs
+        libxml_use_internal_errors(true);
+
+        $dom = new DOMDocument('1.0', 'utf-8');
+
+        if (!$this->configuration->getSubstituteEntities()) {
+            // Keep the original HTML entities
+            $dom->substituteEntities = false;
+        }
+
+        if ($this->configuration->getNormalizeEntities()) {
+            // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
+            $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        }
+
+        if ($this->configuration->getSummonCthulhu()) {
+            $html = preg_replace('/<script\b[^>]*>([\s\S]*?)<\/script>/', '', $html);
+        }
+
+        // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+        $dom->encoding = 'UTF-8';
+
+        $this->removeScripts($dom);
+
+        $this->prepDocument($dom);
+
+        return $dom;
     }
 
     /**
