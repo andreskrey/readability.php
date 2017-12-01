@@ -14,7 +14,7 @@ class DOMDocument extends \DOMDocument
         $this->registerNodeClass('DOMCdataSection', DOMCdataSection::class);
         $this->registerNodeClass('DOMCharacterData', DOMCharacterData::class);
         $this->registerNodeClass('DOMComment', DOMComment::class);
-        $this->registerNodeClass('DOMDocument', DOMDocument::class);
+        $this->registerNodeClass('DOMDocument', self::class);
         $this->registerNodeClass('DOMDocumentFragment', DOMDocumentFragment::class);
         $this->registerNodeClass('DOMDocumentType', DOMDocumentType::class);
         $this->registerNodeClass('DOMElement', DOMElement::class);

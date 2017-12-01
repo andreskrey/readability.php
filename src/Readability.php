@@ -9,7 +9,7 @@ use andreskrey\Readability\Nodes\DOMText;
 use andreskrey\Readability\Nodes\NodeUtility;
 
 /**
- * Class Readability
+ * Class Readability.
  */
 class Readability
 {
@@ -21,49 +21,49 @@ class Readability
     protected $dom;
 
     /**
-     * Title of the article
+     * Title of the article.
      *
      * @var string|null
      */
     protected $title = null;
 
     /**
-     * HTML content article
+     * HTML content article.
      *
      * @var string|null
      */
     protected $content = null;
 
     /**
-     * Excerpt of the article
+     * Excerpt of the article.
      *
      * @var string|null
      */
     protected $excerpt = null;
 
     /**
-     * Main image of the article
+     * Main image of the article.
      *
      * @var string|null
      */
     protected $image = null;
 
     /**
-     * Author of the article. Extracted from the byline tags and other social media properties
+     * Author of the article. Extracted from the byline tags and other social media properties.
      *
      * @var string|null
      */
     protected $author = null;
 
     /**
-     * Direction of the text
+     * Direction of the text.
      *
      * @var string|null
      */
     protected $direction = null;
 
     /**
-     * Configuration object
+     * Configuration object.
      *
      * @var Configuration
      */
@@ -149,7 +149,7 @@ class Readability
     }
 
     /**
-     * Main parse function
+     * Main parse function.
      *
      * @param $html
      * @throws ParseException
@@ -214,7 +214,7 @@ class Readability
     }
 
     /**
-     * Tries to guess relevant info from metadata of the html. Sets the results in the Readability properties
+     * Tries to guess relevant info from metadata of the html. Sets the results in the Readability properties.
      */
     private function getMetadata()
     {
@@ -310,7 +310,6 @@ class Readability
 
         return $result;
     }
-
 
     /**
      * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
@@ -432,7 +431,6 @@ class Readability
         return $curTitle;
     }
 
-
     private function toAbsoluteURI($uri)
     {
         list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->configuration->getOriginalURL());
@@ -479,7 +477,6 @@ class Readability
 
         return [$pathBase, $scheme, $prePath];
     }
-
 
     /**
      * Gets nodes from the root element.
@@ -593,14 +590,14 @@ class Readability
         /*
          * Check if the byline is already set
          */
-        if (isset($this->metadata['byline'])) {
+        if ($this->getAuthor()) {
             return false;
         }
 
         $rel = $node->getAttribute('rel');
 
         if ($rel === 'author' || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
-            $this->metadata['byline'] = trim($node->getTextContent());
+            $this->setAuthor(trim($node->getTextContent()));
 
             return true;
         }
@@ -625,7 +622,6 @@ class Readability
 
         return false;
     }
-
 
     /**
      * Removes all the scripts of the html.
@@ -719,7 +715,6 @@ class Readability
             NodeUtility::setNodeTag($font, 'span', true);
         }
     }
-
 
     /**
      * Assign scores to each node. This function will rate each node and return a DOMElement object for each one.
@@ -816,7 +811,6 @@ class Readability
         }
 
         $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
-        $neededToCreateTopCandidate = false;
         $parentOfTopCandidate = null;
 
         /*
@@ -922,7 +916,7 @@ class Readability
 
         $hasContent = false;
 
-        /** @var Readability $sibling */
+        /** @var DOMElement $sibling */
         foreach ($siblings as $sibling) {
             $append = false;
 
@@ -1088,56 +1082,55 @@ class Readability
             /** @var DOMElement $table */
             $role = $table->getAttribute('role');
             if ($role === 'presentation') {
-                $table->readabilityDataTable = false;
+                $table->setReadabilityDataTable(false);
                 continue;
             }
             $datatable = $table->getAttribute('datatable');
             if ($datatable == '0') {
-                $table->readabilityDataTable = false;
+                $table->setReadabilityDataTable(false);
                 continue;
             }
             $summary = $table->getAttribute('summary');
             if ($summary) {
-                $table->readabilityDataTable = true;
+                $table->setReadabilityDataTable(true);
                 continue;
             }
 
             $caption = $table->getElementsByTagName('caption');
             if ($caption->length > 0 && $caption->item(0)->childNodes->length > 0) {
-                $table->readabilityDataTable = true;
+                $table->setReadabilityDataTable(true);
                 continue;
             }
 
             // If the table has a descendant with any of these tags, consider a data table:
             foreach (['col', 'colgroup', 'tfoot', 'thead', 'th'] as $dataTableDescendants) {
                 if ($table->getElementsByTagName($dataTableDescendants)->length > 0) {
-                    $table->readabilityDataTable = true;
+                    $table->setReadabilityDataTable(true);
                     continue 2;
                 }
             }
 
             // Nested tables indicate a layout table:
             if ($table->getElementsByTagName('table')->length > 0) {
-                $table->readabilityDataTable = false;
+                $table->setReadabilityDataTable(false);
                 continue;
             }
 
             $sizeInfo = $table->getRowAndColumnCount();
             if ($sizeInfo['rows'] >= 10 || $sizeInfo['columns'] > 4) {
-                $table->readabilityDataTable = true;
+                $table->setReadabilityDataTable(true);
                 continue;
             }
             // Now just go by size entirely:
-            $table->readabilityDataTable = $sizeInfo['rows'] * $sizeInfo['columns'] > 10;
+            $table->setReadabilityDataTable($sizeInfo['rows'] * $sizeInfo['columns'] > 10);
         }
     }
-
 
     /**
      * Remove the style attribute on every e and under.
      * TODO: To be moved to Readability.
      *
-     * @param $node \DOMDocument|\DOMNode
+     * @param $node DOMDocument|DOMNode
      **/
     public function _cleanStyles($node)
     {
@@ -1213,7 +1206,6 @@ class Readability
             $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
 
             if ($totalCount === 0 && !preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $paragraph->textContent)) {
-                // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
         }
@@ -1247,7 +1239,7 @@ class Readability
             $node = $DOMNodeList->item($length - 1 - $i);
 
             // First check if we're in a data table, in which case don't remove us.
-            if ($node->hasAncestorTag($node, 'table', -1) && isset($node->readabilityDataTable)) {
+            if ($node->hasAncestorTag($node, 'table', -1) && $node->isReadabilityDataTable()) {
                 continue;
             }
 
@@ -1268,7 +1260,6 @@ class Readability
                  * ominous signs, remove the element.
                  */
 
-                // TODO Horrible hack, must be removed once this function is inside Readability
                 $p = $node->getElementsByTagName('p')->length;
                 $img = $node->getElementsByTagName('img')->length;
                 $li = $node->getElementsByTagName('li')->length - 100;
@@ -1402,7 +1393,6 @@ class Readability
         return $article;
     }
 
-
     /**
      * @return null|string
      */
@@ -1420,7 +1410,7 @@ class Readability
     }
 
     /**
-     * @param null $title
+     * @param string $title
      */
     protected function setTitle($title)
     {
@@ -1436,7 +1426,7 @@ class Readability
     }
 
     /**
-     * @param null $content
+     * @param string $content
      */
     protected function setContent($content)
     {
@@ -1468,7 +1458,7 @@ class Readability
     }
 
     /**
-     * @param null $image
+     * @param string $image
      */
     protected function setImage($image)
     {
@@ -1484,7 +1474,7 @@ class Readability
     }
 
     /**
-     * @param null $author
+     * @param string $author
      */
     protected function setAuthor($author)
     {

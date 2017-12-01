@@ -5,18 +5,25 @@ namespace andreskrey\Readability\Nodes;
 trait NodeTrait
 {
     /**
-     * Content score of the node. Used to determine the value of the content
+     * Content score of the node. Used to determine the value of the content.
      *
      * @var int
      */
     public $contentScore = 0;
 
     /**
-     * Flag for initialized status
+     * Flag for initialized status.
      *
      * @var bool
      */
     private $initialized = false;
+
+    /**
+     * Flag data tables.
+     *
+     * @var bool
+     */
+    private $readabilityDataTable = false;
 
     /**
      * @var array
@@ -36,7 +43,7 @@ trait NodeTrait
     ];
 
     /**
-     * initialized getter
+     * initialized getter.
      *
      * @return bool
      */
@@ -46,11 +53,28 @@ trait NodeTrait
     }
 
     /**
+     * @return bool
+     */
+    public function isReadabilityDataTable()
+    {
+        return $this->readabilityDataTable;
+    }
+
+    /**
+     * @param bool $param
+     */
+    public function setReadabilityDataTable($param)
+    {
+        $this->readabilityDataTable = $param;
+    }
+
+    /**
      * Initializer. Calculates the current score of the node and returns a full Readability object.
      *
      * @ TODO: I don't like the weightClasses param. How can we get the config here?
      *
      * @param $weightClasses bool Weight classes?
+     *
      * @return static
      */
     public function initializeNode($weightClasses)
@@ -179,7 +203,6 @@ trait NodeTrait
         return $linkLength / $textLength;
     }
 
-
     /**
      * Calculates the weight of the class/id of the current element.
      *
@@ -281,11 +304,10 @@ trait NodeTrait
         return ['rows' => $rows, 'columns' => $columns];
     }
 
-
     /**
      * Creates a new node based on the text content of the original node.
      *
-     * @param $originalNode DOMElement
+     * @param $originalNode DOMNode
      * @param $tagName string
      *
      * @return DOMElement
