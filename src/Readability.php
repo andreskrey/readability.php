@@ -1337,8 +1337,6 @@ class Readability
     /**
      * Clean out spurious headers from an Element. Checks things like classnames and link density.
      *
-     * TODO To be moved to Readability
-     *
      * @param DOMDocument $article
      *
      * @return void
