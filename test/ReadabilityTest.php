@@ -2,7 +2,6 @@
 
 namespace andreskrey\Readability\Test;
 
-
 use andreskrey\Readability\Configuration;
 use andreskrey\Readability\Readability;
 
@@ -24,7 +23,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
 
         $configuration = new Configuration();
 
-        foreach($options as $key => $value){
+        foreach ($options as $key => $value) {
             $name = 'set' . $key;
             $configuration->$name($value);
         }
@@ -50,7 +49,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         }
         $configuration = new Configuration();
 
-        foreach($options as $key => $value){
+        foreach ($options as $key => $value) {
             $name = 'set' . $key;
             $configuration->$name($value);
         }

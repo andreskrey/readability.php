@@ -3,7 +3,7 @@
 namespace andreskrey\Readability;
 
 /**
- * Class Configuration
+ * Class Configuration.
  */
 class Configuration
 {
@@ -62,11 +62,13 @@ class Configuration
 
     /**
      * @param int $maxTopCandidates
+     *
      * @return $this
      */
     public function setMaxTopCandidates($maxTopCandidates)
     {
         $this->maxTopCandidates = $maxTopCandidates;
+
         return $this;
     }
 
@@ -80,11 +82,13 @@ class Configuration
 
     /**
      * @param int $wordThreshold
+     *
      * @return $this
      */
     public function setWordThreshold($wordThreshold)
     {
         $this->wordThreshold = $wordThreshold;
+
         return $this;
     }
 
@@ -98,11 +102,13 @@ class Configuration
 
     /**
      * @param bool $articleByLine
+     *
      * @return $this
      */
     public function setArticleByLine($articleByLine)
     {
         $this->articleByLine = $articleByLine;
+
         return $this;
     }
 
@@ -116,11 +122,13 @@ class Configuration
 
     /**
      * @param bool $stripUnlikelyCandidates
+     *
      * @return $this
      */
     public function setStripUnlikelyCandidates($stripUnlikelyCandidates)
     {
         $this->stripUnlikelyCandidates = $stripUnlikelyCandidates;
+
         return $this;
     }
 
@@ -134,11 +142,13 @@ class Configuration
 
     /**
      * @param bool $cleanConditionally
+     *
      * @return $this
      */
     public function setCleanConditionally($cleanConditionally)
     {
         $this->cleanConditionally = $cleanConditionally;
+
         return $this;
     }
 
@@ -152,11 +162,13 @@ class Configuration
 
     /**
      * @param bool $weightClasses
+     *
      * @return $this
      */
     public function setWeightClasses($weightClasses)
     {
         $this->weightClasses = $weightClasses;
+
         return $this;
     }
 
@@ -170,11 +182,13 @@ class Configuration
 
     /**
      * @param bool $removeReadabilityTags
+     *
      * @return $this
      */
     public function setRemoveReadabilityTags($removeReadabilityTags)
     {
         $this->removeReadabilityTags = $removeReadabilityTags;
+
         return $this;
     }
 
@@ -188,11 +202,13 @@ class Configuration
 
     /**
      * @param bool $fixRelativeURLs
+     *
      * @return $this
      */
     public function setFixRelativeURLs($fixRelativeURLs)
     {
         $this->fixRelativeURLs = $fixRelativeURLs;
+
         return $this;
     }
 
@@ -206,11 +222,13 @@ class Configuration
 
     /**
      * @param bool $substituteEntities
+     *
      * @return $this
      */
     public function setSubstituteEntities($substituteEntities)
     {
         $this->substituteEntities = $substituteEntities;
+
         return $this;
     }
 
@@ -224,11 +242,13 @@ class Configuration
 
     /**
      * @param bool $normalizeEntities
+     *
      * @return $this
      */
     public function setNormalizeEntities($normalizeEntities)
     {
         $this->normalizeEntities = $normalizeEntities;
+
         return $this;
     }
 
@@ -242,11 +262,13 @@ class Configuration
 
     /**
      * @param string $originalURL
+     *
      * @return $this
      */
     public function setOriginalURL($originalURL)
     {
         $this->originalURL = $originalURL;
+
         return $this;
     }
 
@@ -260,11 +282,13 @@ class Configuration
 
     /**
      * @param bool $summonCthulhu
+     *
      * @return $this
      */
     public function setSummonCthulhu($summonCthulhu)
     {
         $this->summonCthulhu = $summonCthulhu;
+
         return $this;
     }
 

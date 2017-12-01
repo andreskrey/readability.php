@@ -3,14 +3,12 @@
 namespace andreskrey\Readability\Nodes;
 
 /**
- * Class NodeUtility
- * @package andreskrey\Readability
+ * Class NodeUtility.
  */
 class NodeUtility
 {
-
     /**
-     * Collection of regexps to check the node usability
+     * Collection of regexps to check the node usability.
      *
      * @var array
      */
@@ -32,12 +30,11 @@ class NodeUtility
         'onlyWhitespace' => '/\x{00A0}|\s+/u'
     ];
 
-
     /**
-     *
-     * Imported from the Element class on league\html-to-markdown
+     * Imported from the Element class on league\html-to-markdown.
      *
      * @param $node
+     *
      * @return DOMElement
      */
     public static function nextElement($node)
@@ -52,13 +49,13 @@ class NodeUtility
         return $next;
     }
 
-
     /**
      * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
      * element with the new tag name and importing it to the main DOMDocument.
      *
      * @param string $value
      * @param bool $importAttributes
+     *
      * @return DOMNode
      */
     public static function setNodeTag($node, $value, $importAttributes = false)
@@ -68,7 +65,6 @@ class NodeUtility
 
         $children = $node->childNodes;
         /** @var $children \DOMNodeList $i */
-
         for ($i = 0; $i < $children->length; $i++) {
             $import = $new->importNode($children->item($i), true);
             $new->firstChild->appendChild($import);
@@ -117,7 +113,6 @@ class NodeUtility
             $parent->removeChild($node);
         }
     }
-
 
     /**
      * Returns the next node. First checks for children (if the flag allows it), then for siblings, and finally
