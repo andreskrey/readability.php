@@ -286,7 +286,7 @@ trait NodeClassTrait
     /**
      * Creates a new node based on the text content of the original node.
      *
-     * @param $originalNode DOMElement
+     * @param $originalNode DOMNode
      * @param $tagName string
      *
      * @return DOMElement

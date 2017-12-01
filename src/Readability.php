@@ -596,14 +596,14 @@ class Readability
         /*
          * Check if the byline is already set
          */
-        if (isset($this->metadata['byline'])) {
+        if ($this->getAuthor()) {
             return false;
         }
 
         $rel = $node->getAttribute('rel');
 
         if ($rel === 'author' || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
-            $this->metadata['byline'] = trim($node->getTextContent());
+            $this->setAuthor(trim($node->getTextContent()));
 
             return true;
         }
@@ -817,7 +817,6 @@ class Readability
         }
 
         $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
-        $neededToCreateTopCandidate = false;
         $parentOfTopCandidate = null;
 
         /*
@@ -923,7 +922,7 @@ class Readability
 
         $hasContent = false;
 
-        /** @var Readability $sibling */
+        /** @var DOMElement $sibling */
         foreach ($siblings as $sibling) {
             $append = false;
 
@@ -1137,7 +1136,7 @@ class Readability
      * Remove the style attribute on every e and under.
      * TODO: To be moved to Readability.
      *
-     * @param $node \DOMDocument|\DOMNode
+     * @param $node DOMDocument|DOMNode
      **/
     public function _cleanStyles($node)
     {
@@ -1213,7 +1212,6 @@ class Readability
             $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
 
             if ($totalCount === 0 && !preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $paragraph->textContent)) {
-                // TODO must be done via readability
                 $paragraph->parentNode->removeChild($paragraph);
             }
         }
@@ -1268,7 +1266,6 @@ class Readability
                  * ominous signs, remove the element.
                  */
 
-                // TODO Horrible hack, must be removed once this function is inside Readability
                 $p = $node->getElementsByTagName('p')->length;
                 $img = $node->getElementsByTagName('img')->length;
                 $li = $node->getElementsByTagName('li')->length - 100;
