@@ -2,10 +2,10 @@
 
 namespace andreskrey\Readability;
 
-use andreskrey\Readability\Nodes\DOMDocument;
-use andreskrey\Readability\Nodes\DOMElement;
-use andreskrey\Readability\Nodes\DOMNode;
-use andreskrey\Readability\Nodes\DOMText;
+use andreskrey\Readability\Nodes\DOM\DOMDocument;
+use andreskrey\Readability\Nodes\DOM\DOMElement;
+use andreskrey\Readability\Nodes\DOM\DOMNode;
+use andreskrey\Readability\Nodes\DOM\DOMText;
 use andreskrey\Readability\Nodes\NodeUtility;
 
 /**
