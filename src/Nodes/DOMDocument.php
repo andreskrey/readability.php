@@ -1,10 +1,10 @@
 <?php
 
-namespace andreskrey\Readability\NodeClass;
+namespace andreskrey\Readability\Nodes;
 
 class DOMDocument extends \DOMDocument
 {
-    use NodeClassTrait;
+    use NodeTrait;
 
     public function __construct($version, $encoding)
     {

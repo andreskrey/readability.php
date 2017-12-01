@@ -1,8 +1,8 @@
 <?php
 
-namespace andreskrey\Readability\NodeClass;
+namespace andreskrey\Readability\Nodes;
 
 class DOMProcessingInstruction extends \DOMProcessingInstruction
 {
-    use NodeClassTrait;
+    use NodeTrait;
 }

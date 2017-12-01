@@ -1,10 +1,8 @@
 <?php
 
-namespace andreskrey\Readability\NodeClass;
+namespace andreskrey\Readability\Nodes;
 
-use andreskrey\Readability\NodeUtility;
-
-trait NodeClassTrait
+trait NodeTrait
 {
     /**
      * Content score of the node. Used to determine the value of the content

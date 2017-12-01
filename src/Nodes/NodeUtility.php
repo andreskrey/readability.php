@@ -1,10 +1,6 @@
 <?php
 
-namespace andreskrey\Readability;
-
-use andreskrey\Readability\NodeClass\DOMDocument;
-use andreskrey\Readability\NodeClass\DOMElement;
-use andreskrey\Readability\NodeClass\DOMNode;
+namespace andreskrey\Readability\Nodes;
 
 /**
  * Class NodeUtility
