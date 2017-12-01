@@ -3,21 +3,12 @@
 namespace andreskrey\Readability;
 
 use andreskrey\Readability\NodeClass\DOMDocument;
-use andreskrey\Readability\NodeClass\DOMAttr;
-use andreskrey\Readability\NodeClass\DOMCdataSection;
-use andreskrey\Readability\NodeClass\DOMCharacterData;
-use andreskrey\Readability\NodeClass\DOMComment;
-use andreskrey\Readability\NodeClass\DOMDocumentFragment;
-use andreskrey\Readability\NodeClass\DOMDocumentType;
 use andreskrey\Readability\NodeClass\DOMElement;
 use andreskrey\Readability\NodeClass\DOMNode;
-use andreskrey\Readability\NodeClass\DOMNotation;
-use andreskrey\Readability\NodeClass\DOMProcessingInstruction;
 use andreskrey\Readability\NodeClass\DOMText;
-use andreskrey\Readability\NodeClass\NodeClassTrait;
 
 /**
- * Class Readability
+ * Class Readability.
  */
 class Readability
 {
@@ -29,49 +20,49 @@ class Readability
     protected $dom;
 
     /**
-     * Title of the article
+     * Title of the article.
      *
      * @var string|null
      */
     protected $title = null;
 
     /**
-     * HTML content article
+     * HTML content article.
      *
      * @var string|null
      */
     protected $content = null;
 
     /**
-     * Excerpt of the article
+     * Excerpt of the article.
      *
      * @var string|null
      */
     protected $excerpt = null;
 
     /**
-     * Main image of the article
+     * Main image of the article.
      *
      * @var string|null
      */
     protected $image = null;
 
     /**
-     * Author of the article. Extracted from the byline tags and other social media properties
+     * Author of the article. Extracted from the byline tags and other social media properties.
      *
      * @var string|null
      */
     protected $author = null;
 
     /**
-     * Direction of the text
+     * Direction of the text.
      *
      * @var string|null
      */
     protected $direction = null;
 
     /**
-     * Configuration object
+     * Configuration object.
      *
      * @var Configuration
      */
@@ -116,7 +107,7 @@ class Readability
     }
 
     /**
-     * Main parse function
+     * Main parse function.
      *
      * @param $html
      *
@@ -229,7 +220,7 @@ class Readability
     }
 
     /**
-     * Tries to guess relevant info from metadata of the html. Sets the results in the Readability properties
+     * Tries to guess relevant info from metadata of the html. Sets the results in the Readability properties.
      */
     private function getMetadata()
     {
@@ -325,7 +316,6 @@ class Readability
 
         return $result;
     }
-
 
     /**
      * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
@@ -447,7 +437,6 @@ class Readability
         return $curTitle;
     }
 
-
     private function toAbsoluteURI($uri)
     {
         list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->configuration->getOriginalURL());
@@ -494,7 +483,6 @@ class Readability
 
         return [$pathBase, $scheme, $prePath];
     }
-
 
     /**
      * Gets nodes from the root element.
@@ -641,7 +629,6 @@ class Readability
         return false;
     }
 
-
     /**
      * Removes all the scripts of the html.
      *
@@ -734,7 +721,6 @@ class Readability
             NodeUtility::setNodeTag($font, 'span', true);
         }
     }
-
 
     /**
      * Assign scores to each node. This function will rate each node and return a DOMElement object for each one.
@@ -1147,7 +1133,6 @@ class Readability
         }
     }
 
-
     /**
      * Remove the style attribute on every e and under.
      * TODO: To be moved to Readability.
@@ -1416,7 +1401,6 @@ class Readability
 
         return $article;
     }
-
 
     /**
      * @return null|string
