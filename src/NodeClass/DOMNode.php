@@ -3,10 +3,9 @@
 namespace andreskrey\Readability\NodeClass;
 
 /**
- * Class DOMNode
+ * Class DOMNode.
  *
  * @method getAttribute($attribute)
- * @package andreskrey\Readability\NodeClass
  */
 class DOMNode extends \DOMNode
 {
