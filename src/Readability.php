@@ -2,19 +2,11 @@
 
 namespace andreskrey\Readability;
 
-use andreskrey\Readability\NodeClass\DOMDocument;
-use andreskrey\Readability\NodeClass\DOMAttr;
-use andreskrey\Readability\NodeClass\DOMCdataSection;
-use andreskrey\Readability\NodeClass\DOMCharacterData;
-use andreskrey\Readability\NodeClass\DOMComment;
-use andreskrey\Readability\NodeClass\DOMDocumentFragment;
-use andreskrey\Readability\NodeClass\DOMDocumentType;
-use andreskrey\Readability\NodeClass\DOMElement;
-use andreskrey\Readability\NodeClass\DOMNode;
-use andreskrey\Readability\NodeClass\DOMNotation;
-use andreskrey\Readability\NodeClass\DOMProcessingInstruction;
-use andreskrey\Readability\NodeClass\DOMText;
-use andreskrey\Readability\NodeClass\NodeClassTrait;
+use andreskrey\Readability\Nodes\DOMDocument;
+use andreskrey\Readability\Nodes\DOMElement;
+use andreskrey\Readability\Nodes\DOMNode;
+use andreskrey\Readability\Nodes\DOMText;
+use andreskrey\Readability\Nodes\NodeUtility;
 
 /**
  * Class Readability
@@ -113,78 +105,6 @@ class Readability
     }
 
     /**
-     * Main parse function
-     *
-     * @param $html
-     *
-     * @return array|bool
-     */
-    public function parse($html)
-    {
-        $this->dom = $this->loadHTML($html);
-
-        $this->getMetadata();
-
-        $this->getMainImage();
-
-        // Checking for minimum HTML to work with.
-        if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
-            return false;
-        }
-
-        $parseSuccessful = true;
-        while (true) {
-            $root = $root->firstChild;
-
-            $elementsToScore = $this->getNodes($root);
-
-            $result = $this->rateNodes($elementsToScore);
-
-            /*
-             * Now that we've gone through the full algorithm, check to see if
-             * we got any meaningful content. If we didn't, we may need to re-run
-             * grabArticle with different flags set. This gives us a higher likelihood of
-             * finding the content, and the sieve approach gives us a higher likelihood of
-             * finding the -right- content.
-             */
-
-            // TODO Better way to count resulting text. Textcontent usually has alt titles and that stuff
-            // that doesn't really count to the quality of the result.
-            $length = 0;
-            foreach ($result->getElementsByTagName('p') as $p) {
-                $length += mb_strlen($p->textContent);
-            }
-            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->configuration->getWordThreshold()) {
-                $this->dom = $this->loadHTML($html);
-                $root = $this->dom->getElementsByTagName('body')->item(0);
-
-                if ($this->configuration->getStripUnlikelyCandidates()) {
-                    $this->configuration->setStripUnlikelyCandidates(false);
-                } elseif ($this->configuration->getWeightClasses()) {
-                    $this->configuration->setWeightClasses(false);
-                } elseif ($this->configuration->getCleanConditionally()) {
-                    $this->configuration->setCleanConditionally(false);
-                } else {
-                    $parseSuccessful = false;
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        if (!$parseSuccessful) {
-            return false;
-        }
-
-        $result = $this->postProcessContent($result);
-
-        $this->setContent($result->C14N());
-
-        return true;
-    }
-
-    /**
      * Creates a DOM Document object and loads the provided HTML on it.
      *
      * Used for the first load of Readability and subsequent reloads (when disabling flags and rescanning the text)
@@ -226,6 +146,71 @@ class Readability
         $this->prepDocument($dom);
 
         return $dom;
+    }
+
+    /**
+     * Main parse function
+     *
+     * @param $html
+     * @throws ParseException
+     *
+     * @return array|bool
+     */
+    public function parse($html)
+    {
+        $this->dom = $this->loadHTML($html);
+
+        $this->getMetadata();
+
+        $this->getMainImage();
+
+        // Checking for minimum HTML to work with.
+        if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
+            throw new ParseException('Invalid or incomplete HTML.');
+        }
+
+        while (true) {
+            $root = $root->firstChild;
+
+            $elementsToScore = $this->getNodes($root);
+
+            $result = $this->rateNodes($elementsToScore);
+
+            /*
+             * Now that we've gone through the full algorithm, check to see if
+             * we got any meaningful content. If we didn't, we may need to re-run
+             * grabArticle with different flags set. This gives us a higher likelihood of
+             * finding the content, and the sieve approach gives us a higher likelihood of
+             * finding the -right- content.
+             */
+
+            $length = 0;
+            foreach ($result->getElementsByTagName('p') as $p) {
+                $length += mb_strlen($p->textContent);
+            }
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->configuration->getWordThreshold()) {
+                $this->dom = $this->loadHTML($html);
+                $root = $this->dom->getElementsByTagName('body')->item(0);
+
+                if ($this->configuration->getStripUnlikelyCandidates()) {
+                    $this->configuration->setStripUnlikelyCandidates(false);
+                } elseif ($this->configuration->getWeightClasses()) {
+                    $this->configuration->setWeightClasses(false);
+                } elseif ($this->configuration->getCleanConditionally()) {
+                    $this->configuration->setCleanConditionally(false);
+                } else {
+                    throw new ParseException('Could not parse text.');
+                }
+            } else {
+                break;
+            }
+        }
+
+        $result = $this->postProcessContent($result);
+
+        $this->setContent($result->C14N());
+
+        return true;
     }
 
     /**
