@@ -7,14 +7,14 @@ use andreskrey\Readability\NodeUtility;
 trait NodeClassTrait
 {
     /**
-     * Content score of the node. Used to determine the value of the content
+     * Content score of the node. Used to determine the value of the content.
      *
      * @var int
      */
     public $contentScore = 0;
 
     /**
-     * Flag for initialized status
+     * Flag for initialized status.
      *
      * @var bool
      */
@@ -38,7 +38,7 @@ trait NodeClassTrait
     ];
 
     /**
-     * initialized getter
+     * initialized getter.
      *
      * @return bool
      */
@@ -53,6 +53,7 @@ trait NodeClassTrait
      * @ TODO: I don't like the weightClasses param. How can we get the config here?
      *
      * @param $weightClasses bool Weight classes?
+     *
      * @return static
      */
     public function initializeNode($weightClasses)
@@ -181,7 +182,6 @@ trait NodeClassTrait
         return $linkLength / $textLength;
     }
 
-
     /**
      * Calculates the weight of the class/id of the current element.
      *
@@ -282,7 +282,6 @@ trait NodeClassTrait
 
         return ['rows' => $rows, 'columns' => $columns];
     }
-
 
     /**
      * Creates a new node based on the text content of the original node.
