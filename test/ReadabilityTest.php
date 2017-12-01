@@ -3,6 +3,7 @@
 namespace andreskrey\Readability\Test;
 
 use andreskrey\Readability\Configuration;
+use andreskrey\Readability\ParseException;
 use andreskrey\Readability\Readability;
 
 class ReadabilityTest extends \PHPUnit_Framework_TestCase
@@ -88,5 +89,21 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         }
 
         return $pages;
+    }
+
+    public function testReadabilityThrowsExceptionWithMalformedHTML()
+    {
+        $parser = new Readability(new Configuration());
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Invalid or incomplete HTML.');
+        $parser->parse('<html>');
+    }
+
+    public function testReadabilityThrowsExceptionWithUnparseableHTML()
+    {
+        $parser = new Readability(new Configuration());
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Could not parse text.');
+        $parser->parse('<html><body><p>hello</p></body></html>');
     }
 }
