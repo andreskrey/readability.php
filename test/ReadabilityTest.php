@@ -14,12 +14,17 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
     public function testReadabilityParsesHTML($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
     {
         $options = ['originalURL' => 'http://fakehost/test/test.html',
-            'fixRelativeURLs' => true,
-            'substituteEntities' => true,
+            'FixRelativeURLs' => true,
+            'SubstituteEntities' => true,
+            'ArticleByLine' => true
         ];
 
+        if($config === null || $expectedMetadata === null){
+            $this->markTestSkipped('Wrong test configuration');
+        }
+
         if ($config) {
-            $options = array_merge($options, $config);
+            $options = array_merge($config, $options);
         }
 
         $configuration = new Configuration();
@@ -33,6 +38,11 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         $readability->parse($html);
 
         $this->assertEquals($expectedResult, $readability->getContent());
+
+        foreach($expectedMetadata as $key => $metadata){
+            $function = 'get' . $key;
+            $this->assertEquals($metadata, $readability->$function());
+        }
     }
 
     /**
@@ -74,10 +84,11 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         foreach (array_slice($testPages, 2) as $testPage) {
             $source = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'source.html');
             $expectedHTML = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected.html');
-            $expectedMetadata = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json');
             $expectedImages = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-images.json');
 
-            $config = null;
+            $expectedMetadata = json_decode(file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json'));
+
+            $config = false;
             if (file_exists($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json')) {
                 $config = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json');
                 if ($config) {
