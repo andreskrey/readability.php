@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - No more dumb arrays as a result. If you want to get the title, content, images, or anything else you'll have to use the getters of the Readability class.
 - Environment class is gone. Now you have to create a configuration class and use setters to set your configuration options.
 - Exceptions. Make sure you wrap your Readability class in a try catch block, because if it fails to parse your HTML, it will throw a `ParseException`.
+- Minimum PHP version bumped to 5.6.
 
 ## [v0.3.1](https://github.com/andreskrey/readability.php/releases/tag/v0.3.1)
 
