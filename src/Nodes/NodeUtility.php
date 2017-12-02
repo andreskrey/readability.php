@@ -3,8 +3,8 @@
 namespace andreskrey\Readability\Nodes;
 
 use andreskrey\Readability\Nodes\DOM\DOMDocument;
-use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMElement;
+use andreskrey\Readability\Nodes\DOM\DOMNode;
 
 /**
  * Class NodeUtility.
