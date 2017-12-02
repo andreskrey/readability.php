@@ -1409,7 +1409,7 @@ class Readability
      */
     public function __toString()
     {
-        return $this->getContent();
+        return sprintf('<h1>%s</h1>%s', $this->getTitle(), $this->getContent());
     }
 
     /**
