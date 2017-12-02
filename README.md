@@ -128,10 +128,6 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 Up to date with readability.js as of [16 Oct 2017](https://github.com/mozilla/readability/commit/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5).
  
-## TO-DOs of the current port:
-
- - Port `_cleanStyles` to avoid style attributes inside other tags (like `<p style="hello   ">`) 
-
 ## License
 
     Copyright (c) 2010 Arc90 Inc
