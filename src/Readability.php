@@ -108,6 +108,7 @@ class Readability
      * Main parse function.
      *
      * @param $html
+     *
      * @throws ParseException
      *
      * @return array|bool
@@ -444,7 +445,7 @@ class Readability
     }
 
     /**
-     * Convert URI to an absolute URI
+     * Convert URI to an absolute URI.
      *
      * @param $uri string URI to convert
      *
@@ -484,7 +485,7 @@ class Readability
     }
 
     /**
-     * Returns full path info of an URL
+     * Returns full path info of an URL.
      *
      * @param  string $url
      *
@@ -1371,6 +1372,7 @@ class Readability
 
     /**
      * @param DOMDocument $article
+     *
      * @return DOMDocument
      */
     public function postProcessContent(DOMDocument $article)

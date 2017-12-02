@@ -19,7 +19,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
             'ArticleByLine' => true
         ];
 
-        if($config === null || $expectedMetadata === null){
+        if ($config === null || $expectedMetadata === null) {
             $this->markTestSkipped('Wrong test configuration');
         }
 
@@ -39,7 +39,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($expectedResult, $readability->getContent());
 
-        foreach($expectedMetadata as $key => $metadata){
+        foreach ($expectedMetadata as $key => $metadata) {
             $function = 'get' . $key;
             $this->assertEquals($metadata, $readability->$function());
         }
