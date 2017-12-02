@@ -164,6 +164,16 @@ class Readability
 
         $result = $this->postProcessContent($result);
 
+        // If we haven't found an excerpt in the article's metadata, use the article's
+        // first paragraph as the excerpt. This can be used for displaying a preview of
+        // the article's content.
+        if (!$this->getExcerpt()) {
+            $paragraphs = $result->getElementsByTagName('p');
+            if ($paragraphs->length > 0) {
+                $this->setExcerpt(trim($paragraphs->item(0)->textContent));
+            }
+        }
+
         $this->setContent($result->C14N());
 
         return true;
