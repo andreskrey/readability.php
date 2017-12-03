@@ -7,7 +7,9 @@ PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readabilit
 
 The project aim is to be a 1 to 1 port of Mozilla's version and to follow closely all changes introduced there, but there are some major differences on the structure. Most of the code is a 1:1 copy –even the comments were imported– but some functions and structures were adapted to suit better the PHP language.
 
-**Requires**: PHP 5.6+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
+## Requirements
+
+PHP 5.6+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
 
 `$ sudo apt-get install php7.1-xml php7.1-mbstring`
 
@@ -47,6 +49,16 @@ If you want to have a finer control on the output, just call the properties one 
 <div class="content"><?= $readability->getContent(); ?></div>
 
 ```
+
+Here's a list of the available properties:
+
+- Article title: `->getTitle();`
+- Article content: `->getContent();`
+- Excerpt: `->getExcerpt();`
+- Main image: `->getImage();`
+- All images: `->getImages();`
+- Author: `->getAuthor();`
+- Text direction (ltr or rtl): `->getDirection();`
 
 ## Options
 
