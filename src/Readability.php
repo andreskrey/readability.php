@@ -1396,7 +1396,17 @@ class Readability
 
             foreach ($article->getElementsByTagName('img') as $img) {
                 /** @var DOMElement $img */
-                $src = $img->getAttribute('src');
+                /*
+                 * Extract all possible sources of img url and select the first one on the list.
+                 */
+                $url = [
+                    $img->getAttribute('src'),
+                    $img->getAttribute('data-original'),
+                    $img->getAttribute('data-url')
+                ];
+
+                $src = array_filter($url);
+                $src = reset($src);
                 if ($src) {
                     $img->setAttribute('src', $this->toAbsoluteURI($src));
                 }
