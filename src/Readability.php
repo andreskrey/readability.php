@@ -2,75 +2,625 @@
 
 namespace andreskrey\Readability;
 
-use League\HTMLToMarkdown\Element;
+use andreskrey\Readability\Nodes\DOM\DOMDocument;
+use andreskrey\Readability\Nodes\DOM\DOMElement;
+use andreskrey\Readability\Nodes\DOM\DOMNode;
+use andreskrey\Readability\Nodes\DOM\DOMText;
+use andreskrey\Readability\Nodes\NodeUtility;
 
 /**
- * Class DOMElement.
- *
- * This is a extension of the original Element class from League\HTMLToMarkdown\Element.
- * This class adds functions specific to Readability.php and overloads some of them to fit the purpose of this project.
+ * Class Readability.
  */
-class Readability extends Element implements ReadabilityInterface
+class Readability
 {
     /**
-     * @var \DOMNode|\DOMElement
+     * Main DOMDocument where all the magic happens.
+     *
+     * @var DOMDocument
      */
-    protected $node;
+    protected $dom;
 
     /**
-     * @var int
+     * Title of the article.
+     *
+     * @var string|null
      */
-    protected $contentScore = 0;
+    protected $title = null;
 
     /**
-     * @var int
+     * HTML content article.
+     *
+     * @var string|null
      */
-    protected $initialized = false;
+    protected $content = null;
+
+    /**
+     * Excerpt of the article.
+     *
+     * @var string|null
+     */
+    protected $excerpt = null;
+
+    /**
+     * Main image of the article.
+     *
+     * @var string|null
+     */
+    protected $image = null;
+
+    /**
+     * Author of the article. Extracted from the byline tags and other social media properties.
+     *
+     * @var string|null
+     */
+    protected $author = null;
+
+    /**
+     * Direction of the text.
+     *
+     * @var string|null
+     */
+    protected $direction = null;
+
+    /**
+     * Configuration object.
+     *
+     * @var Configuration
+     */
+    private $configuration;
 
     /**
      * @var array
      */
-    private $regexps = [
-        'positive' => '/article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story/i',
-        'negative' => '/hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|foot|footer|footnote|masthead|media|meta|modal|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|tool|widget/i',
+    private $defaultTagsToScore = [
+        'section',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'p',
+        'td',
+        'pre',
     ];
 
     /**
-     * Constructor.
-     *
-     * @param \DOMNode $node Selected element from DOMDocument
+     * @var array
      */
-    public function __construct(\DOMNode $node)
-    {
-        parent::__construct($node);
+    private $alterToDIVExceptions = [
+        'div',
+        'article',
+        'section',
+        'p',
+    ];
 
-        /*
-         * Restore the score if the object has been already scored.
-         *
-         * An if must be added before calling the getAttribute function, because if we reach the DOMDocument
-         * by getting the node parents we'll get a undefined function fatal error
-         */
-        if (method_exists($node, 'getAttribute')) {
-            if ($node->hasAttribute('data-readability')) {
-                // Node was initialized previously. Restoring score and setting flag.
-                $this->initialized = true;
-                $score = $node->getAttribute('data-readability');
-                $this->setContentScore($score);
+    /**
+     * Readability constructor.
+     *
+     * @param Configuration $configuration
+     */
+    public function __construct(Configuration $configuration)
+    {
+        $this->configuration = $configuration;
+    }
+
+    /**
+     * Main parse function.
+     *
+     * @param $html
+     *
+     * @throws ParseException
+     *
+     * @return array|bool
+     */
+    public function parse($html)
+    {
+        $this->dom = $this->loadHTML($html);
+
+        $this->getMetadata();
+
+        $this->getMainImage();
+
+        // Checking for minimum HTML to work with.
+        if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
+            throw new ParseException('Invalid or incomplete HTML.');
+        }
+
+        while (true) {
+            $root = $root->firstChild;
+
+            $elementsToScore = $this->getNodes($root);
+
+            $result = $this->rateNodes($elementsToScore);
+
+            /*
+             * Now that we've gone through the full algorithm, check to see if
+             * we got any meaningful content. If we didn't, we may need to re-run
+             * grabArticle with different flags set. This gives us a higher likelihood of
+             * finding the content, and the sieve approach gives us a higher likelihood of
+             * finding the -right- content.
+             */
+
+            $length = 0;
+            foreach ($result->getElementsByTagName('p') as $p) {
+                $length += mb_strlen($p->textContent);
             }
+            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->configuration->getWordThreshold()) {
+                $this->dom = $this->loadHTML($html);
+                $root = $this->dom->getElementsByTagName('body')->item(0);
+
+                if ($this->configuration->getStripUnlikelyCandidates()) {
+                    $this->configuration->setStripUnlikelyCandidates(false);
+                } elseif ($this->configuration->getWeightClasses()) {
+                    $this->configuration->setWeightClasses(false);
+                } elseif ($this->configuration->getCleanConditionally()) {
+                    $this->configuration->setCleanConditionally(false);
+                } else {
+                    throw new ParseException('Could not parse text.');
+                }
+            } else {
+                break;
+            }
+        }
+
+        $result = $this->postProcessContent($result);
+
+        // If we haven't found an excerpt in the article's metadata, use the article's
+        // first paragraph as the excerpt. This can be used for displaying a preview of
+        // the article's content.
+        if (!$this->getExcerpt()) {
+            $paragraphs = $result->getElementsByTagName('p');
+            if ($paragraphs->length > 0) {
+                $this->setExcerpt(trim($paragraphs->item(0)->textContent));
+            }
+        }
+
+        $this->setContent($result->C14N());
+
+        return true;
+    }
+
+    /**
+     * Creates a DOM Document object and loads the provided HTML on it.
+     *
+     * Used for the first load of Readability and subsequent reloads (when disabling flags and rescanning the text)
+     * Previous versions of Readability used this method one time and cloned the DOM to keep a backup. This caused bugs
+     * because cloning the DOM object keeps a relation between the clone and the original one, doing changes in both
+     * objects and ruining the backup.
+     *
+     * @param string $html
+     *
+     * @return DOMDocument
+     */
+    private function loadHTML($html)
+    {
+        // To avoid throwing a gazillion of errors on malformed HTMLs
+        libxml_use_internal_errors(true);
+
+        $dom = new DOMDocument('1.0', 'utf-8');
+
+        if (!$this->configuration->getSubstituteEntities()) {
+            // Keep the original HTML entities
+            $dom->substituteEntities = false;
+        }
+
+        if ($this->configuration->getNormalizeEntities()) {
+            // Replace UTF-8 characters with the HTML Entity equivalent. Useful to fix html with mixed content
+            $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        }
+
+        if ($this->configuration->getSummonCthulhu()) {
+            $html = preg_replace('/<script\b[^>]*>([\s\S]*?)<\/script>/', '', $html);
+        }
+
+        // Prepend the XML tag to avoid having issues with special characters. Should be harmless.
+        $dom->loadHTML('<?xml encoding="UTF-8">' . $html);
+        $dom->encoding = 'UTF-8';
+
+        $this->removeScripts($dom);
+
+        $this->prepDocument($dom);
+
+        return $dom;
+    }
+
+    /**
+     * Tries to guess relevant info from metadata of the html. Sets the results in the Readability properties.
+     */
+    private function getMetadata()
+    {
+        $values = [];
+        // Match "description", or Twitter's "twitter:description" (Cards)
+        // in name attribute.
+        $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title|image)\s*$/i';
+
+        // Match Facebook's Open Graph title & description properties.
+        $propertyPattern = '/^\s*og\s*:\s*(description|title|image)\s*$/i';
+
+        foreach ($this->dom->getElementsByTagName('meta') as $meta) {
+            /* @var DOMNode $meta */
+            $elementName = $meta->getAttribute('name');
+            $elementProperty = $meta->getAttribute('property');
+
+            if (in_array('author', [$elementName, $elementProperty])) {
+                $this->setAuthor($meta->getAttribute('content'));
+                continue;
+            }
+
+            $name = null;
+            if (preg_match($namePattern, $elementName)) {
+                $name = $elementName;
+            } elseif (preg_match($propertyPattern, $elementProperty)) {
+                $name = $elementProperty;
+            }
+
+            if ($name) {
+                $content = $meta->getAttribute('content');
+                if ($content) {
+                    // Convert to lowercase and remove any whitespace
+                    // so we can match below.
+                    $name = preg_replace('/\s/', '', strtolower($name));
+                    $values[$name] = trim($content);
+                }
+            }
+        }
+        if (array_key_exists('description', $values)) {
+            $this->setExcerpt($values['description']);
+        } elseif (array_key_exists('og:description', $values)) {
+            // Use facebook open graph description.
+            $this->setExcerpt($values['og:description']);
+        } elseif (array_key_exists('twitter:description', $values)) {
+            // Use twitter cards description.
+            $this->setExcerpt($values['twitter:description']);
+        }
+
+        $this->setTitle($this->getArticleTitle());
+
+        if (!$this->getTitle()) {
+            if (array_key_exists('og:title', $values)) {
+                // Use facebook open graph title.
+                $this->setTitle($values['og:title']);
+            } elseif (array_key_exists('twitter:title', $values)) {
+                // Use twitter cards title.
+                $this->setTitle($values['twitter:title']);
+            }
+        }
+
+        if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
+            $this->setImage(array_key_exists('og:image', $values) ? $values['og:image'] : $values['twitter:image']);
         }
     }
 
     /**
-     * Checks for the tag name. Case insensitive.
+     * Returns all the images of the parsed article.
      *
-     * @param string $value Name to compare to the current tag
+     * @return array
+     */
+    public function getImages()
+    {
+        $result = [];
+        if ($this->getImage()) {
+            $result[] = $this->getImage();
+        }
+
+        if (null == $this->dom) {
+            return $result;
+        }
+
+        foreach ($this->dom->getElementsByTagName('img') as $img) {
+            if ($src = $img->getAttribute('src')) {
+                $result[] = $src;
+            }
+        }
+
+        if ($this->configuration->getFixRelativeURLs()) {
+            foreach ($result as &$imgSrc) {
+                $imgSrc = $this->toAbsoluteURI($imgSrc);
+            }
+        }
+
+        $result = array_unique(array_filter($result));
+
+        return $result;
+    }
+
+    /**
+     * Tries to get the main article image. Will only update the metadata if the getMetadata function couldn't
+     * find a correct image.
+     */
+    public function getMainImage()
+    {
+        $imgUrl = false;
+
+        if ($this->getImage() !== null) {
+            $imgUrl = $this->getImage();
+        }
+
+        if (!$imgUrl) {
+            foreach ($this->dom->getElementsByTagName('link') as $link) {
+                /** @var \DOMElement $link */
+                /*
+                 * Check for the rel attribute, then check if the rel attribute is either img_src or image_src, and
+                 * finally check for the existence of the href attribute, which should hold the image url.
+                 */
+                if ($link->hasAttribute('rel') && ($link->getAttribute('rel') === 'img_src' || $link->getAttribute('rel') === 'image_src') && $link->hasAttribute('href')) {
+                    $imgUrl = $link->getAttribute('href');
+                    break;
+                }
+            }
+        }
+
+        if (!empty($imgUrl) && $this->configuration->getFixRelativeURLs()) {
+            $this->setImage($this->toAbsoluteURI($imgUrl));
+        }
+    }
+
+    /**
+     * Returns the title of the html. Prioritizes the title from the metadata against the title tag.
+     *
+     * @return string|null
+     */
+    private function getArticleTitle()
+    {
+        $originalTitle = null;
+
+        if ($this->getTitle()) {
+            $originalTitle = $this->getTitle();
+        } else {
+            $titleTag = $this->dom->getElementsByTagName('title');
+            if ($titleTag->length > 0) {
+                $originalTitle = $titleTag->item(0)->nodeValue;
+            }
+        }
+
+        if ($originalTitle === null) {
+            return null;
+        }
+
+        $curTitle = $originalTitle;
+        $titleHadHierarchicalSeparators = false;
+
+        /*
+         * If there's a separator in the title, first remove the final part
+         *
+         * Sanity warning: if you eval this match in PHPStorm's "Evaluate expression" box, it will return false
+         * I can assure you it works properly if you let the code run.
+         */
+        if (preg_match('/ [\|\-\\\\\/>»] /i', $curTitle)) {
+            $titleHadHierarchicalSeparators = (bool)preg_match('/ [\\\\\/>»] /', $curTitle);
+            $curTitle = preg_replace('/(.*)[\|\-\\\\\/>»] .*/i', '$1', $originalTitle);
+
+            // If the resulting title is too short (3 words or fewer), remove
+            // the first part instead:
+            if (count(preg_split('/\s+/', $curTitle)) < 3) {
+                $curTitle = preg_replace('/[^\|\-\\\\\/>»]*[\|\-\\\\\/>»](.*)/i', '$1', $originalTitle);
+            }
+        } elseif (strpos($curTitle, ': ') !== false) {
+            // Check if we have an heading containing this exact string, so we
+            // could assume it's the full title.
+            $match = false;
+            for ($i = 1; $i <= 2; $i++) {
+                foreach ($this->dom->getElementsByTagName('h' . $i) as $hTag) {
+                    // Trim texts to avoid having false negatives when the title is surrounded by spaces or tabs
+                    if (trim($hTag->nodeValue) === trim($curTitle)) {
+                        $match = true;
+                    }
+                }
+            }
+
+            // If we don't, let's extract the title out of the original title string.
+            if (!$match) {
+                $curTitle = substr($originalTitle, strrpos($originalTitle, ':') + 1);
+
+                // If the title is now too short, try the first colon instead:
+                if (count(preg_split('/\s+/', $curTitle)) < 3) {
+                    $curTitle = substr($originalTitle, strpos($originalTitle, ':') + 1);
+                }
+            }
+        } elseif (mb_strlen($curTitle) > 150 || mb_strlen($curTitle) < 15) {
+            $hOnes = $this->dom->getElementsByTagName('h1');
+
+            if ($hOnes->length === 1) {
+                $curTitle = $hOnes->item(0)->nodeValue;
+            }
+        }
+
+        $curTitle = trim($curTitle);
+
+        /*
+         * If we now have 4 words or fewer as our title, and either no
+         * 'hierarchical' separators (\, /, > or ») were found in the original
+         * title or we decreased the number of words by more than 1 word, use
+         * the original title.
+         */
+        $curTitleWordCount = count(preg_split('/\s+/', $curTitle));
+        $originalTitleWordCount = count(preg_split('/\s+/', preg_replace('/[\|\-\\\\\/>»]+/', '', $originalTitle))) - 1;
+
+        if ($curTitleWordCount <= 4 &&
+            (!$titleHadHierarchicalSeparators || $curTitleWordCount !== $originalTitleWordCount)) {
+            $curTitle = $originalTitle;
+        }
+
+        return $curTitle;
+    }
+
+    /**
+     * Convert URI to an absolute URI.
+     *
+     * @param $uri string URI to convert
+     *
+     * @return string
+     */
+    private function toAbsoluteURI($uri)
+    {
+        list($pathBase, $scheme, $prePath) = $this->getPathInfo($this->configuration->getOriginalURL());
+
+        // If this is already an absolute URI, return it.
+        if (preg_match('/^[a-zA-Z][a-zA-Z0-9\+\-\.]*:/', $uri)) {
+            return $uri;
+        }
+
+        // Scheme-rooted relative URI.
+        if (substr($uri, 0, 2) === '//') {
+            return $scheme . '://' . substr($uri, 2);
+        }
+
+        // Prepath-rooted relative URI.
+        if (substr($uri, 0, 1) === '/') {
+            return $prePath . $uri;
+        }
+
+        // Dotslash relative URI.
+        if (strpos($uri, './') === 0) {
+            return $pathBase . substr($uri, 2);
+        }
+        // Ignore hash URIs:
+        if (substr($uri, 0, 1) === '#') {
+            return $uri;
+        }
+
+        // Standard relative URI; add entire path. pathBase already includes a
+        // trailing "/".
+        return $pathBase . $uri;
+    }
+
+    /**
+     * Returns full path info of an URL.
+     *
+     * @param  string $url
+     *
+     * @return array [$pathBase, $scheme, $prePath]
+     */
+    public function getPathInfo($url)
+    {
+        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
+
+        return [$pathBase, $scheme, $prePath];
+    }
+
+    /**
+     * Gets nodes from the root element.
+     *
+     * @param $node DOMNode|DOMText
+     *
+     * @return array
+     */
+    private function getNodes($node)
+    {
+        $stripUnlikelyCandidates = $this->configuration->getStripUnlikelyCandidates();
+
+        $elementsToScore = [];
+
+        /*
+         * First, node prepping. Trash nodes that look cruddy (like ones with the
+         * class name "comment", etc), and turn divs into P tags where they have been
+         * used inappropriately (as in, where they contain no other block level elements.)
+         */
+
+        while ($node) {
+            $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
+
+            // Remove DOMComments nodes as we don't need them and mess up children counting
+            if ($node->nodeType === XML_COMMENT_NODE) {
+                $node = NodeUtility::removeAndGetNext($node);
+                continue;
+            }
+
+            // Check to see if this node is a byline, and remove it if it is.
+            if ($this->checkByline($node, $matchString)) {
+                $node = NodeUtility::removeAndGetNext($node);
+                continue;
+            }
+
+            // Remove unlikely candidates
+            if ($stripUnlikelyCandidates) {
+                if (
+                    preg_match(NodeUtility::$regexps['unlikelyCandidates'], $matchString) &&
+                    !preg_match(NodeUtility::$regexps['okMaybeItsACandidate'], $matchString) &&
+                    $node->nodeName !== 'body' &&
+                    $node->nodeName !== 'a'
+                ) {
+                    $node = NodeUtility::removeAndGetNext($node);
+                    continue;
+                }
+            }
+
+            // Remove DIV, SECTION, and HEADER nodes without any content(e.g. text, image, video, or iframe).
+            if (($node->nodeName === 'div' || $node->nodeName === 'section' || $node->nodeName === 'header' ||
+                    $node->nodeName === 'h1' || $node->nodeName === 'h2' || $node->nodeName === 'h3' ||
+                    $node->nodeName === 'h4' || $node->nodeName === 'h5' || $node->nodeName === 'h6' ||
+                    $node->nodeName === 'p') &&
+                $node->isElementWithoutContent()) {
+                $node = NodeUtility::removeAndGetNext($node);
+                continue;
+            }
+
+            if (in_array(strtolower($node->nodeName), $this->defaultTagsToScore)) {
+                $elementsToScore[] = $node;
+            }
+
+            // Turn all divs that don't have children block level elements into p's
+            if ($node->nodeName === 'div') {
+                /*
+                 * Sites like http://mobile.slate.com encloses each paragraph with a DIV
+                 * element. DIVs with only a P element inside and no text content can be
+                 * safely converted into plain P elements to avoid confusing the scoring
+                 * algorithm with DIVs with are, in practice, paragraphs.
+                 */
+                if ($node->hasSinglePNode()) {
+                    $pNode = $node->getChildren(true)[0];
+                    $node->parentNode->replaceChild($pNode, $node);
+                    $node = $pNode;
+                    $elementsToScore[] = $node;
+                } elseif (!$node->hasSingleChildBlockElement()) {
+                    $node = NodeUtility::setNodeTag($node, 'p');
+                    $elementsToScore[] = $node;
+                } else {
+                    // EXPERIMENTAL
+                    foreach ($node->getChildren() as $child) {
+                        /** @var $child DOMNode */
+                        if ($child->nodeType === XML_TEXT_NODE && mb_strlen(trim($child->getTextContent())) > 0) {
+                            $newNode = $node->createNode($child, 'p');
+                            $child->parentNode->replaceChild($newNode, $child);
+                        }
+                    }
+                }
+            }
+
+            $node = NodeUtility::getNextNode($node);
+        }
+
+        return $elementsToScore;
+    }
+
+    /**
+     * Checks if the node is a byline.
+     *
+     * @param DOMNode $node
+     * @param string $matchString
      *
      * @return bool
      */
-    public function tagNameEqualsTo($value)
+    private function checkByline($node, $matchString)
     {
-        $tagName = $this->getTagName();
-        if (strtolower($value) === strtolower($tagName)) {
+        if (!$this->configuration->getArticleByLine()) {
+            return false;
+        }
+
+        /*
+         * Check if the byline is already set
+         */
+        if ($this->getAuthor()) {
+            return false;
+        }
+
+        $rel = $node->getAttribute('rel');
+
+        if ($rel === 'author' || preg_match(NodeUtility::$regexps['byline'], $matchString) && $this->isValidByline($node->getTextContent())) {
+            $this->setAuthor(trim($node->getTextContent()));
+
             return true;
         }
 
@@ -78,471 +628,895 @@ class Readability extends Element implements ReadabilityInterface
     }
 
     /**
-     * Checks for the node type.
+     * Checks the validity of a byLine. Based on string length.
      *
-     * @param string $value Type of node to compare to
+     * @param string $text
      *
      * @return bool
      */
-    public function nodeTypeEqualsTo($value)
+    private function isValidByline($text)
     {
-        return $this->node->nodeType === $value;
-    }
+        if (gettype($text) == 'string') {
+            $byline = trim($text);
 
-    /**
-     * Get the ancestors of the current node.
-     *
-     * @param int|bool $maxLevel Max amount of ancestors to get. False for all of them
-     *
-     * @return array
-     */
-    public function getNodeAncestors($maxLevel = 3)
-    {
-        $ancestors = [];
-        $level = 0;
-
-        $node = $this->getParent();
-
-        while ($node) {
-            $ancestors[] = $node;
-            $level++;
-            if ($level === $maxLevel) {
-                break;
-            }
-            $node = $node->getParent();
+            return (mb_strlen($byline) > 0) && (mb_strlen($text) < 100);
         }
 
-        return $ancestors;
+        return false;
     }
 
     /**
-     * Overloading the getParent function from League\HTMLToMarkdown\Element due to a bug when there are no more parents
-     * on the selected element.
+     * Removes all the scripts of the html.
      *
-     * @return Readability|null
+     * @param DOMDocument $dom
      */
-    public function getParent()
+    private function removeScripts(DOMDocument $dom)
     {
-        $node = $this->node->parentNode;
+        $toRemove = ['script', 'noscript'];
 
-        return ($node) ? new self($node) : null;
-    }
-
-    /**
-     * Returns all links from the current element.
-     *
-     * @return array|null
-     */
-    public function getAllLinks()
-    {
-        if (($this->isText())) {
-            return null;
-        } else {
-            $links = [];
-            foreach ($this->node->getElementsByTagName('a') as $link) {
-                $links[] = new self($link);
-            }
-
-            return $links;
-        }
-    }
-
-    /**
-     * Initializer. Calculates the current score of the node and returns a full Readability object.
-     *
-     * @return Readability
-     */
-    public function initializeNode()
-    {
-        if (!$this->initialized) {
-            $contentScore = 0;
-
-            switch ($this->getTagName()) {
-                case 'div':
-                    $contentScore += 5;
+        foreach ($toRemove as $tag) {
+            while ($script = $dom->getElementsByTagName($tag)) {
+                if ($script->item(0)) {
+                    $script->item(0)->parentNode->removeChild($script->item(0));
+                } else {
                     break;
-
-                case 'pre':
-                case 'td':
-                case 'blockquote':
-                    $contentScore += 3;
-                    break;
-
-                case 'address':
-                case 'ol':
-                case 'ul':
-                case 'dl':
-                case 'dd':
-                case 'dt':
-                case 'li':
-                case 'form':
-                    $contentScore -= 3;
-                    break;
-
-                case 'h1':
-                case 'h2':
-                case 'h3':
-                case 'h4':
-                case 'h5':
-                case 'h6':
-                case 'th':
-                    $contentScore -= 5;
-                    break;
-            }
-
-            $this->setContentScore($contentScore + $this->getClassWeight());
-
-            $this->initialized = true;
-        }
-
-        return $this;
-    }
-
-    /**
-     * Calculates the weight of the class/id of the current element.
-     *
-     * @todo check for flag that lets this function run or not
-     *
-     * @return int
-     */
-    public function getClassWeight()
-    {
-        //        TODO To implement. How to get config from html parser from readability
-//        if ($this->getConfig()->getOption('weightClasses')) {
-//            return 0;
-//        }
-//
-        $weight = 0;
-
-        // Look for a special classname
-        $class = $this->getAttribute('class');
-        if (trim($class)) {
-            if (preg_match($this->regexps['negative'], $class)) {
-                $weight -= 25;
-            }
-
-            if (preg_match($this->regexps['positive'], $class)) {
-                $weight += 25;
+                }
             }
         }
-
-        // Look for a special ID
-        $id = $this->getAttribute('id');
-        if (trim($id)) {
-            if (preg_match($this->regexps['negative'], $id)) {
-                $weight -= 25;
-            }
-
-            if (preg_match($this->regexps['positive'], $id)) {
-                $weight += 25;
-            }
-        }
-
-        return $weight;
     }
 
     /**
-     * Returns the current score of the Readability object.
+     * Prepares the document for parsing.
      *
-     * @return int
+     * @param DOMDocument $dom
      */
-    public function getContentScore()
-    {
-        return $this->contentScore;
-    }
-
-    /**
-     * Returns the current score of the Readability object.
-     *
-     * @param int $score
-     *
-     * @return int
-     */
-    public function setContentScore($score)
-    {
-        // Check if the setAttribute method exists, as some elements lack of it (and calling it anyway throws an exception)
-        if (method_exists($this->node, 'setAttribute')) {
-            $this->contentScore = (float)$score;
-
-            // Set score in an attribute of the tag to prevent losing it while creating new Readability objects.
-            $this->node->setAttribute('data-readability', $this->contentScore);
-
-            return $this->contentScore;
-        }
-
-        return 0;
-    }
-
-    /**
-     * Returns the full text of the node.
-     *
-     * @param bool $normalize Normalize white space?
-     *
-     * @return string
-     */
-    public function getTextContent($normalize = false)
-    {
-        $nodeValue = $this->node->nodeValue;
-        if ($normalize) {
-            $nodeValue = trim(preg_replace('/\s{2,}/', ' ', $nodeValue));
-        }
-
-        return $nodeValue;
-    }
-
-    /**
-     * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
-     * element with the new tag name and importing it to the main DOMDocument.
-     *
-     * @param string $value
-     * @param bool $importAttributes
-     */
-    public function setNodeTag($value, $importAttributes = false)
-    {
-        $new = new \DOMDocument();
-        $new->appendChild($new->createElement($value));
-
-        $childs = $this->node->childNodes;
-        for ($i = 0; $i < $childs->length; $i++) {
-            $import = $new->importNode($childs->item($i), true);
-            $new->firstChild->appendChild($import);
-        }
-
-        if ($importAttributes) {
-            // Import attributes from the original node.
-            foreach ($this->node->attributes as $attribute) {
-                $new->firstChild->setAttribute($attribute->nodeName, $attribute->nodeValue);
-            }
-        }
-
-        // The import must be done on the firstChild of $new, since $new is a DOMDocument and not a DOMElement.
-        $import = $this->node->ownerDocument->importNode($new->firstChild, true);
-        $this->node->parentNode->replaceChild($import, $this->node);
-
-        $this->node = $import;
-    }
-
-    /**
-     * Returns the current DOMNode.
-     *
-     * @return \DOMNode
-     */
-    public function getDOMNode()
-    {
-        return $this->node;
-    }
-
-    /**
-     * Removes the current node and returns the next node to be parsed (child, sibling or parent).
-     *
-     * @param Readability $node
-     *
-     * @return Readability
-     */
-    public function removeAndGetNext($node)
-    {
-        $nextNode = $this->getNextNode($node, true);
-        $node->node->parentNode->removeChild($node->node);
-
-        return $nextNode;
-    }
-
-    /**
-     * Returns the next node. First checks for childs (if the flag allows it), then for siblings, and finally
-     * for parents.
-     *
-     * @param Readability $originalNode
-     * @param bool $ignoreSelfAndKids
-     *
-     * @return Readability
-     */
-    public function getNextNode($originalNode, $ignoreSelfAndKids = false)
+    private function prepDocument(DOMDocument $dom)
     {
         /*
-         * Traverse the DOM from node to node, starting at the node passed in.
-         * Pass true for the second parameter to indicate this node itself
-         * (and its kids) are going away, and we want the next node over.
+         * DOMNodeList must be converted to an array before looping over it.
+         * This is done to avoid node shifting when removing nodes.
          *
-         * Calling this in a loop will traverse the DOM depth-first.
+         * Reverse traversing cannot be done here because we need to find brs that are right next to other brs.
+         * (If we go the other way around we need to search for previous nodes forcing the creation of new functions
+         * that will be used only here)
          */
+        foreach (iterator_to_array($dom->getElementsByTagName('br')) as $br) {
+            $next = $br->nextSibling;
 
-        // First check for kids if those aren't being ignored
-        if (!$ignoreSelfAndKids && $originalNode->node->firstChild) {
-            return new self($originalNode->node->firstChild);
-        }
+            /*
+             * Whether 2 or more <br> elements have been found and replaced with a
+             * <p> block.
+             */
+            $replaced = false;
 
-        // Then for siblings...
-        if ($originalNode->node->nextSibling) {
-            return new self($originalNode->node->nextSibling);
-        }
+            /*
+             * If we find a <br> chain, remove the <br>s until we hit another element
+             * or non-whitespace. This leaves behind the first <br> in the chain
+             * (which will be replaced with a <p> later).
+             */
+            while (($next = NodeUtility::nextElement($next)) && ($next->nodeName === 'br')) {
+                $replaced = true;
+                $brSibling = $next->nextSibling;
+                $next->parentNode->removeChild($next);
+                $next = $brSibling;
+            }
 
-        // And finally, move up the parent chain *and* find a sibling
-        // (because this is depth-first traversal, we will have already
-        // seen the parent nodes themselves).
-        do {
-            $originalNode = $originalNode->getParent();
-        } while ($originalNode && !$originalNode->node->nextSibling);
+            /*
+             * If we removed a <br> chain, replace the remaining <br> with a <p>. Add
+             * all sibling nodes as children of the <p> until we hit another <br>
+             * chain.
+             */
 
-        return ($originalNode) ? new self($originalNode->node->nextSibling) : $originalNode;
-    }
+            if ($replaced) {
+                $p = $dom->createElement('p');
+                $br->parentNode->replaceChild($p, $br);
 
-    /**
-     * Compares nodes. Checks for tag name and text content.
-     *
-     * It's a replacement of the original JS code, which looked like this:
-     *
-     * $node1 == $node2
-     *
-     * I'm not sure this works the same in PHP, so I created a mock function to check the actual content of the node.
-     * Should serve the same porpuse as the original comparison.
-     *
-     * @param Readability $node1
-     * @param Readability $node2
-     *
-     * @return bool
-     */
-    public function compareNodes($node1, $node2)
-    {
-        if ($node1->getTagName() !== $node2->getTagName()) {
-            return false;
-        }
+                $next = $p->nextSibling;
+                while ($next) {
+                    // If we've hit another <br><br>, we're done adding children to this <p>.
+                    if ($next->nodeName === 'br') {
+                        $nextElem = NodeUtility::nextElement($next);
+                        if ($nextElem && $nextElem->nodeName === 'br') {
+                            break;
+                        }
+                    }
 
-        if ($node1->getTextContent(true) !== $node2->getTextContent(true)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Replaces child node with a new one.
-     *
-     * @param Readability $newNode
-     */
-    public function replaceChild(self $newNode)
-    {
-        $this->node->parentNode->replaceChild($newNode->node, $this->node);
-    }
-
-    /**
-     * Creates a new node based on the text content of the original node.
-     *
-     * @param Readability $originalNode
-     * @param string $tagName
-     *
-     * @return Readability
-     */
-    public function createNode(self $originalNode, $tagName)
-    {
-        $text = $originalNode->getTextContent();
-        $newNode = $originalNode->node->ownerDocument->createElement($tagName, $text);
-
-        return new static($newNode);
-    }
-
-    /**
-     * Checks if the object is initialized.
-     *
-     * @return bool
-     */
-    public function isInitialized()
-    {
-        return $this->initialized;
-    }
-
-    /**
-     * Reloads the score stores in the data-readability tag.
-     *
-     * @return int|bool
-     */
-    public function reloadScore()
-    {
-        if (method_exists($this->node, 'getAttribute')) {
-            if ($this->node->hasAttribute('data-readability')) {
-                $this->initialized = true;
-                $score = $this->node->getAttribute('data-readability');
-                $this->setContentScore($score);
-
-                return $score;
+                    // Otherwise, make this node a child of the new <p>.
+                    $sibling = $next->nextSibling;
+                    $p->appendChild($next);
+                    $next = $sibling;
+                }
             }
         }
 
-        return false;
-    }
-
-    /**
-     * Check if a given node has one of its ancestor tag name matching the
-     * provided one.
-     *
-     * @param Readability $node
-     * @param string $tagName
-     * @param int $maxDepth
-     *
-     * @return bool
-     */
-    public function hasAncestorTag(self $node, $tagName, $maxDepth = 3)
-    {
-        $depth = 0;
-        while ($node->getParent()) {
-            if ($maxDepth > 0 && $depth > $maxDepth) {
-                return false;
-            }
-            if ($node->getParent()->tagNameEqualsTo($tagName)) {
-                return true;
-            }
-            $node = $node->getParent();
-            $depth++;
+        // Replace font tags with span
+        $fonts = $dom->getElementsByTagName('font');
+        $length = $fonts->length;
+        for ($i = 0; $i < $length; $i++) {
+            $font = $fonts->item($length - 1 - $i);
+            NodeUtility::setNodeTag($font, 'span', true);
         }
-
-        return false;
     }
 
     /**
-     * Returns the children of the current node.
+     * Assign scores to each node. Returns full article parsed or false on error.
      *
-     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
+     * @param array $nodes
      *
-     * @return array
+     * @return DOMDocument|bool
      */
-    public function getChildren($filterEmptyDOMText = false)
+    private function rateNodes($nodes)
     {
-        $ret = [];
-        /** @var \DOMNode $node */
-        foreach ($this->node->childNodes as $node) {
-            if ($filterEmptyDOMText && $node->nodeName === '#text' && !trim($node->nodeValue)) {
+        $candidates = [];
+
+        /** @var DOMElement $node */
+        foreach ($nodes as $node) {
+            if (is_null($node->parentNode)) {
                 continue;
             }
 
-            $ret[] = new static($node);
+            // Discard nodes with less than 25 characters, without blank space
+            if (mb_strlen($node->getTextContent(true)) < 25) {
+                continue;
+            }
+
+            $ancestors = $node->getNodeAncestors();
+
+            // Exclude nodes with no ancestor
+            if (count($ancestors) === 0) {
+                continue;
+            }
+
+            // Start with a point for the paragraph itself as a base.
+            $contentScore = 1;
+
+            // Add points for any commas within this paragraph.
+            $contentScore += count(explode(',', $node->getTextContent(true)));
+
+            // For every 100 characters in this paragraph, add another point. Up to 3 points.
+            $contentScore += min(floor(mb_strlen($node->getTextContent(true)) / 100), 3);
+
+            /** @var $ancestor DOMElement */
+            foreach ($ancestors as $level => $ancestor) {
+                if (!$ancestor->isInitialized()) {
+                    $ancestor->initializeNode($this->configuration->getWeightClasses());
+                    $candidates[] = $ancestor;
+                }
+
+                /*
+                 * Node score divider:
+                 *  - parent:             1 (no division)
+                 *  - grandparent:        2
+                 *  - great grandparent+: ancestor level * 3
+                 */
+
+                if ($level === 0) {
+                    $scoreDivider = 1;
+                } elseif ($level === 1) {
+                    $scoreDivider = 2;
+                } else {
+                    $scoreDivider = $level * 3;
+                }
+
+                $currentScore = $ancestor->contentScore;
+                $ancestor->contentScore = $currentScore + ($contentScore / $scoreDivider);
+            }
         }
 
-        return $ret;
+        /*
+         * After we've calculated scores, loop through all of the possible
+         * candidate nodes we found and find the one with the highest score.
+         */
+
+        $topCandidates = [];
+        foreach ($candidates as $candidate) {
+
+            /*
+             * Scale the final candidates score based on link density. Good content
+             * should have a relatively small link density (5% or less) and be mostly
+             * unaffected by this operation.
+             */
+
+            $candidate->contentScore = $candidate->contentScore * (1 - $candidate->getLinkDensity());
+
+            for ($i = 0; $i < $this->configuration->getMaxTopCandidates(); $i++) {
+                $aTopCandidate = isset($topCandidates[$i]) ? $topCandidates[$i] : null;
+
+                if (!$aTopCandidate || $candidate->contentScore > $aTopCandidate->contentScore) {
+                    array_splice($topCandidates, $i, 0, [$candidate]);
+                    if (count($topCandidates) > $this->configuration->getMaxTopCandidates()) {
+                        array_pop($topCandidates);
+                    }
+                    break;
+                }
+            }
+        }
+
+        $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
+        $parentOfTopCandidate = null;
+
+        /*
+         * If we still have no top candidate, just use the body as a last resort.
+         * We also have to copy the body node so it is something we can modify.
+         */
+
+        if ($topCandidate === null || $topCandidate->nodeName === 'body') {
+            // Move all of the page's children into topCandidate
+            $topCandidate = new DOMDocument('1.0', 'utf-8');
+            $topCandidate->encoding = 'UTF-8';
+            $topCandidate->appendChild($topCandidate->createElement('div', ''));
+            $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
+
+            // Cannot be foreached, don't ask me why.
+            for ($i = 0; $i < $kids->length; $i++) {
+                $import = $topCandidate->importNode($kids->item($i), true);
+                $topCandidate->firstChild->appendChild($import);
+            }
+
+            // Candidate must be created using firstChild to grab the DOMElement instead of the DOMDocument.
+            $topCandidate = $topCandidate->firstChild;
+        } elseif ($topCandidate) {
+            // Find a better top candidate node if it contains (at least three) nodes which belong to `topCandidates` array
+            // and whose scores are quite closed with current `topCandidate` node.
+            $alternativeCandidateAncestors = [];
+            for ($i = 1; $i < count($topCandidates); $i++) {
+                if ($topCandidates[$i]->contentScore / $topCandidate->contentScore >= 0.75) {
+                    array_push($alternativeCandidateAncestors, $topCandidates[$i]->getNodeAncestors(false));
+                }
+            }
+
+            $MINIMUM_TOPCANDIDATES = 3;
+            if (count($alternativeCandidateAncestors) >= $MINIMUM_TOPCANDIDATES) {
+                $parentOfTopCandidate = $topCandidate->parentNode;
+                while ($parentOfTopCandidate->nodeName !== 'body') {
+                    $listsContainingThisAncestor = 0;
+                    for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
+                        $listsContainingThisAncestor += (int)in_array($parentOfTopCandidate, $alternativeCandidateAncestors[$ancestorIndex]);
+                    }
+                    if ($listsContainingThisAncestor >= $MINIMUM_TOPCANDIDATES) {
+                        $topCandidate = $parentOfTopCandidate;
+                        break;
+                    }
+                    $parentOfTopCandidate = $parentOfTopCandidate->parentNode;
+                }
+            }
+
+            /*
+             * Because of our bonus system, parents of candidates might have scores
+             * themselves. They get half of the node. There won't be nodes with higher
+             * scores than our topCandidate, but if we see the score going *up* in the first
+             * few steps up the tree, that's a decent sign that there might be more content
+             * lurking in other places that we want to unify in. The sibling stuff
+             * below does some of that - but only if we've looked high enough up the DOM
+             * tree.
+             */
+
+            $parentOfTopCandidate = $topCandidate->parentNode;
+            $lastScore = $topCandidate->contentScore;
+
+            // The scores shouldn't get too low.
+            $scoreThreshold = $lastScore / 3;
+
+            /* @var DOMElement $parentOfTopCandidate */
+            while ($parentOfTopCandidate->nodeName !== 'body') {
+                $parentScore = $parentOfTopCandidate->contentScore;
+                if ($parentScore < $scoreThreshold) {
+                    break;
+                }
+
+                if ($parentScore > $lastScore) {
+                    // Alright! We found a better parent to use.
+                    $topCandidate = $parentOfTopCandidate;
+                    break;
+                }
+                $lastScore = $parentOfTopCandidate->contentScore;
+                $parentOfTopCandidate = $parentOfTopCandidate->parentNode;
+            }
+
+            // If the top candidate is the only child, use parent instead. This will help sibling
+            // joining logic when adjacent content is actually located in parent's sibling node.
+            $parentOfTopCandidate = $topCandidate->parentNode;
+            while ($parentOfTopCandidate->nodeName !== 'body' && count($parentOfTopCandidate->getChildren(true)) === 1) {
+                $topCandidate = $parentOfTopCandidate;
+                $parentOfTopCandidate = $topCandidate->parentNode;
+            }
+        }
+
+        /*
+         * Now that we have the top candidate, look through its siblings for content
+         * that might also be related. Things like preambles, content split by ads
+         * that we removed, etc.
+         */
+
+        $articleContent = new DOMDocument('1.0', 'utf-8');
+        $articleContent->createElement('div');
+
+        $siblingScoreThreshold = max(10, $topCandidate->contentScore * 0.2);
+        // Keep potential top candidate's parent node to try to get text direction of it later.
+        $parentOfTopCandidate = $topCandidate->parentNode;
+        $siblings = $parentOfTopCandidate->getChildren();
+
+        $hasContent = false;
+
+        /** @var DOMElement $sibling */
+        foreach ($siblings as $sibling) {
+            $append = false;
+
+            if ($sibling === $topCandidate) {
+                $append = true;
+            } else {
+                $contentBonus = 0;
+
+                // Give a bonus if sibling nodes and top candidates have the example same classname
+                if ($sibling->getAttribute('class') === $topCandidate->getAttribute('class') && $topCandidate->getAttribute('class') !== '') {
+                    $contentBonus += $topCandidate->contentScore * 0.2;
+                }
+                if ($sibling->contentScore + $contentBonus >= $siblingScoreThreshold) {
+                    $append = true;
+                } elseif ($sibling->nodeName === 'p') {
+                    $linkDensity = $sibling->getLinkDensity();
+                    $nodeContent = $sibling->getTextContent(true);
+
+                    if (mb_strlen($nodeContent) > 80 && $linkDensity < 0.25) {
+                        $append = true;
+                    } elseif ($nodeContent && mb_strlen($nodeContent) < 80 && $linkDensity === 0 && preg_match('/\.( |$)/', $nodeContent)) {
+                        $append = true;
+                    }
+                }
+            }
+
+            if ($append) {
+                $hasContent = true;
+
+                if (!in_array(strtolower($sibling->nodeName), $this->alterToDIVExceptions)) {
+                    /*
+                     * We have a node that isn't a common block level element, like a form or td tag.
+                     * Turn it into a div so it doesn't get filtered out later by accident.
+                     */
+
+                    $sibling = NodeUtility::setNodeTag($sibling, 'div');
+                }
+
+                $import = $articleContent->importNode($sibling, true);
+                $articleContent->appendChild($import);
+
+                /*
+                 * No node shifting needs to be check because when calling getChildren, an array is made with the
+                 * children of the parent node, instead of using the DOMElement childNodes function, which, when used
+                 * along with appendChild, would shift the nodes position and the current foreach will behave in
+                 * unpredictable ways.
+                 */
+            }
+        }
+
+        $articleContent = $this->prepArticle($articleContent);
+
+        if ($hasContent) {
+            // Find out text direction from ancestors of final top candidate.
+            $ancestors = array_merge([$parentOfTopCandidate, $topCandidate], $parentOfTopCandidate->getNodeAncestors());
+            foreach ($ancestors as $ancestor) {
+                $articleDir = $ancestor->getAttribute('dir');
+                if ($articleDir) {
+                    $this->setDirection($articleDir);
+                    break;
+                }
+            }
+
+            return $articleContent;
+        } else {
+            return false;
+        }
     }
 
     /**
-     * Determines if a node has no content or it is just a bunch of dividing lines and/or whitespace.
+     * Cleans up the final article.
      *
-     * @return bool
+     * @param DOMDocument $article
+     *
+     * @return DOMDocument
      */
-    public function isElementWithoutContent()
+    public function prepArticle(DOMDocument $article)
     {
-        return $this->node instanceof \DOMElement &&
-            // /\x{00A0}|\s+/u TODO to be replaced with regexps array
-            mb_strlen(preg_replace('/\x{00A0}|\s+/u', '', $this->node->textContent)) === 0 &&
-            ($this->node->childNodes->length === 0 ||
-                $this->node->childNodes->length === $this->node->getElementsByTagName('br')->length + $this->node->getElementsByTagName('hr')->length
-                /*
-                 * Special DOMDocument case: We also need to count how many DOMText we have inside the node.
-                 * If there's an empty tag with an space inside and a BR (for example "<p> <br/></p>) counting only BRs and
-                 * HRs will will say that the example has 2 nodes, instead of one. This happens because in DOMDocument,
-                 * DOMTexts are also nodes (which doesn't happen in JS). So we need to also count how many DOMText we
-                 * are dealing with (And at this point we know they are empty or are just whitespace, because of the
-                 * mb_strlen in this chain of checks).
-                 */
-                + count(array_filter(iterator_to_array($this->node->childNodes), function ($child) {
-                    return $child instanceof \DOMText;
-                }))
+        $this->_cleanStyles($article);
+        $this->_clean($article, 'style');
 
-            );
+        // Check for data tables before we continue, to avoid removing items in
+        // those tables, which will often be isolated even though they're
+        // visually linked to other content-ful elements (text, images, etc.).
+        $this->_markDataTables($article);
+
+        // Clean out junk from the article content
+        $this->_cleanConditionally($article, 'form');
+        $this->_cleanConditionally($article, 'fieldset');
+        $this->_clean($article, 'object');
+        $this->_clean($article, 'embed');
+        $this->_clean($article, 'h1');
+        $this->_clean($article, 'footer');
+
+        // Clean out elements have "share" in their id/class combinations from final top candidates,
+        // which means we don't remove the top candidates even they have "share".
+        foreach ($article->childNodes as $child) {
+            $this->_cleanMatchedNodes($child, '/share/i');
+        }
+
+        /*
+         * If there is only one h2 and its text content substantially equals article title,
+         * they are probably using it as a header and not a subheader,
+         * so remove it since we already extract the title separately.
+         */
+        $h2 = $article->getElementsByTagName('h2');
+        if ($h2->length === 1) {
+            $lengthSimilarRate = (mb_strlen($h2->item(0)->textContent) - mb_strlen($this->getTitle())) / max(mb_strlen($this->getTitle()), 1);
+
+            if (abs($lengthSimilarRate) < 0.5) {
+                if ($lengthSimilarRate > 0) {
+                    $titlesMatch = strpos($h2->item(0)->textContent, $this->getTitle()) !== false;
+                } else {
+                    $titlesMatch = strpos($this->getTitle(), $h2->item(0)->textContent) !== false;
+                }
+                if ($titlesMatch) {
+                    $this->_clean($article, 'h2');
+                }
+            }
+        }
+
+        $this->_clean($article, 'iframe');
+        $this->_clean($article, 'input');
+        $this->_clean($article, 'textarea');
+        $this->_clean($article, 'select');
+        $this->_clean($article, 'button');
+        $this->_cleanHeaders($article);
+
+        // Do these last as the previous stuff may have removed junk
+        // that will affect these
+        $this->_cleanConditionally($article, 'table');
+        $this->_cleanConditionally($article, 'ul');
+        $this->_cleanConditionally($article, 'div');
+
+        $this->_cleanExtraParagraphs($article);
+
+        foreach (iterator_to_array($article->getElementsByTagName('br')) as $br) {
+            $next = $br->nextSibling;
+            if ($next && $next->nodeName === 'p') {
+                $br->parentNode->removeChild($br);
+            }
+        }
+
+        return $article;
+    }
+
+    /**
+     * Look for 'data' (as opposed to 'layout') tables, for which we use
+     * similar checks as
+     * https://dxr.mozilla.org/mozilla-central/rev/71224049c0b52ab190564d3ea0eab089a159a4cf/accessible/html/HTMLTableAccessible.cpp#920.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _markDataTables(DOMDocument $article)
+    {
+        $tables = $article->getElementsByTagName('table');
+        foreach ($tables as $table) {
+            /** @var DOMElement $table */
+            $role = $table->getAttribute('role');
+            if ($role === 'presentation') {
+                $table->setReadabilityDataTable(false);
+                continue;
+            }
+            $datatable = $table->getAttribute('datatable');
+            if ($datatable == '0') {
+                $table->setReadabilityDataTable(false);
+                continue;
+            }
+            $summary = $table->getAttribute('summary');
+            if ($summary) {
+                $table->setReadabilityDataTable(true);
+                continue;
+            }
+
+            $caption = $table->getElementsByTagName('caption');
+            if ($caption->length > 0 && $caption->item(0)->childNodes->length > 0) {
+                $table->setReadabilityDataTable(true);
+                continue;
+            }
+
+            // If the table has a descendant with any of these tags, consider a data table:
+            foreach (['col', 'colgroup', 'tfoot', 'thead', 'th'] as $dataTableDescendants) {
+                if ($table->getElementsByTagName($dataTableDescendants)->length > 0) {
+                    $table->setReadabilityDataTable(true);
+                    continue 2;
+                }
+            }
+
+            // Nested tables indicate a layout table:
+            if ($table->getElementsByTagName('table')->length > 0) {
+                $table->setReadabilityDataTable(false);
+                continue;
+            }
+
+            $sizeInfo = $table->getRowAndColumnCount();
+            if ($sizeInfo['rows'] >= 10 || $sizeInfo['columns'] > 4) {
+                $table->setReadabilityDataTable(true);
+                continue;
+            }
+            // Now just go by size entirely:
+            $table->setReadabilityDataTable($sizeInfo['rows'] * $sizeInfo['columns'] > 10);
+        }
+    }
+
+    /**
+     * Remove the style attribute on every e and under.
+     *
+     * @param $node DOMDocument|DOMNode
+     **/
+    public function _cleanStyles($node)
+    {
+        if (property_exists($node, 'tagName') && $node->tagName === 'svg') {
+            return;
+        }
+
+        // Do not bother if there's no method to remove an attribute
+        if (method_exists($node, 'removeAttribute')) {
+            $presentational_attributes = ['align', 'background', 'bgcolor', 'border', 'cellpadding', 'cellspacing', 'frame', 'hspace', 'rules', 'style', 'valign', 'vspace'];
+            // Remove `style` and deprecated presentational attributes
+            foreach ($presentational_attributes as $presentational_attribute) {
+                $node->removeAttribute($presentational_attribute);
+            }
+
+            $deprecated_size_attribute_elems = ['table', 'th', 'td', 'hr', 'pre'];
+            if (property_exists($node, 'tagName') && in_array($node->tagName, $deprecated_size_attribute_elems)) {
+                $node->removeAttribute('width');
+                $node->removeAttribute('height');
+            }
+        }
+
+        $cur = $node->firstChild;
+        while ($cur !== null) {
+            $this->_cleanStyles($cur);
+            $cur = $cur->nextSibling;
+        }
+    }
+
+    /**
+     * Clean out elements whose id/class combinations match specific string.
+     *
+     * @param $node DOMElement Node to clean
+     * @param $regex string Match id/class combination.
+     *
+     * @return void
+     **/
+    public function _cleanMatchedNodes($node, $regex)
+    {
+        $endOfSearchMarkerNode = NodeUtility::getNextNode($node, true);
+        $next = NodeUtility::getNextNode($node);
+        while ($next && $next !== $endOfSearchMarkerNode) {
+            if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
+                $next = NodeUtility::removeAndGetNext($next);
+            } else {
+                $next = NodeUtility::getNextNode($next);
+            }
+        }
+    }
+
+    /**
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanExtraParagraphs(DOMDocument $article)
+    {
+        $paragraphs = $article->getElementsByTagName('p');
+        $length = $paragraphs->length;
+
+        for ($i = 0; $i < $length; $i++) {
+            $paragraph = $paragraphs->item($length - 1 - $i);
+
+            $imgCount = $paragraph->getElementsByTagName('img')->length;
+            $embedCount = $paragraph->getElementsByTagName('embed')->length;
+            $objectCount = $paragraph->getElementsByTagName('object')->length;
+            // At this point, nasty iframes have been removed, only remain embedded video ones.
+            $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
+            $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
+
+            if ($totalCount === 0 && !preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $paragraph->textContent)) {
+                $paragraph->parentNode->removeChild($paragraph);
+            }
+        }
+    }
+
+    /**
+     * @param DOMDocument $article
+     *
+     * @return void
+     */
+    public function _cleanConditionally(DOMDocument $article, $tag)
+    {
+        if (!$this->configuration->getCleanConditionally()) {
+            return;
+        }
+
+        $isList = in_array($tag, ['ul', 'ol']);
+
+        /*
+         * Gather counts for other typical elements embedded within.
+         * Traverse backwards so we can remove nodes at the same time
+         * without effecting the traversal.
+         */
+
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+            /** @var $node DOMElement */
+            $node = $DOMNodeList->item($length - 1 - $i);
+
+            // First check if we're in a data table, in which case don't remove us.
+            if ($node->hasAncestorTag($node, 'table', -1) && $node->isReadabilityDataTable()) {
+                continue;
+            }
+
+            $weight = 0;
+            if ($this->configuration->getWeightClasses()) {
+                $weight = $node->getClassWeight();
+            }
+
+            if ($weight < 0) {
+                NodeUtility::removeNode($node);
+                continue;
+            }
+
+            if (substr_count($node->getTextContent(), ',') < 10) {
+                /*
+                 * If there are not very many commas, and the number of
+                 * non-paragraph elements is more than paragraphs or other
+                 * ominous signs, remove the element.
+                 */
+
+                $p = $node->getElementsByTagName('p')->length;
+                $img = $node->getElementsByTagName('img')->length;
+                $li = $node->getElementsByTagName('li')->length - 100;
+                $input = $node->getElementsByTagName('input')->length;
+
+                $embedCount = 0;
+                $embeds = $node->getElementsByTagName('embed');
+
+                foreach ($embeds as $embedNode) {
+                    if (preg_match(NodeUtility::$regexps['videos'], $embedNode->C14N())) {
+                        $embedCount++;
+                    }
+                }
+
+                $linkDensity = $node->getLinkDensity();
+                $contentLength = mb_strlen($node->getTextContent(true));
+
+                $haveToRemove =
+                    ($img > 1 && $p / $img < 0.5 && !$node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $li > $p) ||
+                    ($input > floor($p / 3)) ||
+                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $weight < 25 && $linkDensity > 0.2) ||
+                    ($weight >= 25 && $linkDensity > 0.5) ||
+                    (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
+
+                if ($haveToRemove) {
+                    NodeUtility::removeNode($node);
+                }
+            }
+        }
+    }
+
+    /**
+     * Clean a node of all elements of type "tag".
+     * (Unless it's a youtube/vimeo video. People love movies.).
+     *
+     * @param $article DOMDocument
+     * @param $tag string tag to clean
+     *
+     * @return void
+     **/
+    public function _clean(DOMDocument $article, $tag)
+    {
+        $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
+
+        $DOMNodeList = $article->getElementsByTagName($tag);
+        $length = $DOMNodeList->length;
+        for ($i = 0; $i < $length; $i++) {
+            $item = $DOMNodeList->item($length - 1 - $i);
+
+            // Allow youtube and vimeo videos through as people usually want to see those.
+            if ($isEmbed) {
+                $attributeValues = [];
+                foreach ($item->attributes as $name => $value) {
+                    $attributeValues[] = $value->nodeValue;
+                }
+                $attributeValues = implode('|', $attributeValues);
+
+                // First, check the elements attributes to see if any of them contain youtube or vimeo
+                if (preg_match(NodeUtility::$regexps['videos'], $attributeValues)) {
+                    continue;
+                }
+
+                // Then check the elements inside this element for the same.
+                if (preg_match(NodeUtility::$regexps['videos'], $item->C14N())) {
+                    continue;
+                }
+            }
+            NodeUtility::removeNode($item);
+        }
+    }
+
+    /**
+     * Clean out spurious headers from an Element. Checks things like classnames and link density.
+     *
+     * @param DOMDocument $article
+     *
+     * @return void
+     **/
+    public function _cleanHeaders(DOMDocument $article)
+    {
+        for ($headerIndex = 1; $headerIndex < 3; $headerIndex++) {
+            $headers = $article->getElementsByTagName('h' . $headerIndex);
+            /** @var $header DOMElement */
+            foreach ($headers as $header) {
+                $weight = 0;
+                if ($this->configuration->getWeightClasses()) {
+                    $weight = $header->getClassWeight();
+                }
+
+                if ($weight < 0) {
+                    NodeUtility::removeNode($header);
+                }
+            }
+        }
+    }
+
+    /**
+     * @param DOMDocument $article
+     *
+     * @return DOMDocument
+     */
+    public function postProcessContent(DOMDocument $article)
+    {
+        // Readability cannot open relative uris so we convert them to absolute uris.
+        if ($this->configuration->getFixRelativeURLs()) {
+            foreach (iterator_to_array($article->getElementsByTagName('a')) as $link) {
+                /** @var DOMElement $link */
+                $href = $link->getAttribute('href');
+                if ($href) {
+                    // Replace links with javascript: URIs with text content, since
+                    // they won't work after scripts have been removed from the page.
+                    if (strpos($href, 'javascript:') === 0) {
+                        $text = $article->createTextNode($link->textContent);
+                        $link->parentNode->replaceChild($text, $link);
+                    } else {
+                        $link->setAttribute('href', $this->toAbsoluteURI($href));
+                    }
+                }
+            }
+
+            foreach ($article->getElementsByTagName('img') as $img) {
+                /** @var DOMElement $img */
+                /*
+                 * Extract all possible sources of img url and select the first one on the list.
+                 */
+                $url = [
+                    $img->getAttribute('src'),
+                    $img->getAttribute('data-original'),
+                    $img->getAttribute('data-url')
+                ];
+
+                $src = array_filter($url);
+                $src = reset($src);
+                if ($src) {
+                    $img->setAttribute('src', $this->toAbsoluteURI($src));
+                }
+            }
+        }
+
+        return $article;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function __toString()
+    {
+        return sprintf('<h1>%s</h1>%s', $this->getTitle(), $this->getContent());
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    /**
+     * @param string $title
+     */
+    protected function setTitle($title)
+    {
+        $this->title = $title;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getContent()
+    {
+        return $this->content;
+    }
+
+    /**
+     * @param string $content
+     */
+    protected function setContent($content)
+    {
+        $this->content = $content;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getExcerpt()
+    {
+        return $this->excerpt;
+    }
+
+    /**
+     * @param null|string $excerpt
+     */
+    public function setExcerpt($excerpt)
+    {
+        $this->excerpt = $excerpt;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getImage()
+    {
+        return $this->image;
+    }
+
+    /**
+     * @param string $image
+     */
+    protected function setImage($image)
+    {
+        $this->image = $image;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getAuthor()
+    {
+        return $this->author;
+    }
+
+    /**
+     * @param string $author
+     */
+    protected function setAuthor($author)
+    {
+        $this->author = $author;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getDirection()
+    {
+        return $this->direction;
+    }
+
+    /**
+     * @param null|string $direction
+     */
+    public function setDirection($direction)
+    {
+        $this->direction = $direction;
     }
 }
