@@ -131,6 +131,8 @@ Up to date with readability.js as of [16 Oct 2017](https://github.com/mozilla/re
  
 ## License
 
+Based on Arc90's readability.js (1.7.1) script available at: http://code.google.com/p/arc90labs-readability
+
     Copyright (c) 2010 Arc90 Inc
 
     Licensed under the Apache License, Version 2.0 (the "License");
