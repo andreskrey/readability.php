@@ -119,7 +119,7 @@ Readability.php has no dependencies to other libraries.
 ## To-do
 
 - Keep up with Readability.js changes
-- Add a small template engine for the __toString() method, instead of using a harcoded one.
+- Add a small template engine for the __toString() method, instead of using a hardcoded one.
 
 ## How it works
 
