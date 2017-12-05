@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Added 'data-orig' as an URL source for images
+
 ## [v1.0.0](https://github.com/andreskrey/readability.php/releases/tag/v1.0.0)
 
 - Node encapsulation is gone. Pre v1 all nodes where encapsulated in a Readability class, which created lots of trouble with dependencies, responsibilities, and properties. Now all the encapsulation is gone: all the DOMNodes inside the Readability class are extensions of the original DOM classes, which allows the system to take advantage of the functions and properties of DOMDocument.
