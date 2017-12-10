@@ -126,14 +126,14 @@ class Readability
     {
         $this->dom = $this->loadHTML($html);
 
-        $this->getMetadata();
-
-        $this->getMainImage();
-
         // Checking for minimum HTML to work with.
         if (!($root = $this->dom->getElementsByTagName('body')->item(0)) || !$root->firstChild) {
             throw new ParseException('Invalid or incomplete HTML.');
         }
+
+        $this->getMetadata();
+
+        $this->getMainImage();
 
         while (true) {
             $root = $root->firstChild;
