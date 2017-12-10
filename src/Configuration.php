@@ -2,6 +2,7 @@
 
 namespace andreskrey\Readability;
 
+use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -10,6 +11,8 @@ use Psr\Log\NullLogger;
  */
 class Configuration
 {
+    use LoggerAwareTrait;
+
     /**
      * @var int
      */
@@ -70,14 +73,6 @@ class Configuration
         } else {
             return $this->logger;
         }
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**
