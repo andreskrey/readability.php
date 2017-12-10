@@ -57,10 +57,6 @@ class Configuration
      * @var string
      */
     protected $originalURL = 'http://fakehost';
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger = null;
 
     /**
      * @return LoggerInterface
