@@ -7,6 +7,7 @@ use andreskrey\Readability\Nodes\DOM\DOMElement;
 use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMText;
 use andreskrey\Readability\Nodes\NodeUtility;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class Readability.
@@ -70,6 +71,13 @@ class Readability
     private $configuration;
 
     /**
+     * Logger object.
+     *
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
      * @var array
      */
     private $defaultTagsToScore = [
@@ -102,6 +110,7 @@ class Readability
     public function __construct(Configuration $configuration)
     {
         $this->configuration = $configuration;
+        $this->logger = $this->configuration->getLogger();
     }
 
     /**

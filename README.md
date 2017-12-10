@@ -126,7 +126,7 @@ Self closing tags like `<br />` get automatically expanded to `<br></br`. No way
 
 ## Dependencies
 
-Readability.php has no dependencies to other libraries.
+Readability.php uses the [PSR Log](https://github.com/php-fig/log) interface to define the allowed type of loggers.
 
 ## To-do
 
