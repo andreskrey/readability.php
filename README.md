@@ -85,6 +85,21 @@ Then you pass this Configuration object to Readability. The following options ar
 - **OriginalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
 - **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/andreskrey/readability.php#known-issues). If you're not parsing Javascript tutorials, it's recommended to always set this option as `true`.
 
+### Debug log
+
+Logging is optional and you will have to inject your own logger to save all the debugging messages. To do so, use a logger that implements the [PSR-3 logging interface](https://github.com/php-fig/log) and pass it to the configuration object. For example:
+
+```
+// Using monolog
+
+$log = new Logger('Readability');
+$log->pushHandler(new StreamHandler('path/to/my/log.txt'));
+
+$configuration->setLogger($log);
+```
+
+In the log you will find information about the parsed nodes, why they were removed, and why they were considered relevant to the final article.
+
 ## Limitations
 
 Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php need to be complete and all the content should be in the HTML already.  
