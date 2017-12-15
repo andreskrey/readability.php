@@ -898,7 +898,7 @@ class Readability
             $scoreThreshold = $lastScore / 3;
 
             /* @var DOMElement $parentOfTopCandidate */
-            while ($parentOfTopCandidate->nodeName !== 'body') {
+            while ($parentOfTopCandidate->parentNode !== null && $parentOfTopCandidate->nodeName !== 'body') {
                 $parentScore = $parentOfTopCandidate->contentScore;
                 if ($parentScore < $scoreThreshold) {
                     break;
