@@ -24,5 +24,6 @@ class DOMDocument extends \DOMDocument
         $this->registerNodeClass('DOMNotation', DOMNotation::class);
         $this->registerNodeClass('DOMProcessingInstruction', DOMProcessingInstruction::class);
         $this->registerNodeClass('DOMText', DOMText::class);
+        $this->registerNodeClass('DOMEntityReference', DOMEntityReference::class);
     }
 }
