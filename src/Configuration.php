@@ -2,11 +2,17 @@
 
 namespace andreskrey\Readability;
 
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
 /**
  * Class Configuration.
  */
 class Configuration
 {
+    use LoggerAwareTrait;
+
     /**
      * @var int
      */
@@ -47,6 +53,19 @@ class Configuration
      * @var string
      */
     protected $originalURL = 'http://fakehost';
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        // If no logger has been set, just return a null logger
+        if ($this->logger === null) {
+            return new NullLogger();
+        } else {
+            return $this->logger;
+        }
+    }
 
     /**
      * @return int

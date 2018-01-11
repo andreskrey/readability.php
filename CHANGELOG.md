@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 - Added 'data-orig' as an URL source for images
 - Removed 'modal' as a negative property from classes
+- Added option to inject a logger
 - Removed all references to the `data-readability` tags that don't apply anymore to the new structure
 - Merged PR #38 (Missing DOMEntityReference)
 
