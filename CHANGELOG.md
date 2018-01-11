@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v1.1.0](https://github.com/andreskrey/readability.php/releases/tag/v1.1.0)
+
 - Added 'data-orig' as an URL source for images
 - Removed 'modal' as a negative property from classes
 - Added option to inject a logger
