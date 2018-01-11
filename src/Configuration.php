@@ -40,10 +40,6 @@ class Configuration
     /**
      * @var bool
      */
-    protected $removeReadabilityTags = true;
-    /**
-     * @var bool
-     */
     protected $fixRelativeURLs = false;
     /**
      * @var bool
@@ -187,26 +183,6 @@ class Configuration
     public function setWeightClasses($weightClasses)
     {
         $this->weightClasses = $weightClasses;
-
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getRemoveReadabilityTags()
-    {
-        return $this->removeReadabilityTags;
-    }
-
-    /**
-     * @param bool $removeReadabilityTags
-     *
-     * @return $this
-     */
-    public function setRemoveReadabilityTags($removeReadabilityTags)
-    {
-        $this->removeReadabilityTags = $removeReadabilityTags;
 
         return $this;
     }
