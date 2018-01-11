@@ -78,7 +78,6 @@ Then you pass this Configuration object to Readability. The following options ar
 - **StripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
 - **CleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
 - **WeightClasses**: default value `true`, weight classes during the rating phase. 
-- **RemoveReadabilityTags**: default value `true`, remove the data-readability tags inside the nodes that are added during the rating phase. 
 - **FixRelativeURLs**: default value `false`, convert relative URLs to absolute. Like `/test` to `http://host/test`. 
 - **SubstituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&aacute;` to á.
 - **NormalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.

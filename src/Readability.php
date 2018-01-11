@@ -980,7 +980,8 @@ class Readability
             $scoreThreshold = $lastScore / 3;
 
             /* @var DOMElement $parentOfTopCandidate */
-            while ($parentOfTopCandidate->nodeName !== 'body') {
+            // Check if we are actually dealing with a DOMNode and not a DOMDocument node or higher
+            while ($parentOfTopCandidate->nodeName !== 'body' && $parentOfTopCandidate->nodeType === XML_ELEMENT_NODE) {
                 $parentScore = $parentOfTopCandidate->contentScore;
                 if ($parentScore < $scoreThreshold) {
                     break;
