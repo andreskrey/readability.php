@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 - Added 'data-orig' as an URL source for images
 - Removed 'modal' as a negative property from classes
+- Removed all references to the `data-readability` tags that don't apply anymore to the new structure
 
 ## [v1.0.0](https://github.com/andreskrey/readability.php/releases/tag/v1.0.0)
 
