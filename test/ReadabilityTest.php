@@ -37,7 +37,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         $readability = new Readability($configuration);
         $readability->parse($html);
 
-        $this->assertEquals($expectedResult, $readability->getContent());
+        $this->assertSame($expectedResult, $readability->getContent());
 
         foreach ($expectedMetadata as $key => $metadata) {
             $function = 'get' . $key;
@@ -68,7 +68,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         $readability = new Readability($configuration);
         $readability->parse($html);
 
-        $this->assertEquals($expectedImages, json_encode($readability->getImages()));
+        $this->assertSame($expectedImages, json_encode($readability->getImages()));
     }
 
     public function getSamplePages()
