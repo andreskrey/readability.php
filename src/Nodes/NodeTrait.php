@@ -2,6 +2,7 @@
 
 namespace andreskrey\Readability\Nodes;
 
+use andreskrey\Readability\Nodes\DOM\DOMDocument;
 use andreskrey\Readability\Nodes\DOM\DOMElement;
 use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMText;
@@ -158,7 +159,7 @@ trait NodeTrait
 
         $node = $this->parentNode;
 
-        while ($node) {
+        while ($node && !($node instanceof DOMDocument)) {
             $ancestors[] = $node;
             $level++;
             if ($level === $maxLevel) {
