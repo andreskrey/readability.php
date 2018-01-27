@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 - Switched from assertEquals to assertSame on unit testing to avoid weak comparisons.
+- Added a safe check to avoid sending the DOMDocument as a node when scanning for node ancestors.
 
 ## [v1.1.0](https://github.com/andreskrey/readability.php/releases/tag/v1.1.0)
 
