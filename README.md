@@ -24,7 +24,7 @@ First you have to require the library using composer:
 Then, create a Readability class and pass a Configuration class, feed the `parse()` function with your HTML and echo the variable:
 
 ```php 
-use andreskrey\Readability\HTMLParser;
+use andreskrey\Readability\Readability;
 use andreskrey\Readability\Configuration;
 
 $readability = new Readability(new Configuration());
