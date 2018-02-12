@@ -35,7 +35,7 @@ try {
     $readability->parse($html);
     echo $readability;
 } catch (ParseException $e) {
-    echo sprintf('Error processing text: %s', $e->getMessage);
+    echo sprintf('Error processing text: %s', $e->getMessage());
 }
 ```
 
