@@ -41,7 +41,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
 
         foreach ($expectedMetadata as $key => $metadata) {
             $function = 'get' . $key;
-            $this->assertEquals($metadata, $readability->$function());
+            $this->assertEquals($metadata, $readability->$function(), sprintf('Failed asserting %s metadata', $key));
         }
     }
 

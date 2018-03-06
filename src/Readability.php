@@ -29,9 +29,9 @@ class Readability
     protected $title = null;
 
     /**
-     * HTML content article.
+     * Final DOMDocument with the fully parsed HTML.
      *
-     * @var string|null
+     * @var DOMDocument|null
      */
     protected $content = null;
 
@@ -198,7 +198,7 @@ class Readability
             }
         }
 
-        $this->setContent($result->C14N());
+        $this->setContent($result);
 
         $this->logger->info('*** Parse successful :)');
 
@@ -348,11 +348,11 @@ class Readability
             $result[] = $this->getImage();
         }
 
-        if (null == $this->dom) {
+        if (null == $this->getContentObject()) {
             return $result;
         }
 
-        foreach ($this->dom->getElementsByTagName('img') as $img) {
+        foreach ($this->getContentObject()->getElementsByTagName('img') as $img) {
             if ($src = $img->getAttribute('src')) {
                 $result[] = $src;
             }
@@ -1564,13 +1564,21 @@ class Readability
      */
     public function getContent()
     {
+        return $this->content->C14N();
+    }
+
+    /**
+     * @return DOMDocument|null
+     */
+    public function getContentObject()
+    {
         return $this->content;
     }
 
     /**
-     * @param string $content
+     * @param DOMDocument $content
      */
-    protected function setContent($content)
+    protected function setContent(DOMDocument $content)
     {
         $this->content = $content;
     }

@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Added a safe check to avoid sending the DOMDocument as a node when scanning for node ancestors.
 - Fix issue #45: Small mistake in documentation
 - Fix issue #46: Added `data-src` as a image source path
+- Fixed bug when extracting all the image of the article (Was extracting images from the original DOM instead of the parsed one)
 
 ## [v1.1.0](https://github.com/andreskrey/readability.php/releases/tag/v1.1.0)
 
