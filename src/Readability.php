@@ -348,11 +348,11 @@ class Readability
             $result[] = $this->getImage();
         }
 
-        if (null == $this->getContentObject()) {
+        if (null == $this->getDOMDocument()) {
             return $result;
         }
 
-        foreach ($this->getContentObject()->getElementsByTagName('img') as $img) {
+        foreach ($this->getDOMDocument()->getElementsByTagName('img') as $img) {
             if ($src = $img->getAttribute('src')) {
                 $result[] = $src;
             }
@@ -1570,7 +1570,7 @@ class Readability
     /**
      * @return DOMDocument|null
      */
-    public function getContentObject()
+    public function getDOMDocument()
     {
         return $this->content;
     }
