@@ -60,6 +60,8 @@ Here's a list of the available properties:
 - Author: `->getAuthor();`
 - Text direction (ltr or rtl): `->getDirection();`
 
+If you need to tweak the final HTML you can get the DOMDocument of the result by calling `->getDOMDocument()`.
+
 ## Options
 
 You can change the behaviour of Readability via the Configuration object. For example, if you want to fix relative URLs and declare the original URL, you could set up the configuration like this:
