@@ -1516,6 +1516,7 @@ class Readability
                  */
                 $url = [
                     $img->getAttribute('src'),
+                    $img->getAttribute('data-src'),
                     $img->getAttribute('data-original'),
                     $img->getAttribute('data-orig'),
                     $img->getAttribute('data-url')
