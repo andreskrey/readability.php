@@ -68,11 +68,21 @@ You can change the behaviour of Readability via the Configuration object. For ex
 
 ```php
 $configuration = new Configuration();
-$configuration->setFixRelativeURLs(true)
+$configuration
+    ->setFixRelativeURLs(true)
     ->setOriginalURL('http://my.newspaper.url/article/something-interesting-to-read.html');
 ```
+Also you can pass an array of configuration parameters to the constructor:
+```php
+$configuration = new Configuration([
+    'fixRelativeURLs' => true,
+    'originalURL'     => 'http://my.newspaper.url/article/something-interesting-to-read.html',
+    // other parameters ... listing below
+]);
+```
 
-Then you pass this Configuration object to Readability. The following options are available. Remember to prepend `set` when calling them.
+
+Then you pass this Configuration object to Readability. The following options are available. Remember to prepend `set` when calling them using native setters.
 
 - **MaxTopCandidates**: default value `5`, max amount of top level candidates.
 - **WordThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
