@@ -3,7 +3,7 @@
  * Created by PhpStorm.
  * User: topot
  * Date: 09.03.2018
- * Time: 16:26
+ * Time: 16:26.
  */
 
 namespace andreskrey\Readability\Test;
@@ -11,13 +11,13 @@ namespace andreskrey\Readability\Test;
 use andreskrey\Readability\Configuration;
 
 /**
- * Class ConfigurationTest
- * @package andreskrey\Readability\Test
+ * Class ConfigurationTest.
  */
 class ConfigurationTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @dataProvider getParams
+     *
      * @param array $params
      */
     public function testConfigurationConstructorSetsParameters(array $params)
@@ -25,9 +25,10 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
         $config = new Configuration($params);
         $this->doEqualsAsserts($config, $params);
     }
-    
+
     /**
      * @dataProvider getParams
+     *
      * @param array $params
      */
     public function testInvalidParameterIsNotInConfig(array $params)
@@ -35,7 +36,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
         $config = new Configuration($params);
         $this->assertArrayNotHasKey('invalidParameter', $config->toArray(), 'Invalid param key is not present in config');
     }
-    
+
     /**
      * @param Configuration $config
      * @param array $options
@@ -50,7 +51,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($options['stripUnlikelyCandidates'], $config->getStripUnlikelyCandidates());
         $this->assertEquals($options['substituteEntities'], $config->getSubstituteEntities());
     }
-    
+
     /**
      * @return array
      */
@@ -59,13 +60,13 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
         return [
             [
                 [
-                    'originalURL'             => 'my.original.url',
-                    'fixRelativeURLs'         => true,
-                    'articleByLine'           => true,
-                    'maxTopCandidates'        => 3,
+                    'originalURL' => 'my.original.url',
+                    'fixRelativeURLs' => true,
+                    'articleByLine' => true,
+                    'maxTopCandidates' => 3,
                     'stripUnlikelyCandidates' => false,
-                    'substituteEntities'      => true,
-                    'invalidParameter'        => 'invalidParameterValue',
+                    'substituteEntities' => true,
+                    'invalidParameter' => 'invalidParameterValue',
                 ],
             ],
         ];
