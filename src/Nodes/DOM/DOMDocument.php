@@ -20,10 +20,11 @@ class DOMDocument extends \DOMDocument
         $this->registerNodeClass('DOMDocumentFragment', DOMDocumentFragment::class);
         $this->registerNodeClass('DOMDocumentType', DOMDocumentType::class);
         $this->registerNodeClass('DOMElement', DOMElement::class);
+        $this->registerNodeClass('DOMEntity', DOMEntity::class);
+        $this->registerNodeClass('DOMEntityReference', DOMEntityReference::class);
         $this->registerNodeClass('DOMNode', DOMNode::class);
         $this->registerNodeClass('DOMNotation', DOMNotation::class);
         $this->registerNodeClass('DOMProcessingInstruction', DOMProcessingInstruction::class);
         $this->registerNodeClass('DOMText', DOMText::class);
-        $this->registerNodeClass('DOMEntityReference', DOMEntityReference::class);
     }
 }
