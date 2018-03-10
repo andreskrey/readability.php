@@ -1133,6 +1133,7 @@ class Readability
         $this->_clean($article, 'embed');
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
+        $this->_clean($article, 'link');
 
         // Clean out elements have "share" in their id/class combinations from final top candidates,
         // which means we don't remove the top candidates even they have "share".
