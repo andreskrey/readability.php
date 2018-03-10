@@ -78,6 +78,13 @@ class Readability
     private $logger;
 
     /**
+     * Collection of attempted text extractions.
+     *
+     * @var array
+     */
+    private $attempts = [];
+
+    /**
      * @var array
      */
     private $defaultTagsToScore = [
@@ -162,47 +169,69 @@ class Readability
 
             $this->logger->info(sprintf('[Parsing] Article parsed. Amount of words: %s. Current threshold is: %s', $length, $this->configuration->getWordThreshold()));
 
-            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->configuration->getWordThreshold()) {
+            $parseSuccessful = true;
+
+            if ($result && $length < $this->configuration->getWordThreshold()) {
                 $this->dom = $this->loadHTML($html);
                 $root = $this->dom->getElementsByTagName('body')->item(0);
+                $parseSuccessful = false;
 
                 if ($this->configuration->getStripUnlikelyCandidates()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting StripUnlikelyCandidates as false');
                     $this->configuration->setStripUnlikelyCandidates(false);
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } elseif ($this->configuration->getWeightClasses()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting WeightClasses as false');
                     $this->configuration->setWeightClasses(false);
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } elseif ($this->configuration->getCleanConditionally()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting CleanConditionally as false');
                     $this->configuration->setCleanConditionally(false);
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } else {
-                    $this->logger->emergency('[Parsing] Could not parse text, giving up :(');
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
 
-                    throw new ParseException('Could not parse text.');
+                    // No luck after removing flags, just return the longest text we found during the different loops
+                    usort($this->attempts, function ($a, $b) {
+                        return $a['textLength'] < $b['textLength'];
+                    });
+
+                    // But first check if we actually have something
+                    if (!$this->attempts[0]['textLength']) {
+                        $this->logger->emergency('[Parsing] Could not parse text, giving up :(');
+
+                        throw new ParseException('Could not parse text.');
+                    }
+
+                    $result = $this->attempts[0]['articleContent'];
+                    $parseSuccessful = true;
+                    break;
                 }
             } else {
                 break;
             }
         }
 
-        $result = $this->postProcessContent($result);
+        if ($parseSuccessful) {
+            $result = $this->postProcessContent($result);
 
-        // If we haven't found an excerpt in the article's metadata, use the article's
-        // first paragraph as the excerpt. This can be used for displaying a preview of
-        // the article's content.
-        if (!$this->getExcerpt()) {
-            $this->logger->debug('[Parsing] No excerpt text found on metadata, extracting first p node and using it as excerpt.');
-            $paragraphs = $result->getElementsByTagName('p');
-            if ($paragraphs->length > 0) {
-                $this->setExcerpt(trim($paragraphs->item(0)->textContent));
+            // If we haven't found an excerpt in the article's metadata, use the article's
+            // first paragraph as the excerpt. This can be used for displaying a preview of
+            // the article's content.
+            if (!$this->getExcerpt()) {
+                $this->logger->debug('[Parsing] No excerpt text found on metadata, extracting first p node and using it as excerpt.');
+                $paragraphs = $result->getElementsByTagName('p');
+                if ($paragraphs->length > 0) {
+                    $this->setExcerpt(trim($paragraphs->item(0)->textContent));
+                }
             }
+
+            $this->setContent($result);
+
+            $this->logger->info('*** Parse successful :)');
+
+            return true;
         }
-
-        $this->setContent($result);
-
-        $this->logger->info('*** Parse successful :)');
-
-        return true;
     }
 
     /**
