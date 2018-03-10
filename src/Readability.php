@@ -189,6 +189,7 @@ class Readability
                     $this->configuration->setCleanConditionally(false);
                     $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } else {
+                    $this->logger->debug('[Parsing] Threshold not met, searching across attempts for some content.');
                     $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
 
                     // No luck after removing flags, just return the longest text we found during the different loops
@@ -202,6 +203,8 @@ class Readability
 
                         throw new ParseException('Could not parse text.');
                     }
+
+                    $this->logger->debug('[Parsing] Threshold not met, but found some content in previous attempts.');
 
                     $result = $this->attempts[0]['articleContent'];
                     $parseSuccessful = true;
