@@ -1480,6 +1480,28 @@ class Readability
     }
 
     /**
+     * Removes the class="" attribute from every element in the given
+     * subtree.
+     *
+     * Readability.js has a special filter to avoid cleaning the classes that the algorithm adds. We don't add classes
+     * here so no need to filter those.
+     * 
+     * @param DOMDocument|DOMNode $node
+     *
+     * @return void
+     **/
+    public function _cleanClasses($node)
+    {
+        if ($node->getAttribute('class') !== '') {
+            $node->removeAttribute('class');
+        }
+
+        for ($node = $node->firstChild; $node !== null; $node = $node->nextSibling) {
+            $this->_cleanClasses($node);
+        }
+    }
+
+    /**
      * @param DOMDocument $article
      *
      * @return DOMDocument
@@ -1531,6 +1553,8 @@ class Readability
                 }
             }
         }
+
+        $this->_cleanClasses($article);
 
         return $article;
     }
