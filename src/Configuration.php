@@ -76,7 +76,7 @@ class Configuration
     public function __construct(array $params = [])
     {
         foreach ($params as $key => $value) {
-            $setter = "set{$key}";
+            $setter = sprintf('set%s', $key);
             if (method_exists($this, $setter)) {
                 call_user_func([$this, $setter], $value);
             }
@@ -92,7 +92,7 @@ class Configuration
     {
         $out = [];
         foreach ($this as $key => $value) {
-            $getter = "get{$key}";
+            $getter = sprintf('get%s', $key);
             if (!is_object($value) && method_exists($this, $getter)) {
                 $out[$key] = call_user_func([$this, $getter]);
             }

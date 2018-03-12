@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: topot
- * Date: 09.03.2018
- * Time: 16:26.
- */
 
 namespace andreskrey\Readability\Test;
 
