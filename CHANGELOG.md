@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Fix issue #46: Added `data-src` as a image source path
 - Fixed bug when extracting all the image of the article (Was extracting images from the original DOM instead of the parsed one)
 - Added the `->getDOMDocument()` getter to retrieve the fully parsed DOMDocument
+- Merged PR #48 that allows passing an array as configuration (@topotru)
 
 ## [v1.1.0](https://github.com/andreskrey/readability.php/releases/tag/v1.1.0)
 
