@@ -7,13 +7,13 @@ PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readabilit
 
 The project aim is to be a 1 to 1 port of Mozilla's version and to follow closely all changes introduced there, but there are some major differences on the structure. Most of the code is a 1:1 copy –even the comments were imported– but some functions and structures were adapted to suit better the PHP language.
 
+**Lead Developer**: Andres Rey
+
 ## Requirements
 
 PHP 5.6+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
 
 `$ sudo apt-get install php7.1-xml php7.1-mbstring`
-
-**Lead Developer**: Andres Rey
 
 ## How to use it
 
@@ -68,11 +68,21 @@ You can change the behaviour of Readability via the Configuration object. For ex
 
 ```php
 $configuration = new Configuration();
-$configuration->setFixRelativeURLs(true)
+$configuration
+    ->setFixRelativeURLs(true)
     ->setOriginalURL('http://my.newspaper.url/article/something-interesting-to-read.html');
 ```
+Also you can pass an array of configuration parameters to the constructor:
+```php
+$configuration = new Configuration([
+    'fixRelativeURLs' => true,
+    'originalURL'     => 'http://my.newspaper.url/article/something-interesting-to-read.html',
+    // other parameters ... listing below
+]);
+```
 
-Then you pass this Configuration object to Readability. The following options are available. Remember to prepend `set` when calling them.
+
+Then you pass this Configuration object to Readability. The following options are available. Remember to prepend `set` when calling them using native setters.
 
 - **MaxTopCandidates**: default value `5`, max amount of top level candidates.
 - **WordThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
@@ -155,7 +165,7 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 ## Code porting
 
-Up to date with readability.js as of [16 Oct 2017](https://github.com/mozilla/readability/commit/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5).
+Up to date with readability.js as of [2 Mar 2018](https://github.com/mozilla/readability/commit/8525c6af36d3badbe27c4672a6f2dd99ddb4097f).
  
 ## License
 
