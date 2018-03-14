@@ -1564,7 +1564,7 @@ class Readability
      */
     public function getContent()
     {
-        return (null !== $this->content) ? $this->content->C14N() : null;
+        return ($this->content instanceof DOMDocument) ? $this->content->C14N() : null;
     }
 
     /**
