@@ -1564,7 +1564,7 @@ class Readability
      */
     public function getContent()
     {
-        return $this->content->C14N();
+        return (null !== $this->content) ? $this->content->C14N() : null;
     }
 
     /**
