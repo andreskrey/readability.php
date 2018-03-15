@@ -68,6 +68,18 @@ class Configuration
     }
 
     /**
+     * @param LoggerInterface $logger
+     *
+     * @return Configuration
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+
+        return $this;
+    }
+
+    /**
      * @return int
      */
     public function getMaxTopCandidates()
