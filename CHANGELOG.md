@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Merged PR#49 (Missing object when calling `->getContent()`)
+
 ## [v1.1.1](https://github.com/andreskrey/readability.php/releases/tag/v1.1.1)
 
 - Switched from assertEquals to assertSame on unit testing to avoid weak comparisons.
