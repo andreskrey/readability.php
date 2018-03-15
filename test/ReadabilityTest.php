@@ -117,4 +117,10 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         $this->expectExceptionMessage('Could not parse text.');
         $parser->parse('<html><body><p>hello</p></body></html>');
     }
+
+    public function testReadabilityCallGetContentWithNoContent()
+    {
+        $parser = new Readability(new Configuration());
+        $this->assertNull($parser->getContent());
+    }
 }
