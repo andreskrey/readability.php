@@ -582,7 +582,19 @@ class Readability
      */
     public function getPathInfo($url)
     {
-        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        // Check for base URLs
+        if ($this->dom->baseURI !== null) {
+            if (substr($this->dom->baseURI, 0, 1) === '/') {
+                // URLs starting with '/' override completely the URL defined in the link
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . $this->dom->baseURI;
+            } else {
+                // Otherwise just prepend the base to the actual path
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/' . rtrim($this->dom->baseURI, '/') . '/';
+            }
+        } else {
+            $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        }
+
         $scheme = parse_url($pathBase, PHP_URL_SCHEME);
         $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
 
