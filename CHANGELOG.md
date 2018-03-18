@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Merged PR#49 (Missing object when calling `->getContent()`)
 - Imported all changes from Readability.js as of 2 March 2018 ([8525c6a](https://github.com/mozilla/readability/commit/8525c6af36d3badbe27c4672a6f2dd99ddb4097f))
 
 ## [v1.1.1](https://github.com/andreskrey/readability.php/releases/tag/v1.1.1)

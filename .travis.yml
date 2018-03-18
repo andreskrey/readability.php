@@ -8,4 +8,10 @@ php:
   - "7.1"
   - "7.2"
 
+script:
+  - ./vendor/bin/phpunit --coverage-clover ./test/clover.xml
+
+after_script:
+  - php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
+
 sudo: false
