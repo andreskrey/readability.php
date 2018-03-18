@@ -17,42 +17,89 @@ class Configuration
      * @var int
      */
     protected $maxTopCandidates = 5;
+
     /**
      * @var int
      */
     protected $wordThreshold = 500;
+
     /**
      * @var bool
      */
     protected $articleByLine = false;
+
     /**
      * @var bool
      */
     protected $stripUnlikelyCandidates = true;
+
     /**
      * @var bool
      */
     protected $cleanConditionally = true;
+
     /**
      * @var bool
      */
     protected $weightClasses = true;
+
     /**
      * @var bool
      */
     protected $fixRelativeURLs = false;
+
     /**
      * @var bool
      */
     protected $substituteEntities = false;
+
     /**
      * @var bool
      */
     protected $normalizeEntities = false;
+
+    /**
+     * @var bool
+     */
+    protected $summonCthulhu = false;
+
     /**
      * @var string
      */
     protected $originalURL = 'http://fakehost';
+
+    /**
+     * Configuration constructor.
+     *
+     * @param array $params
+     */
+    public function __construct(array $params = [])
+    {
+        foreach ($params as $key => $value) {
+            $setter = sprintf('set%s', $key);
+            if (method_exists($this, $setter)) {
+                call_user_func([$this, $setter], $value);
+            }
+        }
+    }
+
+    /**
+     * Returns an array-representation of configuration.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        $out = [];
+        foreach ($this as $key => $value) {
+            $getter = sprintf('get%s', $key);
+            if (!is_object($value) && method_exists($this, $getter)) {
+                $out[$key] = call_user_func([$this, $getter]);
+            }
+        }
+
+        return $out;
+    }
 
     /**
      * @return LoggerInterface
@@ -298,9 +345,4 @@ class Configuration
 
         return $this;
     }
-
-    /**
-     * @var bool
-     */
-    protected $summonCthulhu = false;
 }

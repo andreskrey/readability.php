@@ -3,12 +3,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v1.1.1](https://github.com/andreskrey/readability.php/releases/tag/v1.1.1)
+
 - Switched from assertEquals to assertSame on unit testing to avoid weak comparisons.
 - Added a safe check to avoid sending the DOMDocument as a node when scanning for node ancestors.
 - Fix issue #45: Small mistake in documentation
 - Fix issue #46: Added `data-src` as a image source path
 - Fixed bug when extracting all the image of the article (Was extracting images from the original DOM instead of the parsed one)
 - Added the `->getDOMDocument()` getter to retrieve the fully parsed DOMDocument
+- Merged PR #48 that allows passing an array as configuration (@topotru)
 
 ## [v1.1.0](https://github.com/andreskrey/readability.php/releases/tag/v1.1.0)
 
