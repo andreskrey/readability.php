@@ -13,7 +13,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
      */
     public function testReadabilityParsesHTML($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
     {
-        $options = ['originalURL' => 'http://fakehost/test/test.html',
+        $options = ['OriginalURL' => 'http://fakehost/test/test.html',
             'FixRelativeURLs' => true,
             'SubstituteEntities' => true,
             'ArticleByLine' => true
@@ -27,12 +27,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
             $options = array_merge($config, $options);
         }
 
-        $configuration = new Configuration();
-
-        foreach ($options as $key => $value) {
-            $name = 'set' . $key;
-            $configuration->$name($value);
-        }
+        $configuration = new Configuration($options);
 
         $readability = new Readability($configuration);
         $readability->parse($html);
@@ -50,7 +45,7 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
      */
     public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
     {
-        $options = ['originalURL' => 'http://fakehost/test/test.html',
+        $options = ['OriginalURL' => 'http://fakehost/test/test.html',
             'fixRelativeURLs' => true,
             'substituteEntities' => true,
         ];
@@ -58,12 +53,8 @@ class ReadabilityTest extends \PHPUnit_Framework_TestCase
         if ($config) {
             $options = array_merge($options, $config);
         }
-        $configuration = new Configuration();
 
-        foreach ($options as $key => $value) {
-            $name = 'set' . $key;
-            $configuration->$name($value);
-        }
+        $configuration = new Configuration($options);
 
         $readability = new Readability($configuration);
         $readability->parse($html);
