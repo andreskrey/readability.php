@@ -162,10 +162,7 @@ class Readability
              * finding the -right- content.
              */
 
-            $length = 0;
-            foreach ($result->getElementsByTagName('p') as $p) {
-                $length += mb_strlen($p->textContent);
-            }
+            $length = mb_strlen(preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $result->textContent));
 
             $this->logger->info(sprintf('[Parsing] Article parsed. Amount of words: %s. Current threshold is: %s', $length, $this->configuration->getWordThreshold()));
 
