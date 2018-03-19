@@ -3,6 +3,8 @@
 namespace andreskrey\Readability\Test;
 
 use andreskrey\Readability\Configuration;
+use Monolog\Handler\NullHandler;
+use Monolog\Logger;
 
 /**
  * Class ConfigurationTest.
@@ -72,5 +74,19 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
                 'invalidParameter' => 'invalidParameterValue'
             ]
         ]];
+    }
+
+    /**
+     * Test if a logger interface can be injected and retrieved from the Configuration object
+     */
+    public function testLoggerCanBeInjected()
+    {
+        $configuration = new Configuration();
+        $log = new Logger('Readability');
+        $log->pushHandler(new NullHandler());
+
+        $configuration->setLogger($log);
+
+        $this->assertSame($log, $configuration->getLogger());
     }
 }
