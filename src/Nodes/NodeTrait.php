@@ -7,6 +7,9 @@ use andreskrey\Readability\Nodes\DOM\DOMElement;
 use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMText;
 
+/**
+ * @method \DOMNode removeAttribute($name)
+ */
 trait NodeTrait
 {
     /**

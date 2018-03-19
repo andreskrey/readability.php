@@ -78,6 +78,13 @@ class Readability
     private $logger;
 
     /**
+     * Collection of attempted text extractions.
+     *
+     * @var array
+     */
+    private $attempts = [];
+
+    /**
      * @var array
      */
     private $defaultTagsToScore = [
@@ -155,54 +162,76 @@ class Readability
              * finding the -right- content.
              */
 
-            $length = 0;
-            foreach ($result->getElementsByTagName('p') as $p) {
-                $length += mb_strlen($p->textContent);
-            }
+            $length = mb_strlen(preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $result->textContent));
 
             $this->logger->info(sprintf('[Parsing] Article parsed. Amount of words: %s. Current threshold is: %s', $length, $this->configuration->getWordThreshold()));
 
-            if ($result && mb_strlen(preg_replace('/\s/', '', $result->textContent)) < $this->configuration->getWordThreshold()) {
+            $parseSuccessful = true;
+
+            if ($result && $length < $this->configuration->getWordThreshold()) {
                 $this->dom = $this->loadHTML($html);
                 $root = $this->dom->getElementsByTagName('body')->item(0);
+                $parseSuccessful = false;
 
                 if ($this->configuration->getStripUnlikelyCandidates()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting StripUnlikelyCandidates as false');
                     $this->configuration->setStripUnlikelyCandidates(false);
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } elseif ($this->configuration->getWeightClasses()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting WeightClasses as false');
                     $this->configuration->setWeightClasses(false);
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } elseif ($this->configuration->getCleanConditionally()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting CleanConditionally as false');
                     $this->configuration->setCleanConditionally(false);
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
                 } else {
-                    $this->logger->emergency('[Parsing] Could not parse text, giving up :(');
+                    $this->logger->debug('[Parsing] Threshold not met, searching across attempts for some content.');
+                    $this->attempts[] = ['articleContent' => $result, 'textLength' => $length];
 
-                    throw new ParseException('Could not parse text.');
+                    // No luck after removing flags, just return the longest text we found during the different loops
+                    usort($this->attempts, function ($a, $b) {
+                        return $a['textLength'] < $b['textLength'];
+                    });
+
+                    // But first check if we actually have something
+                    if (!$this->attempts[0]['textLength']) {
+                        $this->logger->emergency('[Parsing] Could not parse text, giving up :(');
+
+                        throw new ParseException('Could not parse text.');
+                    }
+
+                    $this->logger->debug('[Parsing] Threshold not met, but found some content in previous attempts.');
+
+                    $result = $this->attempts[0]['articleContent'];
+                    $parseSuccessful = true;
+                    break;
                 }
             } else {
                 break;
             }
         }
 
-        $result = $this->postProcessContent($result);
+        if ($parseSuccessful) {
+            $result = $this->postProcessContent($result);
 
-        // If we haven't found an excerpt in the article's metadata, use the article's
-        // first paragraph as the excerpt. This can be used for displaying a preview of
-        // the article's content.
-        if (!$this->getExcerpt()) {
-            $this->logger->debug('[Parsing] No excerpt text found on metadata, extracting first p node and using it as excerpt.');
-            $paragraphs = $result->getElementsByTagName('p');
-            if ($paragraphs->length > 0) {
-                $this->setExcerpt(trim($paragraphs->item(0)->textContent));
+            // If we haven't found an excerpt in the article's metadata, use the article's
+            // first paragraph as the excerpt. This can be used for displaying a preview of
+            // the article's content.
+            if (!$this->getExcerpt()) {
+                $this->logger->debug('[Parsing] No excerpt text found on metadata, extracting first p node and using it as excerpt.');
+                $paragraphs = $result->getElementsByTagName('p');
+                if ($paragraphs->length > 0) {
+                    $this->setExcerpt(trim($paragraphs->item(0)->textContent));
+                }
             }
+
+            $this->setContent($result);
+
+            $this->logger->info('*** Parse successful :)');
+
+            return true;
         }
-
-        $this->setContent($result);
-
-        $this->logger->info('*** Parse successful :)');
-
-        return true;
     }
 
     /**
@@ -468,6 +497,10 @@ class Readability
                 if (count(preg_split('/\s+/', $curTitle)) < 3) {
                     $curTitle = substr($originalTitle, strpos($originalTitle, ':') + 1);
                     $this->logger->info(sprintf('[Metadata] Title too short, using the first part of the title instead: \'%s\'', $curTitle));
+                } elseif (count(preg_split('/\s+/', substr($curTitle, 0, strpos($curTitle, ':')))) > 5) {
+                    // But if we have too many words before the colon there's something weird
+                    // with the titles and the H tags so let's just use the original title instead
+                    $curTitle = $originalTitle;
                 }
             }
         } elseif (mb_strlen($curTitle) > 150 || mb_strlen($curTitle) < 15) {
@@ -549,7 +582,19 @@ class Readability
      */
     public function getPathInfo($url)
     {
-        $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        // Check for base URLs
+        if ($this->dom->baseURI !== null) {
+            if (substr($this->dom->baseURI, 0, 1) === '/') {
+                // URLs starting with '/' override completely the URL defined in the link
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . $this->dom->baseURI;
+            } else {
+                // Otherwise just prepend the base to the actual path
+                $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/' . rtrim($this->dom->baseURI, '/') . '/';
+            }
+        } else {
+            $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
+        }
+
         $scheme = parse_url($pathBase, PHP_URL_SCHEME);
         $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
 
@@ -1129,6 +1174,7 @@ class Readability
         $this->_clean($article, 'embed');
         $this->_clean($article, 'h1');
         $this->_clean($article, 'footer');
+        $this->_clean($article, 'link');
 
         // Clean out elements have "share" in their id/class combinations from final top candidates,
         // which means we don't remove the top candidates even they have "share".
@@ -1480,6 +1526,28 @@ class Readability
     }
 
     /**
+     * Removes the class="" attribute from every element in the given
+     * subtree.
+     *
+     * Readability.js has a special filter to avoid cleaning the classes that the algorithm adds. We don't add classes
+     * here so no need to filter those.
+     *
+     * @param DOMDocument|DOMNode $node
+     *
+     * @return void
+     **/
+    public function _cleanClasses($node)
+    {
+        if ($node->getAttribute('class') !== '') {
+            $node->removeAttribute('class');
+        }
+
+        for ($node = $node->firstChild; $node !== null; $node = $node->nextSibling) {
+            $this->_cleanClasses($node);
+        }
+    }
+
+    /**
      * @param DOMDocument $article
      *
      * @return DOMDocument
@@ -1532,6 +1600,8 @@ class Readability
             }
         }
 
+        $this->_cleanClasses($article);
+
         return $article;
     }
 
@@ -1564,7 +1634,7 @@ class Readability
      */
     public function getContent()
     {
-        return $this->content->C14N();
+        return ($this->content instanceof DOMDocument) ? $this->content->C14N() : null;
     }
 
     /**

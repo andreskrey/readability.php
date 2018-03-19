@@ -1,11 +1,19 @@
 language: php
 
-install: composer install
+install:
+ - composer install
 
 php:
   - "5.6"
   - "7.0"
   - "7.1"
   - "7.2"
+
+script:
+  - ./vendor/bin/phpunit --coverage-clover ./test/clover.xml
+
+after_script:
+  - composer require php-coveralls/php-coveralls:^2.0
+  - php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
 
 sudo: false

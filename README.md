@@ -1,5 +1,5 @@
 # Readability.php
-[![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Build Status](https://travis-ci.org/andreskrey/readability.php.svg?branch=master)](https://travis-ci.org/andreskrey/readability.php) [![Total Downloads](https://poser.pugx.org/andreskrey/readability.php/downloads)](https://packagist.org/packages/andreskrey/readability.php) [![Monthly Downloads](https://poser.pugx.org/andreskrey/readability.php/d/monthly)](https://packagist.org/packages/andreskrey/readability.php)
+[![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![Build Status](https://travis-ci.org/andreskrey/readability.php.svg?branch=master)](https://travis-ci.org/andreskrey/readability.php) [![Coverage Status](https://coveralls.io/repos/github/andreskrey/readability.php/badge.svg?branch=master)](https://coveralls.io/github/andreskrey/readability.php/?branch=master) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Total Downloads](https://poser.pugx.org/andreskrey/readability.php/downloads)](https://packagist.org/packages/andreskrey/readability.php) [![Monthly Downloads](https://poser.pugx.org/andreskrey/readability.php/d/monthly)](https://packagist.org/packages/andreskrey/readability.php)
 
 PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and returns **title**, **author**, **main image** and **text content** without nav bars, ads, footers, or anything that isn't the main body of the text. Analyzes each node, gives them a score, and determines what's relevant and what can be discarded.
 
@@ -7,13 +7,13 @@ PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readabilit
 
 The project aim is to be a 1 to 1 port of Mozilla's version and to follow closely all changes introduced there, but there are some major differences on the structure. Most of the code is a 1:1 copy –even the comments were imported– but some functions and structures were adapted to suit better the PHP language.
 
+**Lead Developer**: Andres Rey
+
 ## Requirements
 
 PHP 5.6+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
 
 `$ sudo apt-get install php7.1-xml php7.1-mbstring`
-
-**Lead Developer**: Andres Rey
 
 ## How to use it
 
@@ -152,7 +152,7 @@ Self closing tags like `<br />` get automatically expanded to `<br></br`. No way
 
 ## Dependencies
 
-Readability.php uses the [PSR Log](https://github.com/php-fig/log) interface to define the allowed type of loggers.
+Readability.php uses the [PSR Log](https://github.com/php-fig/log) interface to define the allowed type of loggers. [Monolog](https://github.com/Seldaek/monolog) is only required on development installations. (`--dev` option during `composer install`).
 
 ## To-do
 
@@ -165,7 +165,7 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 ## Code porting
 
-Up to date with readability.js as of [16 Oct 2017](https://github.com/mozilla/readability/commit/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5).
+Up to date with readability.js as of [2 Mar 2018](https://github.com/mozilla/readability/commit/8525c6af36d3badbe27c4672a6f2dd99ddb4097f).
  
 ## License
 

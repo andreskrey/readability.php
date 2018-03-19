@@ -3,9 +3,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Merged PR#49 (Missing object when calling `->getContent()`)
+- Imported all changes from Readability.js as of 2 March 2018 ([8525c6a](https://github.com/mozilla/readability/commit/8525c6af36d3badbe27c4672a6f2dd99ddb4097f)):
+    - Check for `<base>` elements before converting URLs to absolute.
+    - Clean `<link>` tags on `prepArticle()`
+    - Attempt to return at least some text if all the algorithm runs fail (Check PR [#423](https://github.com/mozilla/readability/pull/423) on JS version)
+    - Add new test cases for the previous changes
+    - And all other changes reflected [in this diff](https://github.com/mozilla/readability/compare/c3ff1a2d2c94c1db257b2c9aa88a4b8fbeb221c5...8525c6af36d3badbe27c4672a6f2dd99ddb4097f)
+
 ## [v1.1.1](https://github.com/andreskrey/readability.php/releases/tag/v1.1.1)
 
-- Switched from assertEquals to assertSame on unit testing to avoid weak comparisons.
+- Switched from assertEquals to assertSame on unit testing to avoid weak comparisons. 
 - Added a safe check to avoid sending the DOMDocument as a node when scanning for node ancestors.
 - Fix issue #45: Small mistake in documentation
 - Fix issue #46: Added `data-src` as a image source path
