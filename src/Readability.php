@@ -497,7 +497,7 @@ class Readability
                 if (count(preg_split('/\s+/', $curTitle)) < 3) {
                     $curTitle = substr($originalTitle, strpos($originalTitle, ':') + 1);
                     $this->logger->info(sprintf('[Metadata] Title too short, using the first part of the title instead: \'%s\'', $curTitle));
-                } else if (count(preg_split('/\s+/', substr($curTitle, 0, strpos($curTitle, ':')))) > 5) {
+                } elseif (count(preg_split('/\s+/', substr($curTitle, 0, strpos($curTitle, ':')))) > 5) {
                     // But if we have too many words before the colon there's something weird
                     // with the titles and the H tags so let's just use the original title instead
                     $curTitle = $originalTitle;

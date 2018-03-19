@@ -52,7 +52,6 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($options['summonCthulhu'], $config->getOriginalURL());
     }
 
-
     /**
      * @return array
      */
@@ -77,7 +76,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Test if a logger interface can be injected and retrieved from the Configuration object
+     * Test if a logger interface can be injected and retrieved from the Configuration object.
      */
     public function testLoggerCanBeInjected()
     {
