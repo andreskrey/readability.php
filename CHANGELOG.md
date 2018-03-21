@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+- Clean `<aside>` tags during `prepArticle()`.
+
 ## [v1.2.0](https://github.com/andreskrey/readability.php/releases/tag/v1.2.0)
 
 - Merged PR#49 (Missing object when calling `->getContent()`)
