@@ -1,0 +1,6 @@
+{
+  "StripUnlikelyCandidates": false,
+  "NormalizeEntities": true,
+  "CleanConditionally": false,
+  "SummonCthulhu": true
+}
