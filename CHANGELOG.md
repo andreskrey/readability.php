@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 ## Unreleased
 
 - Clean `<aside>` tags during `prepArticle()`.
+- Merged PR #58: Fix notice non-object on $parentOfTopCandidate for tumblr.com
 
 ## [v1.2.0](https://github.com/andreskrey/readability.php/releases/tag/v1.2.0)
 
