@@ -997,7 +997,7 @@ class Readability
             $MINIMUM_TOPCANDIDATES = 3;
             if (count($alternativeCandidateAncestors) >= $MINIMUM_TOPCANDIDATES) {
                 $parentOfTopCandidate = $topCandidate->parentNode;
-                while ($parentOfTopCandidate->nodeName !== 'body') {
+                while ($parentOfTopCandidate->nodeName !== 'body' && $parentOfTopCandidate->nodeType === XML_ELEMENT_NODE) {
                     $listsContainingThisAncestor = 0;
                     for ($ancestorIndex = 0; $ancestorIndex < count($alternativeCandidateAncestors) && $listsContainingThisAncestor < $MINIMUM_TOPCANDIDATES; $ancestorIndex++) {
                         $listsContainingThisAncestor += (int)in_array($parentOfTopCandidate, $alternativeCandidateAncestors[$ancestorIndex]);
@@ -1047,7 +1047,10 @@ class Readability
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->parentNode;
-            while ($parentOfTopCandidate->nodeName !== 'body' && count($parentOfTopCandidate->getChildren(true)) === 1) {
+            while ($parentOfTopCandidate->nodeName !== 'body'
+                   && $parentOfTopCandidate->nodeType === XML_ELEMENT_NODE
+                   && count($parentOfTopCandidate->getChildren(true)) === 1
+            ) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->parentNode;
             }
