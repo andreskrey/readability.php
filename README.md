@@ -26,6 +26,7 @@ Then, create a Readability class and pass a Configuration class, feed the `parse
 ```php 
 use andreskrey\Readability\Readability;
 use andreskrey\Readability\Configuration;
+use andreskrey\Readability\ParseException;
 
 $readability = new Readability(new Configuration());
 
