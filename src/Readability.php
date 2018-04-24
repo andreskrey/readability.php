@@ -127,7 +127,7 @@ class Readability
      *
      * @throws ParseException
      *
-     * @return array|bool
+     * @return bool
      */
     public function parse($html)
     {
@@ -212,7 +212,7 @@ class Readability
             }
         }
 
-        if ($parseSuccessful) {
+        if (isset($parseSuccessful) && $parseSuccessful) {
             $result = $this->postProcessContent($result);
 
             // If we haven't found an excerpt in the article's metadata, use the article's
