@@ -127,7 +127,7 @@ class Readability
      *
      * @throws ParseException
      *
-     * @return array|bool
+     * @return bool
      */
     public function parse($html)
     {
@@ -166,12 +166,9 @@ class Readability
 
             $this->logger->info(sprintf('[Parsing] Article parsed. Amount of words: %s. Current threshold is: %s', $length, $this->configuration->getWordThreshold()));
 
-            $parseSuccessful = true;
-
             if ($result && $length < $this->configuration->getWordThreshold()) {
                 $this->dom = $this->loadHTML($html);
                 $root = $this->dom->getElementsByTagName('body')->item(0);
-                $parseSuccessful = false;
 
                 if ($this->configuration->getStripUnlikelyCandidates()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting StripUnlikelyCandidates as false');
@@ -204,7 +201,6 @@ class Readability
                     $this->logger->debug('[Parsing] Threshold not met, but found some content in previous attempts.');
 
                     $result = $this->attempts[0]['articleContent'];
-                    $parseSuccessful = true;
                     break;
                 }
             } else {
@@ -212,26 +208,24 @@ class Readability
             }
         }
 
-        if ($parseSuccessful) {
-            $result = $this->postProcessContent($result);
+        $result = $this->postProcessContent($result);
 
-            // If we haven't found an excerpt in the article's metadata, use the article's
-            // first paragraph as the excerpt. This can be used for displaying a preview of
-            // the article's content.
-            if (!$this->getExcerpt()) {
-                $this->logger->debug('[Parsing] No excerpt text found on metadata, extracting first p node and using it as excerpt.');
-                $paragraphs = $result->getElementsByTagName('p');
-                if ($paragraphs->length > 0) {
-                    $this->setExcerpt(trim($paragraphs->item(0)->textContent));
-                }
+        // If we haven't found an excerpt in the article's metadata, use the article's
+        // first paragraph as the excerpt. This can be used for displaying a preview of
+        // the article's content.
+        if (!$this->getExcerpt()) {
+            $this->logger->debug('[Parsing] No excerpt text found on metadata, extracting first p node and using it as excerpt.');
+            $paragraphs = $result->getElementsByTagName('p');
+            if ($paragraphs->length > 0) {
+                $this->setExcerpt(trim($paragraphs->item(0)->textContent));
             }
-
-            $this->setContent($result);
-
-            $this->logger->info('*** Parse successful :)');
-
-            return true;
         }
+
+        $this->setContent($result);
+
+        $this->logger->info('*** Parse successful :)');
+
+        return true;
     }
 
     /**
