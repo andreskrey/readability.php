@@ -983,7 +983,9 @@ class Readability
             // and whose scores are quite closed with current `topCandidate` node.
             $alternativeCandidateAncestors = [];
             for ($i = 1; $i < count($topCandidates); $i++) {
-                if ($topCandidates[$i]->contentScore / $topCandidate->contentScore >= 0.75) {
+                // In some cases we may end up with a top candidate with zero content score. To avoid dividing by zero
+                // we have to use max() and replace zero with a low value like 0.1
+                if ($topCandidates[$i]->contentScore / max($topCandidate->contentScore, 0.1) >= 0.75) {
                     array_push($alternativeCandidateAncestors, $topCandidates[$i]->getNodeAncestors(false));
                 }
             }
