@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 - Clean `<aside>` tags during `prepArticle()`.
 - Merged PR #58: Fix notice non-object on $parentOfTopCandidate for tumblr.com
+- Fixed issue #63: Division by zero
 - Housekeeping:
   - Removed $parseSuccessful flag that wasn't needed anymore
 
