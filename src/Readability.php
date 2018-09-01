@@ -831,6 +831,10 @@ class Readability
                         }
                     }
 
+                    if ($next->isPhrasingContent()) {
+                        break;
+                    }
+
                     $this->logger->debug('[PrepDocument] Replacing BR with a P node...');
 
                     // Otherwise, make this node a child of the new <p>.

@@ -51,6 +51,21 @@ trait NodeTrait
     ];
 
     /**
+     * The commented out elements qualify as phrasing content but tend to be
+     * removed by readability when put into paragraphs, so we ignore them here.
+     *
+     * @var array
+     */
+    private $phrasing_elems = [
+        // 'CANVAS', 'IFRAME', 'SVG', 'VIDEO',
+        'abbr', 'audio', 'b', 'bdo', 'br', 'button', 'cite', 'code', 'data',
+        'datalist', 'dfn', 'em', 'embed', 'i', 'img', 'input', 'kbd', 'label',
+        'mark', 'math', 'meter', 'noscript', 'object', 'output', 'progress', 'q',
+        'ruby', 'samp', 'script', 'select', 'small', 'span', 'strong', 'sub',
+        'sup', 'textarea', 'time', 'var', 'wbr'
+    ];
+
+    /**
      * initialized getter.
      *
      * @return bool
@@ -429,6 +444,23 @@ trait NodeTrait
                     return $child instanceof DOMText;
                 }))
 
+            );
+    }
+
+    /**
+     * Determine if a node qualifies as phrasing content.
+     * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories#Phrasing_content
+     *
+     * @return bool
+     */
+    public function isPhrasingContent()
+    {
+        return $this->nodeType === XML_TEXT_NODE || !in_array($this->tagName, $this->phrasing_elems) ||
+            (!is_null($this->childNodes) &&
+                ($this->tagName === 'a' || $this->tagName === 'del' || $this->tagName === 'ins') &&
+                array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
+                    return $carry || $node->isPhrasingContent();
+                })
             );
     }
 }
