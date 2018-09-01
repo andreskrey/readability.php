@@ -842,6 +842,14 @@ class Readability
                     $p->appendChild($next);
                     $next = $sibling;
                 }
+
+                while ($p->lastChild && preg_match(NodeUtility::$regexps['whitespace'], $p->lastChild->textContent)) {
+                    $p->parentNode->removeChild($p->lastChild);
+                }
+
+                if ($p->parentNode->tagName === "p") {
+                    NodeUtility::setNodeTag($p->parentNode, 'div');
+                }
             }
         }
 
