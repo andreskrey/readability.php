@@ -447,7 +447,7 @@ class Readability
             return null;
         }
 
-        $curTitle = $originalTitle;
+        $curTitle = trim($originalTitle);
         $titleHadHierarchicalSeparators = false;
 
         /*
@@ -825,7 +825,7 @@ class Readability
                 while ($next) {
                     // If we've hit another <br><br>, we're done adding children to this <p>.
                     if ($next->nodeName === 'br') {
-                        $nextElem = NodeUtility::nextElement($next);
+                        $nextElem = NodeUtility::nextElement($next->nextSibling);
                         if ($nextElem && $nextElem->nodeName === 'br') {
                             break;
                         }
