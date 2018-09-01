@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fixed issue #63: Division by zero
 - Housekeeping:
   - Removed $parseSuccessful flag that wasn't needed anymore
+- Rename wordThreshold to charThreshold and throw deprecation notices. WordThreshold will be removed in version 2.0.
 
 ## [v1.2.0](https://github.com/andreskrey/readability.php/releases/tag/v1.2.0)
 
