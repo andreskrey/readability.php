@@ -626,6 +626,12 @@ class Readability
 
             $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
+            if (!$node->isProbablyVisible()) {
+                $this->logger->debug(sprintf('[Get Nodes] Removing hidden node... Match string was: \'%s\'', $matchString));
+                $node = NodeUtility::removeAndGetNext($node);
+                continue;
+            }
+
             // Check to see if this node is a byline, and remove it if it is.
             if ($this->checkByline($node, $matchString)) {
                 $this->logger->debug(sprintf('[Get Nodes] Found byline, removing... Node content was: \'%s\'', substr($node->nodeValue, 0, 128)));
