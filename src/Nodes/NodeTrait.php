@@ -375,26 +375,26 @@ trait NodeTrait
      * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
      * tags are, in practice, paragraphs.
      *
-     * @param DOMNode $node
+     * @param $tag string Name of tag
      *
      * @return bool
      */
-    public function hasSinglePNode()
+    public function hasSingleTagInsideElement($tag)
     {
-        // There should be exactly 1 element child which is a P:
-        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== 'p') {
+        // There should be exactly 1 element child with given tag
+        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== $tag) {
             return false;
         }
 
-        // And there should be no text nodes with real content (param true on ->getChildren)
-        foreach ($children as $child) {
-            /** @var $child DOMNode */
-            if ($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent())) {
+        // And there should be no text nodes with real content
+        return array_reduce($children, function ($carry, $child) {
+            if (!$carry === false) {
                 return false;
             }
-        }
 
-        return true;
+            /** @var $child DOMNode */
+            return !($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent()));
+        });
     }
 
     /**
