@@ -617,14 +617,14 @@ class Readability
          */
 
         while ($node) {
-            $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
-
             // Remove DOMComments nodes as we don't need them and mess up children counting
             if ($node->nodeType === XML_COMMENT_NODE) {
                 $this->logger->debug(sprintf('[Get Nodes] Found comment node, removing... Node content was: \'%s\'', substr($node->nodeValue, 0, 128)));
                 $node = NodeUtility::removeAndGetNext($node);
                 continue;
             }
+
+            $matchString = $node->getAttribute('class') . ' ' . $node->getAttribute('id');
 
             // Check to see if this node is a byline, and remove it if it is.
             if ($this->checkByline($node, $matchString)) {
