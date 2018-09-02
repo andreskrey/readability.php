@@ -164,6 +164,24 @@ trait NodeTrait
     }
 
     /**
+     * Override for native hasAttribute
+     *
+     * @see getAttribute
+     *
+     * @param $attributeName
+     *
+     * @return bool
+     */
+    public function hasAttribute($attributeName)
+    {
+        if (!is_null($this->attributes)) {
+            return parent::hasAttribute($attributeName);
+        }
+
+        return false;
+    }
+
+    /**
      * Get the ancestors of the current node.
      *
      * @param int|bool $maxLevel Max amount of ancestors to get. False for all of them
