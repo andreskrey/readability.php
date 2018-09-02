@@ -671,7 +671,7 @@ class Readability
                  * safely converted into plain P elements to avoid confusing the scoring
                  * algorithm with DIVs with are, in practice, paragraphs.
                  */
-                if ($node->hasSinglePNode()) {
+                if ($node->hasSingleTagInsideElement('p')) {
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single P node, removing DIV. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
                     $pNode = $node->getChildren(true)[0];
                     $node->parentNode->replaceChild($pNode, $node);
@@ -1235,6 +1235,23 @@ class Readability
                 $this->logger->debug('[PrepArticle] Removing br node next to a p node.');
                 $br->parentNode->removeChild($br);
             }
+        }
+
+        // Remove single-cell tables
+        foreach (iterator_to_array($article->getElementsByTagName('table')) as $table) {
+            /** @var DOMNode $table */
+            $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->childNodes[0] : $table;
+            if ($tbody->hasSingleTagInsideElement('tr')) {
+                $row = $tbody->childNodes[0];
+                if ($row->hasSingleTagInsideElement('td')) {
+                    $cell = $row->childNodes[0];
+                    $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
+                        return $carry || $node->isPhrasingContent();
+                    })) ? 'p' : 'div');
+                    $table->parentNode->replaceChild($cell, $table);
+                }
+            }
+
         }
 
         return $article;
