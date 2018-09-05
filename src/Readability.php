@@ -671,13 +671,36 @@ class Readability
 
             // Turn all divs that don't have children block level elements into p's
             if ($node->nodeName === 'div') {
+                // Put phrasing content into paragraphs.
+                $p = null;
+                $childNode = $node->firstChild;
+                while ($childNode) {
+                    $nextSibling = $childNode->nextSibling;
+                    if ($childNode->isPhrasingContent()) {
+                        if ($p !== null) {
+                            $p->appendChild($childNode);
+                        } else if (!$childNode->isWhitespace()) {
+                            $p = $this->dom->createElement('p');
+                            $node->replaceChild($p, $childNode);
+                            $p->appendChild($childNode);
+                        }
+                    } else if ($p !== null) {
+                        while ($p->lastChild && $p->lastChild->isWhitespace()) {
+                            $p->removeChild($p->lastChild);
+                        }
+                        $p = null;
+                    }
+                    $childNode = $nextSibling;
+                }
+
+
                 /*
                  * Sites like http://mobile.slate.com encloses each paragraph with a DIV
                  * element. DIVs with only a P element inside and no text content can be
                  * safely converted into plain P elements to avoid confusing the scoring
                  * algorithm with DIVs with are, in practice, paragraphs.
                  */
-                if ($node->hasSingleTagInsideElement('p')) {
+                if ($node->hasSingleTagInsideElement('p') && $node->getLinkDensity() < 0.25) {
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single P node, removing DIV. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
                     $pNode = $node->getChildren(true)[0];
                     $node->parentNode->replaceChild($pNode, $node);

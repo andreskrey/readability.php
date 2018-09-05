@@ -473,9 +473,9 @@ trait NodeTrait
      */
     public function isPhrasingContent()
     {
-        return $this->nodeType === XML_TEXT_NODE || !in_array($this->tagName, $this->phrasing_elems) ||
+        return $this->nodeType === XML_TEXT_NODE || !in_array($this->nodeName , $this->phrasing_elems) ||
             (!is_null($this->childNodes) &&
-                ($this->tagName === 'a' || $this->tagName === 'del' || $this->tagName === 'ins') &&
+                ($this->nodeName === 'a' || $this->nodeName === 'del' || $this->nodeName === 'ins') &&
                 array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
                     return $carry || $node->isPhrasingContent();
                 })
@@ -492,5 +492,11 @@ trait NodeTrait
          */
 
         return !$this->hasAttribute('hidden');
+    }
+
+    public function isWhitespace()
+    {
+        return ($this->nodeType === XML_TEXT_NODE && mb_strlen(trim($this->textContent)) === 0) ||
+            ($this->nodeType === XML_ELEMENT_NODE && $this->nodeName === 'br');
     }
 }
