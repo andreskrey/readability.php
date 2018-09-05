@@ -710,16 +710,6 @@ class Readability
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single child block element, converting to a P node. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
                     $node = NodeUtility::setNodeTag($node, 'p');
                     $elementsToScore[] = $node;
-                } else {
-                    // EXPERIMENTAL
-                    foreach ($node->getChildren() as $child) {
-                        /** @var $child DOMNode */
-                        if ($child->nodeType === XML_TEXT_NODE && mb_strlen(trim($child->getTextContent())) > 0) {
-                            $this->logger->debug(sprintf('[Get Nodes] Found DIV a text node inside, converting to a P node. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
-                            $newNode = $node->createNode($child, 'p');
-                            $child->parentNode->replaceChild($newNode, $child);
-                        }
-                    }
                 }
             }
 
