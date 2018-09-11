@@ -286,77 +286,82 @@ class Readability
         $this->logger->debug('[Metadata] Retrieving metadata...');
 
         $values = [];
-        // Match "description", or Twitter's "twitter:description" (Cards)
-        // in name attribute.
-        $namePattern = '/^\s*((twitter)\s*:\s*)?(description|title|image)\s*$/i';
+        // property is a space-separated list of values
+        $propertyPattern = '/\s*(dc|dcterm|og|twitter)\s*:\s*(author|creator|description|title)\s*/i';
 
-        // Match Facebook's Open Graph title & description properties.
-        $propertyPattern = '/^\s*og\s*:\s*(description|title|image)\s*$/i';
+        // name is a single value
+        $namePattern = '/^\s*(?:(dc|dcterm|og|twitter|weibo:(article|webpage))\s*[\.:]\s*)?(author|creator|description|title)\s*$/i';
 
+        // Find description tags.
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
             /* @var DOMNode $meta */
             $elementName = $meta->getAttribute('name');
             $elementProperty = $meta->getAttribute('property');
-
-            if (in_array('author', [$elementName, $elementProperty])) {
-                $this->logger->info(sprintf('[Metadata] Found author: \'%s\'', $meta->getAttribute('content')));
-                $this->setAuthor($meta->getAttribute('content'));
-                continue;
-            }
-
+            $content = $meta->getAttribute('content');
+            $matches = null;
             $name = null;
-            if (preg_match($namePattern, $elementName)) {
-                $name = $elementName;
-            } elseif (preg_match($propertyPattern, $elementProperty)) {
-                $name = $elementProperty;
+
+            if ($elementProperty) {
+                if (preg_match($propertyPattern, $elementProperty, $matches)) {
+                    for ($i = count($matches) - 1; $i >= 0; $i--) {
+                        // Convert to lowercase, and remove any whitespace
+                        // so we can match below.
+                        $name = preg_replace('/\s/', '', mb_strtolower($matches[$i]));
+                        // multiple authors
+                        $values[$name] = trim($content);
+                    }
+                }
             }
 
-            if ($name) {
-                $content = $meta->getAttribute('content');
+            if (!$matches && $elementName && preg_match($namePattern, $elementName)) {
+                $name = $elementName;
                 if ($content) {
-                    // Convert to lowercase and remove any whitespace
-                    // so we can match below.
-                    $name = preg_replace('/\s/', '', strtolower($name));
+                    // Convert to lowercase, remove any whitespace, and convert dots
+                    // to colons so we can match below.
+                    $name = preg_replace(['/\s/', '/\./'], ['', ':'], mb_strtolower($name));
                     $values[$name] = trim($content);
                 }
             }
         }
-        if (array_key_exists('description', $values)) {
-            $this->logger->info(sprintf('[Metadata] Found excerpt in \'description\' tag: \'%s\'', $values['description']));
-            $this->setExcerpt($values['description']);
-        } elseif (array_key_exists('og:description', $values)) {
-            // Use facebook open graph description.
-            $this->logger->info(sprintf('[Metadata] Found excerpt in \'og:description\' tag: \'%s\'', $values['og:description']));
-            $this->setExcerpt($values['og:description']);
-        } elseif (array_key_exists('twitter:description', $values)) {
-            // Use twitter cards description.
-            $this->logger->info(sprintf('[Metadata] Found excerpt in \'twitter:description\' tag: \'%s\'', $values['twitter:description']));
-            $this->setExcerpt($values['twitter:description']);
-        }
 
-        $this->setTitle($this->getArticleTitle());
+        // get title
+        $this->setTitle(current(array_intersect_key($values, array_flip([
+            'dc:title',
+            'dcterm:title',
+            'og:title',
+            'weibo:article:title',
+            'weibo:webpage:title',
+            'title',
+            'twitter:title'
+        ]))));
 
         if (!$this->getTitle()) {
-            if (array_key_exists('og:title', $values)) {
-                // Use facebook open graph title.
-                $this->logger->info(sprintf('[Metadata] Found title in \'og:title\' tag: \'%s\'', $values['og:title']));
-                $this->setTitle($values['og:title']);
-            } elseif (array_key_exists('twitter:title', $values)) {
-                // Use twitter cards title.
-                $this->logger->info(sprintf('[Metadata] Found title in \'twitter:title\' tag: \'%s\'', $values['twitter:title']));
-                $this->setTitle($values['twitter:title']);
-            }
+            $this->setTitle($this->getArticleTitle());
         }
 
-        if (array_key_exists('og:image', $values) || array_key_exists('twitter:image', $values)) {
-            if (array_key_exists('og:image', $values)) {
-                $this->logger->info(sprintf('[Metadata] Found main image in \'og:image\' tag: \'%s\'', $values['og:image']));
-                $this->setImage($values['og:image']);
-            } else {
-                $this->logger->info(sprintf('[Metadata] Found main image in \'twitter:image\' tag: \'%s\'', $values['twitter:image']));
-                $this->setImage($values['twitter:image']);
-            }
-        }
+        // get author
+        $this->setAuthor(current(array_intersect_key($values, array_flip([
+            'dc:creator',
+            'dcterm:creator',
+            'author'
+        ]))));
+
+        // get description
+        $this->setExcerpt(current(array_intersect_key($values, array_flip([
+            'dc:description',
+            'dcterm:description',
+            'og:description',
+            'weibo:article:description',
+            'weibo:webpage:description',
+            'description',
+            'twitter:description'
+        ]))));
+
+        // get main image
+        $this->setImage(current(array_intersect_key($values, array_flip([
+            'og:image',
+            'twitter:image'
+        ]))));
     }
 
     /**
@@ -1264,7 +1269,7 @@ class Readability
                 $row = $tbody->childNodes[0];
                 if ($row->hasSingleTagInsideElement('td')) {
                     $cell = $row->childNodes[0];
-                    $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
+                    $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($cell->childNodes), function ($carry, $node) {
                         return $carry || $node->isPhrasingContent();
                     })) ? 'p' : 'div');
                     $table->parentNode->replaceChild($cell, $table);
