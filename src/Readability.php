@@ -782,16 +782,10 @@ class Readability
      */
     private function removeScripts(DOMDocument $dom)
     {
-        $toRemove = ['script', 'noscript'];
-
-        foreach ($toRemove as $tag) {
-            while ($script = $dom->getElementsByTagName($tag)) {
-                if ($script->item(0)) {
-                    $script->item(0)->parentNode->removeChild($script->item(0));
-                } else {
-                    break;
-                }
-            }
+        foreach (['script', 'noscript'] as $tag) {
+            $nodes = $dom->getElementsByTagName($tag);
+            foreach (iterator_to_array($nodes) as $node)
+                NodeUtility::removeNode($node);
         }
     }
 
