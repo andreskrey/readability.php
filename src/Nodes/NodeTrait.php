@@ -389,9 +389,8 @@ trait NodeTrait
     }
 
     /**
-     * Checks if the current node has a single child and if that child is a P node.
-     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
-     * tags are, in practice, paragraphs.
+     * Check if this node has only whitespace and a single element with given tag
+     * or if it contains no element with given tag or more than 1 element.
      *
      * @param $tag string Name of tag
      *
