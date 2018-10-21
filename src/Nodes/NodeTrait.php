@@ -472,7 +472,7 @@ trait NodeTrait
      */
     public function isPhrasingContent()
     {
-        return $this->nodeType === XML_TEXT_NODE || !in_array($this->nodeName , $this->phrasing_elems) ||
+        return $this->nodeType === XML_TEXT_NODE || in_array($this->nodeName, $this->phrasing_elems) !== false ||
             (!is_null($this->childNodes) &&
                 ($this->nodeName === 'a' || $this->nodeName === 'del' || $this->nodeName === 'ins') &&
                 array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
