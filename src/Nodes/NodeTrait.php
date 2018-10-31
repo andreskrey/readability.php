@@ -485,12 +485,12 @@ trait NodeTrait
     {
         /*
          * In the original JS project they check if the node has the style display=none, which unfortunately
-         * in our case we have no way of knowing that. So we just check for the attribute hidden.
+         * in our case we have no way of knowing that. So we just check for the attribute hidden or "display: none".
          *
          * Might be a good idea to check for classes or other attributes like 'aria-hidden'
          */
 
-        return !$this->hasAttribute('hidden');
+        return !preg_match('/display:( )?none/', $this->getAttribute('style')) && !$this->hasAttribute('hidden');
     }
 
     public function isWhitespace()
