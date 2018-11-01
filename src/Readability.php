@@ -325,7 +325,16 @@ class Readability
         }
 
         // get title
-        $this->setTitle(current(array_intersect_key($values, array_flip([
+        /*
+         * This is a very convoluted way of extracting the first matching key of the $values array
+         * against a set of options. First you define the target keys, flip it, intersect them (discarding the
+         * target keys without a match), then reversing it (because array_intersect_key reverses the original array) and
+         * finally get the item.
+         *
+         * This could be easily replaced with an ugly set of isset($values['key']) or a bunch of ??s.
+         * Will probably replace it with ??s after dropping support of PHP5.6
+         */
+        $this->setTitle(current(array_reverse(array_intersect_key($values, array_flip([
             'dc:title',
             'dcterm:title',
             'og:title',
@@ -333,21 +342,21 @@ class Readability
             'weibo:webpage:title',
             'title',
             'twitter:title'
-        ]))));
+        ])))));
 
         if (!$this->getTitle()) {
             $this->setTitle($this->getArticleTitle());
         }
 
         // get author
-        $this->setAuthor(current(array_intersect_key($values, array_flip([
+        $this->setAuthor(current(array_reverse(array_intersect_key($values, array_flip([
             'dc:creator',
             'dcterm:creator',
             'author'
-        ]))));
+        ])))));
 
         // get description
-        $this->setExcerpt(current(array_intersect_key($values, array_flip([
+        $this->setExcerpt(current(array_reverse(array_intersect_key($values, array_flip([
             'dc:description',
             'dcterm:description',
             'og:description',
@@ -355,13 +364,13 @@ class Readability
             'weibo:webpage:description',
             'description',
             'twitter:description'
-        ]))));
+        ])))));
 
         // get main image
-        $this->setImage(current(array_intersect_key($values, array_flip([
+        $this->setImage(current(array_reverse(array_intersect_key($values, array_flip([
             'og:image',
             'twitter:image'
-        ]))));
+        ])))));
     }
 
     /**
