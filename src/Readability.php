@@ -333,7 +333,7 @@ class Readability
          * Will probably replace it with ??s after dropping support of PHP5.6
          */
 
-        $key = current(array_intersect_key([
+        $key = current(array_intersect([
             'dc:title',
             'dcterm:title',
             'og:title',
@@ -350,7 +350,7 @@ class Readability
         }
 
         // get author
-        $key = current(array_intersect_key([
+        $key = current(array_intersect([
             'dc:creator',
             'dcterm:creator',
             'author'
@@ -359,7 +359,7 @@ class Readability
         $this->setAuthor(isset($values[$key]) ? $values[$key] : null);
 
         // get description
-        $key = current(array_intersect_key([
+        $key = current(array_intersect([
             'dc:description',
             'dcterm:description',
             'og:description',
@@ -372,7 +372,7 @@ class Readability
         $this->setExcerpt(isset($values[$key]) ? $values[$key] : null);
 
         // get main image
-        $key = current(array_intersect_key([
+        $key = current(array_intersect([
             'og:image',
             'twitter:image'
         ], array_keys($values)));
