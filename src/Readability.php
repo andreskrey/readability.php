@@ -785,7 +785,7 @@ class Readability
         if (gettype($text) == 'string') {
             $byline = trim($text);
 
-            return (mb_strlen($byline) > 0) && (mb_strlen($text) < 100);
+            return (mb_strlen($byline) > 0) && (mb_strlen($byline) < 100);
         }
 
         return false;
