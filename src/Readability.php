@@ -865,7 +865,7 @@ class Readability
                         }
                     }
 
-                    if ($next->isPhrasingContent()) {
+                    if (!$next->isPhrasingContent()) {
                         break;
                     }
 
