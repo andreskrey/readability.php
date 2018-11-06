@@ -1276,11 +1276,11 @@ class Readability
             /** @var DOMNode $table */
             $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->childNodes[0] : $table;
             if ($tbody->hasSingleTagInsideElement('tr')) {
-                $row = $tbody->childNodes[0];
+                $row = $tbody->firstChild;
                 if ($row->hasSingleTagInsideElement('td')) {
-                    $cell = $row->childNodes[0];
+                    $cell = $row->firstChild;
                     $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($cell->childNodes), function ($carry, $node) {
-                        return $carry || $node->isPhrasingContent();
+                        return $node->isPhrasingContent() && $carry;
                     })) ? 'p' : 'div');
                     $table->parentNode->replaceChild($cell, $table);
                 }
