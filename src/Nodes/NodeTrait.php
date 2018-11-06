@@ -477,7 +477,7 @@ trait NodeTrait
                 ($this->nodeName === 'a' || $this->nodeName === 'del' || $this->nodeName === 'ins') &&
                 array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
                     return $node->isPhrasingContent() && $carry;
-                })
+                }, true)
             );
     }
 

@@ -1281,7 +1281,7 @@ class Readability
                     $cell = $row->firstChild;
                     $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($cell->childNodes), function ($carry, $node) {
                         return $node->isPhrasingContent() && $carry;
-                    })) ? 'p' : 'div');
+                    }, true)) ? 'p' : 'div');
                     $table->parentNode->replaceChild($cell, $table);
                 }
             }
