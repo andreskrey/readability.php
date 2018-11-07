@@ -371,9 +371,11 @@ trait NodeTrait
      *
      * @return bool
      */
-    public function hasAncestorTag($node, $tagName, $maxDepth = 3)
+    public function hasAncestorTag($tagName, $maxDepth = 3)
     {
         $depth = 0;
+        $node = $this;
+
         while ($node->parentNode) {
             if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;

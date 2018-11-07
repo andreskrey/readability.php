@@ -1435,6 +1435,7 @@ class Readability
 
     /**
      * @param DOMDocument $article
+     * @param string $tag Tag to clean conditionally
      *
      * @return void
      */
@@ -1459,7 +1460,7 @@ class Readability
             $node = $DOMNodeList->item($length - 1 - $i);
 
             // First check if we're in a data table, in which case don't remove us.
-            if ($node->hasAncestorTag($node, 'table', -1) && $node->isReadabilityDataTable()) {
+            if ($node->hasAncestorTag('table', -1) && $node->isReadabilityDataTable()) {
                 continue;
             }
 
@@ -1500,10 +1501,10 @@ class Readability
                 $contentLength = mb_strlen($node->getTextContent(true));
 
                 $haveToRemove =
-                    ($img > 1 && $p / $img < 0.5 && !$node->hasAncestorTag($node, 'figure')) ||
+                    ($img > 1 && $p / $img < 0.5 && !$node->hasAncestorTag('figure')) ||
                     (!$isList && $li > $p) ||
                     ($input > floor($p / 3)) ||
-                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag($node, 'figure')) ||
+                    (!$isList && $contentLength < 25 && ($img === 0 || $img > 2) && !$node->hasAncestorTag('figure')) ||
                     (!$isList && $weight < 25 && $linkDensity > 0.2) ||
                     ($weight >= 25 && $linkDensity > 0.5) ||
                     (($embedCount === 1 && $contentLength < 75) || $embedCount > 1);
