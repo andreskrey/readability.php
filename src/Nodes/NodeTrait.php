@@ -365,13 +365,13 @@ trait NodeTrait
      * Check if a given node has one of its ancestor tag name matching the
      * provided one.
      *
-     * @param DOMElement $node
      * @param string $tagName
      * @param int $maxDepth
+     * @param callable $filterFn
      *
      * @return bool
      */
-    public function hasAncestorTag($tagName, $maxDepth = 3)
+    public function hasAncestorTag($tagName, $maxDepth = 3, callable $filterFn = null)
     {
         $depth = 0;
         $node = $this;
@@ -380,9 +380,11 @@ trait NodeTrait
             if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;
             }
-            if ($node->parentNode->nodeName === $tagName) {
+
+            if ($node->parentNode->nodeName === $tagName && (!$filterFn || $filterFn($node->parentNode))) {
                 return true;
             }
+
             $node = $node->parentNode;
             $depth++;
         }
