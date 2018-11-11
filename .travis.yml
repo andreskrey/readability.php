@@ -1,5 +1,8 @@
 language: php
 
+before_install:
+  - apt-cache policy libxml2
+
 install:
  - composer install
 
