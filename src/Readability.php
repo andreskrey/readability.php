@@ -877,8 +877,8 @@ class Readability
                     $next = $sibling;
                 }
 
-                while ($p->lastChild && preg_match(NodeUtility::$regexps['whitespace'], $p->lastChild->textContent)) {
-                    $p->parentNode->removeChild($p->lastChild);
+                while ($p->lastChild && $p->lastChild->isWhitespace()) {
+                    $p->removeChild($p->lastChild);
                 }
 
                 if ($p->parentNode->tagName === "p") {
