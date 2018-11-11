@@ -80,7 +80,17 @@ trait NodeTrait
      */
     public function isReadabilityDataTable()
     {
-        return $this->readabilityDataTable;
+        /*
+         * This is a workaround that I'd like to remove in the future.
+         * Seems that although we are extending the base DOMElement and adding custom properties (like this one,
+         * 'readabilityDataTable'), these properties get lost when you search for elements with getElementsByTagName.
+         * This means that even if we mark the tables in a previous step, when we want to retrieve that information,
+         * all the custom properties are in their default values. Somehow we need to find a way to make these properties
+         * permanent across the whole DOM.
+         */
+        return $this->hasAttribute('readabilityDataTable')
+            && $this->getAttribute('readabilityDataTable') === '1';
+//        return $this->readabilityDataTable;
     }
 
     /**
@@ -88,7 +98,9 @@ trait NodeTrait
      */
     public function setReadabilityDataTable($param)
     {
-        $this->readabilityDataTable = $param;
+        // Can't be "true" because DOMDocument casts it to "1"
+        $this->setAttribute('readabilityDataTable', $param ? '1' : '0');
+//        $this->readabilityDataTable = $param;
     }
 
     /**
