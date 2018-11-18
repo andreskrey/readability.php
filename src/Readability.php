@@ -831,7 +831,7 @@ class Readability
          */
         $DOMNodeList = iterator_to_array($dom->getElementsByTagName('br'));
         $length = count($DOMNodeList);
-        for ($i = 0; $i < $length; $i++) {
+        for ($i = 0; $i < $length; $i < 0 ? $i = 0 : $i++) {
             $br = $DOMNodeList[$i];
             $next = $br->nextSibling;
 
