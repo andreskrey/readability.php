@@ -109,9 +109,9 @@ class Configuration
         // If no logger has been set, just return a null logger
         if ($this->logger === null) {
             return new NullLogger();
-        } else {
-            return $this->logger;
         }
+
+        return $this->logger;
     }
 
     /**
