@@ -911,7 +911,7 @@ class Readability
         for ($i = 0; $i < $length; $i++) {
             $this->logger->debug('[PrepDocument] Converting font tag into a span tag.');
             $font = $fonts->item($length - 1 - $i);
-            NodeUtility::setNodeTag($font, 'span', true);
+            NodeUtility::setNodeTag($font, 'span');
         }
     }
 
