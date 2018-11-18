@@ -46,7 +46,7 @@ class NodeUtility
         $next = $node;
         while ($next
             && $next->nodeType !== XML_ELEMENT_NODE
-            && preg_match(NodeUtility::$regexps['whitespace'], $next->textContent)) {
+            && $next->isWhitespace()) {
             $next = $next->nextSibling;
         }
 

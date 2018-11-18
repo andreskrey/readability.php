@@ -815,14 +815,24 @@ class Readability
         $this->logger->info('[PrepDocument] Preparing document for parsing...');
 
         /*
-         * DOMNodeList must be converted to an array before looping over it.
-         * This is done to avoid node shifting when removing nodes.
+         * This is a very ugly hack that is probably causing a big performance hit, but after fighting with it for like
+         * 4 days this is the best solution I've came up with.
          *
-         * Reverse traversing cannot be done here because we need to find brs that are right next to other brs.
-         * (If we go the other way around we need to search for previous nodes forcing the creation of new functions
-         * that will be used only here)
+         * Because we have find the first BR and then remove the following ones, nodes shift in a different way than
+         * they do in the JS version. In the JS version, even if you remove a node, it will still appear during the
+         * foreach. This does not happen in DOMDocument, because if you remove the BR, the one in the foreach becomes
+         * orphan and gives an exception if you try to do anything with it.
+         *
+         * Shifting also occurs when we convert a P parent node to DIV, which remove the BRs from the "pool"
+         * of the foreach.
+         *
+         * So the solution is to find every BR on each loop and keep track of the ones we removed (by tweaking the value
+         * of $i)
          */
-        foreach (iterator_to_array($dom->getElementsByTagName('br')) as $br) {
+        $DOMNodeList = iterator_to_array($dom->getElementsByTagName('br'));
+        $length = count($DOMNodeList);
+        for ($i = 0; $i < $length; $i++) {
+            $br = $DOMNodeList[$i];
             $next = $br->nextSibling;
 
             /*
@@ -843,6 +853,10 @@ class Readability
                 $brSibling = $next->nextSibling;
                 $next->parentNode->removeChild($next);
                 $next = $brSibling;
+
+                // We just removed a BR and we need to "go back" one step because that node will not be there
+                // anymore when we search for all the BRs at the end of this loop.
+                $i--;
             }
 
             /*
@@ -885,6 +899,10 @@ class Readability
                     NodeUtility::setNodeTag($p->parentNode, 'div');
                 }
             }
+
+            // Search for all the BRs again and tweak the length of the for loop
+            $DOMNodeList = iterator_to_array($dom->getElementsByTagName('br'));
+            $length = count($DOMNodeList);
         }
 
         // Replace font tags with span
@@ -1460,7 +1478,7 @@ class Readability
             $node = $DOMNodeList->item($length - 1 - $i);
 
             // First check if we're in a data table, in which case don't remove us.
-            if ($node->hasAncestorTag('table', -1, function($node){
+            if ($node->hasAncestorTag('table', -1, function ($node) {
                 return $node->isReadabilityDataTable();
             })) {
                 continue;
