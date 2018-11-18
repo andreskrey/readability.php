@@ -1559,7 +1559,7 @@ class Readability
             // Allow youtube and vimeo videos through as people usually want to see those.
             if ($isEmbed) {
                 $attributeValues = [];
-                foreach ($item->attributes as $name => $value) {
+                foreach ($item->attributes as $value) {
                     $attributeValues[] = $value->nodeValue;
                 }
                 $attributeValues = implode('|', $attributeValues);
