@@ -87,6 +87,8 @@ trait NodeTrait
          * This means that even if we mark the tables in a previous step, when we want to retrieve that information,
          * all the custom properties are in their default values. Somehow we need to find a way to make these properties
          * permanent across the whole DOM.
+         *
+         * @see https://stackoverflow.com/questions/35654709/php-registernodeclass-and-reusing-variable-names
          */
         return $this->hasAttribute('readabilityDataTable')
             && $this->getAttribute('readabilityDataTable') === '1';
