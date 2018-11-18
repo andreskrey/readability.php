@@ -159,6 +159,7 @@ Readability.php uses the [PSR Log](https://github.com/php-fig/log) interface to 
 
 - Keep up with Readability.js changes
 - Add a small template engine for the __toString() method, instead of using a hardcoded one.
+- Replace all the `iterator_to_array` calls with a custom PHP generator that keeps track of the removed or altered nodes.
 
 ## How it works
 
