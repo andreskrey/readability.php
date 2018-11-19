@@ -343,7 +343,7 @@ class Readability
             'twitter:title'
         ], array_keys($values)));
 
-        $this->setTitle(isset($values[$key]) ? $values[$key] : null);
+        $this->setTitle(isset($values[$key]) ? trim($values[$key]) : null);
 
         if (!$this->getTitle()) {
             $this->setTitle($this->getArticleTitle());
@@ -468,7 +468,7 @@ class Readability
             return null;
         }
 
-        $curTitle = trim($originalTitle);
+        $curTitle = $originalTitle = trim($originalTitle);
         $titleHadHierarchicalSeparators = false;
 
         /*
