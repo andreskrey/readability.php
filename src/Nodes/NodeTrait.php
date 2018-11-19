@@ -553,7 +553,7 @@ trait NodeTrait
             // Subtract the amount of nodes removed from the current index
             $i -= $count - count($nodes);
 
-            // Subtract the amount of nodes removes from the current count
+            // Subtract the amount of nodes removed from the current count
             $count -= ($count - count($nodes));
         }
     }
