@@ -6,6 +6,7 @@ use andreskrey\Readability\Nodes\DOM\DOMDocument;
 use andreskrey\Readability\Nodes\DOM\DOMElement;
 use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMText;
+use DOMNodeList;
 
 /**
  * @method \DOMNode removeAttribute($name)
@@ -515,5 +516,45 @@ trait NodeTrait
     {
         return ($this->nodeType === XML_TEXT_NODE && mb_strlen(trim($this->textContent)) === 0) ||
             ($this->nodeType === XML_ELEMENT_NODE && $this->nodeName === 'br');
+    }
+
+    /**
+     * This is a hack that overcomes the issue of node shifting when scanning and removing nodes.
+     *
+     * In the JS version of getElementsByTagName, if you remove a node it will not appear during the
+     * foreach. This does not happen in PHP DOMDocument, because if you remove a node, it will still appear but as an
+     * orphan node and will give an exception if you try to do anything with it.
+     *
+     * Shifting also occurs when converting parent nodes (like a P to a DIV), which in that case the found nodes are
+     * removed from the foreach "pool" but the internal index of the foreach is not aware and skips over nodes that
+     * never looped over. (index is at position 5, 2 nodes are removed, next one should be node 3, but the foreach tries
+     * to access node 6)
+     *
+     * This function solves this by searching for the nodes on every loop and keeping track of the count differences.
+     * Because on every loop we call getElementsByTagName again, this could cause a performance impact and should be
+     * used only when the results of the search are going to be used to remove the nodes.
+     *
+     * @param string $tag
+     *
+     * @return \Generator
+     */
+    public function shiftingAwareGetElementsByTagName($tag)
+    {
+        /** @var $nodes DOMNodeList */
+        $nodes = $this->getElementsByTagName($tag);
+        $count = count($nodes);
+
+        for ($i = 0; $i < $count; $i = max(++$i, 0)) {
+            yield $nodes->item($i);
+
+            // Search for all the nodes again
+            $nodes = $this->getElementsByTagName($tag);
+
+            // Subtract the amount of nodes removed from the current index
+            $i -= $count - count($nodes);
+
+            // Subtract the amount of nodes removes from the current count
+            $count -= ($count - count($nodes));
+        }
     }
 }

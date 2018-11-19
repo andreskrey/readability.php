@@ -814,25 +814,7 @@ class Readability
     {
         $this->logger->info('[PrepDocument] Preparing document for parsing...');
 
-        /*
-         * This is a very ugly hack that is probably causing a big performance hit, but after fighting with it for like
-         * 4 days this is the best solution I've came up with.
-         *
-         * Because we have find the first BR and then remove the following ones, nodes shift in a different way than
-         * they do in the JS version. In the JS version, even if you remove a node, it will still appear during the
-         * foreach. This does not happen in DOMDocument, because if you remove the BR, the one in the foreach becomes
-         * orphan and gives an exception if you try to do anything with it.
-         *
-         * Shifting also occurs when we convert a P parent node to DIV, which remove the BRs from the "pool"
-         * of the foreach.
-         *
-         * So the solution is to find every BR on each loop and keep track of the ones we removed (by tweaking the value
-         * of $i)
-         */
-        $DOMNodeList = iterator_to_array($dom->getElementsByTagName('br'));
-        $length = count($DOMNodeList);
-        for ($i = 0; $i < $length; $i < 0 ? $i = 0 : $i++) {
-            $br = $DOMNodeList[$i];
+        foreach ($dom->shiftingAwareGetElementsByTagName('br') as $br) {
             $next = $br->nextSibling;
 
             /*
@@ -853,10 +835,6 @@ class Readability
                 $brSibling = $next->nextSibling;
                 $next->parentNode->removeChild($next);
                 $next = $brSibling;
-
-                // We just removed a BR and we need to "go back" one step because that node will not be there
-                // anymore when we search for all the BRs at the end of this loop.
-                $i--;
             }
 
             /*
@@ -899,10 +877,6 @@ class Readability
                     NodeUtility::setNodeTag($p->parentNode, 'div');
                 }
             }
-
-            // Search for all the BRs again and tweak the length of the for loop
-            $DOMNodeList = iterator_to_array($dom->getElementsByTagName('br'));
-            $length = count($DOMNodeList);
         }
 
         // Replace font tags with span
@@ -1290,7 +1264,7 @@ class Readability
         }
 
         // Remove single-cell tables
-        foreach (iterator_to_array($article->getElementsByTagName('table')) as $table) {
+        foreach ($article->shiftingAwareGetElementsByTagName('table') as $table) {
             /** @var DOMNode $table */
             $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->childNodes[0] : $table;
             if ($tbody->hasSingleTagInsideElement('tr')) {
