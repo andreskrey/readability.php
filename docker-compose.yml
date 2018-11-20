@@ -1,12 +1,6 @@
 version: '3'
 
 services:
-#  php-5.6:
-#    build: ./docker/php-5.6
-#    volumes:
-#      - ./:/app
-#    tty: true
-
   php-7.0:
     build: ./docker/php-7.0
     volumes:
