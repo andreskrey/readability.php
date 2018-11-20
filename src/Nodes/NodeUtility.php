@@ -57,6 +57,7 @@ class NodeUtility
      * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
      * element with the new tag name and importing it to the main DOMDocument.
      *
+     * @param DOMNode $node
      * @param string $value
      * @param bool $importAttributes
      *
