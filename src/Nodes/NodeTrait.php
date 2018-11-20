@@ -542,7 +542,7 @@ trait NodeTrait
     {
         /** @var $nodes DOMNodeList */
         $nodes = $this->getElementsByTagName($tag);
-        $count = count($nodes);
+        $count = $nodes->length;
 
         for ($i = 0; $i < $count; $i = max(++$i, 0)) {
             yield $nodes->item($i);
@@ -551,10 +551,10 @@ trait NodeTrait
             $nodes = $this->getElementsByTagName($tag);
 
             // Subtract the amount of nodes removed from the current index
-            $i -= $count - count($nodes);
+            $i -= $count - $nodes->length;
 
             // Subtract the amount of nodes removed from the current count
-            $count -= ($count - count($nodes));
+            $count -= ($count - $nodes->length);
         }
     }
 }
