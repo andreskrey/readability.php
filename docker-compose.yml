@@ -3,28 +3,32 @@ version: '3'
 services:
   php-5.6:
     image: php:5.6-cli
+    build: ./docker/php/
     volumes:
-      - ./docker/php-5.6/:/
       - ./:/app
+#      - ./docker/php/conf.d:/usr/local/etc/php/conf.d/
     tty: true
 
   php-7.0:
     image: php:7.0-cli
+    build: ./docker/php/
     volumes:
-      - ./docker/php-7.0/:/
       - ./:/app
+#      - ./docker/php/conf.d:/usr/local/etc/php/conf.d/
     tty: true
 
   php-7.1:
     image: php:7.1-cli
+    build: ./docker/php/
     volumes:
-      - ./docker/php-7.1/:/
       - ./:/app
+#      - ./docker/php/conf.d:/usr/local/etc/php/conf.d/
     tty: true
 
   php-7.2:
     image: php:7.2-cli
+    build: ./docker/php/
     volumes:
-      - ./docker/php-7.2/:/
       - ./:/app
+#      - ./docker/php/conf.d:/usr/local/etc/php/conf.d/
     tty: true
