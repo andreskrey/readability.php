@@ -18,5 +18,3 @@ script:
 after_script:
   - composer require php-coveralls/php-coveralls:^2.0
   - php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
-
-sudo: false
