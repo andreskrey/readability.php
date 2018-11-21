@@ -22,7 +22,6 @@
         "ext-dom": "*",
         "ext-xml": "*",
         "ext-mbstring": "*",
-        "ext-libxml": "*",
         "psr/log": "^1.0"
     },
     "require-dev": {
