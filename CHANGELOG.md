@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
   - Removed $parseSuccessful flag that wasn't needed anymore
 - Rename wordThreshold to charThreshold and throw deprecation notices. WordThreshold will be removed in version 2.0.
 - Added "-ad-" as unlikely candidate
+- Added Docker containers with PHP 7.0, 7.1, and 7.2 and makefile to trigger the tests.
+- [BREAKING CHANGE] Bumped the minimum supported version of PHP to 7.0
 
 
 ## [v1.2.0](https://github.com/andreskrey/readability.php/releases/tag/v1.2.0)
