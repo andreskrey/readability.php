@@ -428,7 +428,7 @@ trait NodeTrait
                 return false;
             }
 
-            /** @var $child DOMNode */
+            /** @var DOMNode $child */
             return !($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent()));
         });
     }
