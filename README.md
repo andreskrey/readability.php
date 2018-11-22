@@ -179,7 +179,7 @@ This will start all the containers and run all the tests on every supported vers
 
 ## Code porting
 
-Up to date with readability.js as of [28 Aug 2018](https://github.com/mozilla/readability/commit/3be1aaa01c078c25b67ed8dfd1c9aa8f9963490b).
+Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
  
 ## License
 
