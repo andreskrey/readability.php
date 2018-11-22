@@ -700,12 +700,12 @@ class Readability
                     if ($childNode->isPhrasingContent()) {
                         if ($p !== null) {
                             $p->appendChild($childNode);
-                        } else if (!$childNode->isWhitespace()) {
+                        } elseif (!$childNode->isWhitespace()) {
                             $p = $this->dom->createElement('p');
                             $node->replaceChild($p, $childNode);
                             $p->appendChild($childNode);
                         }
-                    } else if ($p !== null) {
+                    } elseif ($p !== null) {
                         while ($p->lastChild && $p->lastChild->isWhitespace()) {
                             $p->removeChild($p->lastChild);
                         }
@@ -713,7 +713,6 @@ class Readability
                     }
                     $childNode = $nextSibling;
                 }
-
 
                 /*
                  * Sites like http://mobile.slate.com encloses each paragraph with a DIV
@@ -800,8 +799,9 @@ class Readability
     {
         foreach (['script', 'noscript'] as $tag) {
             $nodes = $dom->getElementsByTagName($tag);
-            foreach (iterator_to_array($nodes) as $node)
+            foreach (iterator_to_array($nodes) as $node) {
                 NodeUtility::removeNode($node);
+            }
         }
     }
 
@@ -873,7 +873,7 @@ class Readability
                     $p->removeChild($p->lastChild);
                 }
 
-                if ($p->parentNode->tagName === "p") {
+                if ($p->parentNode->tagName === 'p') {
                     NodeUtility::setNodeTag($p->parentNode, 'div');
                 }
             }
@@ -1277,7 +1277,6 @@ class Readability
                     $table->parentNode->replaceChild($cell, $table);
                 }
             }
-
         }
 
         return $article;

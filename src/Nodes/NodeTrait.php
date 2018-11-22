@@ -81,7 +81,7 @@ trait NodeTrait
      */
     public function isReadabilityDataTable()
     {
-        /**
+        /*
          * This is a workaround that I'd like to remove in the future.
          * Seems that although we are extending the base DOMElement and adding custom properties (like this one,
          * 'readabilityDataTable'), these properties get lost when you search for elements with getElementsByTagName.
@@ -179,7 +179,7 @@ trait NodeTrait
     }
 
     /**
-     * Override for native hasAttribute
+     * Override for native hasAttribute.
      *
      * @see getAttribute
      *
@@ -428,7 +428,7 @@ trait NodeTrait
                 return false;
             }
 
-            /** @var DOMNode $child */
+            /* @var DOMNode $child */
             return !($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent()));
         });
     }
@@ -485,7 +485,7 @@ trait NodeTrait
 
     /**
      * Determine if a node qualifies as phrasing content.
-     * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories#Phrasing_content
+     * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories#Phrasing_content.
      *
      * @return bool
      */
