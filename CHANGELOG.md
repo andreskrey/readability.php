@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v2.0.0](https://github.com/andreskrey/readability.php/releases/tag/v2.0.0)
+
 - [BREAKING CHANGE] Bumped the minimum supported version of PHP to 7.0
 - Clean `<aside>` tags during `prepArticle()`.
 - Merged PR #58: Fix notice non-object on $parentOfTopCandidate for tumblr.com
