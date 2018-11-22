@@ -173,7 +173,7 @@ class Configuration
      */
     public function getWordThreshold()
     {
-        @trigger_error('getWordThreshold was replaced with getCharThreshold and will be removed in version 2.0', E_USER_DEPRECATED);
+        @trigger_error('getWordThreshold was replaced with getCharThreshold and will be removed in version 3.0', E_USER_DEPRECATED);
 
         return $this->charThreshold;
     }
@@ -185,7 +185,7 @@ class Configuration
      */
     public function setWordThreshold($charThreshold)
     {
-        @trigger_error('setWordThreshold was replaced with setCharThreshold and will be removed in version 2.0', E_USER_DEPRECATED);
+        @trigger_error('setWordThreshold was replaced with setCharThreshold and will be removed in version 3.0', E_USER_DEPRECATED);
 
         $this->charThreshold = $charThreshold;
 

@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - Fixed issue #63: Division by zero
 - Housekeeping:
     - Removed $parseSuccessful flag that wasn't needed anymore
-- Rename wordThreshold to charThreshold and throw deprecation notices. WordThreshold will be removed in version 2.0.
+- Rename wordThreshold to charThreshold and throw deprecation notices. WordThreshold will be removed in version 3.0.
 - Added "-ad-" as unlikely candidate
 - Added Docker containers with PHP 7.0, 7.1, and 7.2 and makefile to trigger the tests.
 - Imported new code from the JS version as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743), which includes the following changes:
