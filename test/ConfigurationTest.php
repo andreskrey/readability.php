@@ -9,7 +9,7 @@ use Monolog\Logger;
 /**
  * Class ConfigurationTest.
  */
-class ConfigurationTest extends \PHPUnit_Framework_TestCase
+class ConfigurationTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider getParams
@@ -40,6 +40,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
     private function doEqualsAsserts(Configuration $config, array $options)
     {
         $this->assertEquals($options['maxTopCandidates'], $config->getMaxTopCandidates());
+        $this->assertEquals($options['charThreshold'], $config->getCharThreshold());
         $this->assertEquals($options['wordThreshold'], $config->getWordThreshold());
         $this->assertEquals($options['articleByLine'], $config->getArticleByLine());
         $this->assertEquals($options['stripUnlikelyCandidates'], $config->getStripUnlikelyCandidates());
@@ -61,6 +62,7 @@ class ConfigurationTest extends \PHPUnit_Framework_TestCase
             'All current parameters' => [
                 'maxTopCandidates' => 3,
                 'wordThreshold' => 500,
+                'charThreshold' => 500,
                 'articleByLine' => true,
                 'stripUnlikelyCandidates' => false,
                 'cleanConditionally' => false,

@@ -6,6 +6,7 @@ use andreskrey\Readability\Nodes\DOM\DOMDocument;
 use andreskrey\Readability\Nodes\DOM\DOMElement;
 use andreskrey\Readability\Nodes\DOM\DOMNode;
 use andreskrey\Readability\Nodes\DOM\DOMText;
+use DOMNodeList;
 
 /**
  * @method \DOMNode removeAttribute($name)
@@ -51,6 +52,21 @@ trait NodeTrait
     ];
 
     /**
+     * The commented out elements qualify as phrasing content but tend to be
+     * removed by readability when put into paragraphs, so we ignore them here.
+     *
+     * @var array
+     */
+    private $phrasing_elems = [
+        // 'CANVAS', 'IFRAME', 'SVG', 'VIDEO',
+        'abbr', 'audio', 'b', 'bdo', 'br', 'button', 'cite', 'code', 'data',
+        'datalist', 'dfn', 'em', 'embed', 'i', 'img', 'input', 'kbd', 'label',
+        'mark', 'math', 'meter', 'noscript', 'object', 'output', 'progress', 'q',
+        'ruby', 'samp', 'script', 'select', 'small', 'span', 'strong', 'sub',
+        'sup', 'textarea', 'time', 'var', 'wbr'
+    ];
+
+    /**
      * initialized getter.
      *
      * @return bool
@@ -65,7 +81,19 @@ trait NodeTrait
      */
     public function isReadabilityDataTable()
     {
-        return $this->readabilityDataTable;
+        /*
+         * This is a workaround that I'd like to remove in the future.
+         * Seems that although we are extending the base DOMElement and adding custom properties (like this one,
+         * 'readabilityDataTable'), these properties get lost when you search for elements with getElementsByTagName.
+         * This means that even if we mark the tables in a previous step, when we want to retrieve that information,
+         * all the custom properties are in their default values. Somehow we need to find a way to make these properties
+         * permanent across the whole DOM.
+         *
+         * @see https://stackoverflow.com/questions/35654709/php-registernodeclass-and-reusing-variable-names
+         */
+        return $this->hasAttribute('readabilityDataTable')
+            && $this->getAttribute('readabilityDataTable') === '1';
+//        return $this->readabilityDataTable;
     }
 
     /**
@@ -73,7 +101,9 @@ trait NodeTrait
      */
     public function setReadabilityDataTable($param)
     {
-        $this->readabilityDataTable = $param;
+        // Can't be "true" because DOMDocument casts it to "1"
+        $this->setAttribute('readabilityDataTable', $param ? '1' : '0');
+//        $this->readabilityDataTable = $param;
     }
 
     /**
@@ -146,6 +176,24 @@ trait NodeTrait
         }
 
         return '';
+    }
+
+    /**
+     * Override for native hasAttribute.
+     *
+     * @see getAttribute
+     *
+     * @param $attributeName
+     *
+     * @return bool
+     */
+    public function hasAttribute($attributeName)
+    {
+        if (!is_null($this->attributes)) {
+            return parent::hasAttribute($attributeName);
+        }
+
+        return false;
     }
 
     /**
@@ -332,22 +380,26 @@ trait NodeTrait
      * Check if a given node has one of its ancestor tag name matching the
      * provided one.
      *
-     * @param DOMElement $node
      * @param string $tagName
      * @param int $maxDepth
+     * @param callable $filterFn
      *
      * @return bool
      */
-    public function hasAncestorTag($node, $tagName, $maxDepth = 3)
+    public function hasAncestorTag($tagName, $maxDepth = 3, callable $filterFn = null)
     {
         $depth = 0;
+        $node = $this;
+
         while ($node->parentNode) {
             if ($maxDepth > 0 && $depth > $maxDepth) {
                 return false;
             }
-            if ($node->parentNode->nodeName === $tagName) {
+
+            if ($node->parentNode->nodeName === $tagName && (!$filterFn || $filterFn($node->parentNode))) {
                 return true;
             }
+
             $node = $node->parentNode;
             $depth++;
         }
@@ -356,30 +408,29 @@ trait NodeTrait
     }
 
     /**
-     * Checks if the current node has a single child and if that child is a P node.
-     * Useful to convert <div><p> nodes to a single <p> node and avoid confusing the scoring system since div with p
-     * tags are, in practice, paragraphs.
+     * Check if this node has only whitespace and a single element with given tag
+     * or if it contains no element with given tag or more than 1 element.
      *
-     * @param DOMNode $node
+     * @param $tag string Name of tag
      *
      * @return bool
      */
-    public function hasSinglePNode()
+    public function hasSingleTagInsideElement($tag)
     {
-        // There should be exactly 1 element child which is a P:
-        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== 'p') {
+        // There should be exactly 1 element child with given tag
+        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== $tag) {
             return false;
         }
 
-        // And there should be no text nodes with real content (param true on ->getChildren)
-        foreach ($children as $child) {
-            /** @var $child DOMNode */
-            if ($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent())) {
+        // And there should be no text nodes with real content
+        return array_reduce($children, function ($carry, $child) {
+            if (!$carry === false) {
                 return false;
             }
-        }
 
-        return true;
+            /* @var DOMNode $child */
+            return !($child->nodeType === XML_TEXT_NODE && !preg_match('/\S$/', $child->getTextContent()));
+        });
     }
 
     /**
@@ -430,5 +481,80 @@ trait NodeTrait
                 }))
 
             );
+    }
+
+    /**
+     * Determine if a node qualifies as phrasing content.
+     * https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Content_categories#Phrasing_content.
+     *
+     * @return bool
+     */
+    public function isPhrasingContent()
+    {
+        return $this->nodeType === XML_TEXT_NODE || in_array($this->nodeName, $this->phrasing_elems) !== false ||
+            (!is_null($this->childNodes) &&
+                ($this->nodeName === 'a' || $this->nodeName === 'del' || $this->nodeName === 'ins') &&
+                array_reduce(iterator_to_array($this->childNodes), function ($carry, $node) {
+                    return $node->isPhrasingContent() && $carry;
+                }, true)
+            );
+    }
+
+    public function isProbablyVisible()
+    {
+        /*
+         * In the original JS project they check if the node has the style display=none, which unfortunately
+         * in our case we have no way of knowing that. So we just check for the attribute hidden or "display: none".
+         *
+         * Might be a good idea to check for classes or other attributes like 'aria-hidden'
+         */
+
+        return !preg_match('/display:( )?none/', $this->getAttribute('style')) && !$this->hasAttribute('hidden');
+    }
+
+    public function isWhitespace()
+    {
+        return ($this->nodeType === XML_TEXT_NODE && mb_strlen(trim($this->textContent)) === 0) ||
+            ($this->nodeType === XML_ELEMENT_NODE && $this->nodeName === 'br');
+    }
+
+    /**
+     * This is a hack that overcomes the issue of node shifting when scanning and removing nodes.
+     *
+     * In the JS version of getElementsByTagName, if you remove a node it will not appear during the
+     * foreach. This does not happen in PHP DOMDocument, because if you remove a node, it will still appear but as an
+     * orphan node and will give an exception if you try to do anything with it.
+     *
+     * Shifting also occurs when converting parent nodes (like a P to a DIV), which in that case the found nodes are
+     * removed from the foreach "pool" but the internal index of the foreach is not aware and skips over nodes that
+     * never looped over. (index is at position 5, 2 nodes are removed, next one should be node 3, but the foreach tries
+     * to access node 6)
+     *
+     * This function solves this by searching for the nodes on every loop and keeping track of the count differences.
+     * Because on every loop we call getElementsByTagName again, this could cause a performance impact and should be
+     * used only when the results of the search are going to be used to remove the nodes.
+     *
+     * @param string $tag
+     *
+     * @return \Generator
+     */
+    public function shiftingAwareGetElementsByTagName($tag)
+    {
+        /** @var $nodes DOMNodeList */
+        $nodes = $this->getElementsByTagName($tag);
+        $count = $nodes->length;
+
+        for ($i = 0; $i < $count; $i = max(++$i, 0)) {
+            yield $nodes->item($i);
+
+            // Search for all the nodes again
+            $nodes = $this->getElementsByTagName($tag);
+
+            // Subtract the amount of nodes removed from the current index
+            $i -= $count - $nodes->length;
+
+            // Subtract the amount of nodes removed from the current count
+            $count -= ($count - $nodes->length);
+        }
     }
 }

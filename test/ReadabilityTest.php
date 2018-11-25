@@ -6,7 +6,7 @@ use andreskrey\Readability\Configuration;
 use andreskrey\Readability\ParseException;
 use andreskrey\Readability\Readability;
 
-class ReadabilityTest extends \PHPUnit_Framework_TestCase
+class ReadabilityTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider getSamplePages

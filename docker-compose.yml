@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  php-7.0:
+    build: ./docker/php-7.0
+    volumes:
+      - ./:/app
+    tty: true
+
+  php-7.1:
+    build: ./docker/php-7.1
+    volumes:
+      - ./:/app
+    tty: true
+
+  php-7.2:
+    build: ./docker/php-7.2
+    volumes:
+      - ./:/app
+    tty: true

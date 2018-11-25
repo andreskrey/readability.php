@@ -3,6 +3,26 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v2.0.0](https://github.com/andreskrey/readability.php/releases/tag/v2.0.0)
+
+- [BREAKING CHANGE] Bumped the minimum supported version of PHP to 7.0
+- Clean `<aside>` tags during `prepArticle()`.
+- Merged PR #58: Fix notice non-object on $parentOfTopCandidate for tumblr.com
+- Fixed issue #63: Division by zero
+- Housekeeping:
+    - Removed $parseSuccessful flag that wasn't needed anymore
+- Rename wordThreshold to charThreshold and throw deprecation notices. WordThreshold will be removed in version 3.0.
+- Added "-ad-" as unlikely candidate
+- Added Docker containers with PHP 7.0, 7.1, and 7.2 and makefile to trigger the tests.
+- Imported new code from the JS version as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743), which includes the following changes:
+    - Move phrasing contents [into paragraphs](https://github.com/mozilla/readability/commit/9f2c5cb42ee9635f091178271d66888cbb47e5dc)
+    - Improved the title detection
+    - Remove [single cell tables](https://github.com/mozilla/readability/commit/ea4165721f9105d8f1e53cfecdcfdafceaf3e4bf)
+    - Improved the detection of video related elements
+    - New test cases
+    - Various minor fixes
+
+
 ## [v1.2.0](https://github.com/andreskrey/readability.php/releases/tag/v1.2.0)
 
 - Merged PR#49 (Missing object when calling `->getContent()`)

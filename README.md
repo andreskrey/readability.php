@@ -11,7 +11,7 @@ The project aim is to be a 1 to 1 port of Mozilla's version and to follow closel
 
 ## Requirements
 
-PHP 5.6+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
+PHP 7.0+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (in the rare case your system does not have them already), you could try something like this in *nix like environments:
 
 `$ sudo apt-get install php7.1-xml php7.1-mbstring`
 
@@ -26,6 +26,7 @@ Then, create a Readability class and pass a Configuration class, feed the `parse
 ```php 
 use andreskrey\Readability\Readability;
 use andreskrey\Readability\Configuration;
+use andreskrey\Readability\ParseException;
 
 $readability = new Readability(new Configuration());
 
@@ -158,14 +159,27 @@ Readability.php uses the [PSR Log](https://github.com/php-fig/log) interface to 
 
 - Keep up with Readability.js changes
 - Add a small template engine for the __toString() method, instead of using a hardcoded one.
+- Replace all the `iterator_to_array` calls with a custom PHP generator that keeps track of the removed or altered nodes.
 
 ## How it works
 
 Readability parses all the text with DOMDocument, scans the text nodes and gives the a score, based on the amount of words, links and type of element. Then it selects the highest scoring element and creates a new DOMDocument with all its siblings. Each sibling is scored to discard useless elements, like nav bars, empty nodes, etc.
 
+## Testing
+
+Any version of PHP installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.0, 7.1, and 7.2.
+
+You'll need Docker and Docker Compose for this. To run all the tests in all the available versions just type the following command:
+
+```bash
+make test-all
+```
+
+This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.0`, `make test-7.1`, or `make test-7.2`.
+
 ## Code porting
 
-Up to date with readability.js as of [2 Mar 2018](https://github.com/mozilla/readability/commit/8525c6af36d3badbe27c4672a6f2dd99ddb4097f).
+Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
  
 ## License
 

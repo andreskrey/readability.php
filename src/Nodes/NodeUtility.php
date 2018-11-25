@@ -17,13 +17,13 @@ class NodeUtility
      * @var array
      */
     public static $regexps = [
-        'unlikelyCandidates' => '/banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|foot|header|legends|menu|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote/i',
+        'unlikelyCandidates' => '/-ad-|banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|foot|header|legends|menu|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote/i',
         'okMaybeItsACandidate' => '/and|article|body|column|main|shadow/i',
         'extraneous' => '/print|archive|comment|discuss|e[\-]?mail|share|reply|all|login|sign|single|utility/i',
         'byline' => '/byline|author|dateline|writtenby|p-author/i',
         'replaceFonts' => '/<(\/?)font[^>]*>/gi',
         'normalize' => '/\s{2,}/',
-        'videos' => '/\/\/(www\.)?(dailymotion|youtube|youtube-nocookie|player\.vimeo)\.com/i',
+        'videos' => '/\/\/(www\.)?((dailymotion|youtube|youtube-nocookie|player\.vimeo|v\.qq)\.com|(archive|upload\.wikimedia)\.org|player\.twitch\.tv)/i',
         'nextLink' => '/(next|weiter|continue|>([^\|]|$)|»([^\|]|$))/i',
         'prevLink' => '/(prev|earl|old|new|<|«)/i',
         'whitespace' => '/^\s*$/',
@@ -45,8 +45,8 @@ class NodeUtility
     {
         $next = $node;
         while ($next
-            && $next->nodeName !== '#text'
-            && trim($next->textContent)) {
+            && $next->nodeType !== XML_ELEMENT_NODE
+            && $next->isWhitespace()) {
             $next = $next->nextSibling;
         }
 
@@ -57,12 +57,13 @@ class NodeUtility
      * Changes the node tag name. Since tagName on DOMElement is a read only value, this must be done creating a new
      * element with the new tag name and importing it to the main DOMDocument.
      *
+     * @param DOMNode $node
      * @param string $value
      * @param bool $importAttributes
      *
      * @return DOMNode
      */
-    public static function setNodeTag($node, $value, $importAttributes = false)
+    public static function setNodeTag($node, $value, $importAttributes = true)
     {
         $new = new DOMDocument('1.0', 'utf-8');
         $new->appendChild($new->createElement($value));

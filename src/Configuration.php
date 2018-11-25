@@ -21,7 +21,7 @@ class Configuration
     /**
      * @var int
      */
-    protected $wordThreshold = 500;
+    protected $charThreshold = 500;
 
     /**
      * @var bool
@@ -109,9 +109,9 @@ class Configuration
         // If no logger has been set, just return a null logger
         if ($this->logger === null) {
             return new NullLogger();
-        } else {
-            return $this->logger;
         }
+
+        return $this->logger;
     }
 
     /**
@@ -149,19 +149,45 @@ class Configuration
     /**
      * @return int
      */
-    public function getWordThreshold()
+    public function getCharThreshold()
     {
-        return $this->wordThreshold;
+        return $this->charThreshold;
     }
 
     /**
-     * @param int $wordThreshold
+     * @param int $charThreshold
      *
      * @return $this
      */
-    public function setWordThreshold($wordThreshold)
+    public function setCharThreshold($charThreshold)
     {
-        $this->wordThreshold = $wordThreshold;
+        $this->charThreshold = $charThreshold;
+
+        return $this;
+    }
+
+    /**
+     * @deprecated Use getCharThreshold. Will be removed in version 2.0
+     *
+     * @return int
+     */
+    public function getWordThreshold()
+    {
+        @trigger_error('getWordThreshold was replaced with getCharThreshold and will be removed in version 3.0', E_USER_DEPRECATED);
+
+        return $this->charThreshold;
+    }
+
+    /**
+     * @param int $charThreshold
+     *
+     * @return $this
+     */
+    public function setWordThreshold($charThreshold)
+    {
+        @trigger_error('setWordThreshold was replaced with setCharThreshold and will be removed in version 3.0', E_USER_DEPRECATED);
+
+        $this->charThreshold = $charThreshold;
 
         return $this;
     }
