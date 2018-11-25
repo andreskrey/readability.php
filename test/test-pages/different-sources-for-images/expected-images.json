@@ -1,1 +1,7 @@
-["https:\/\/test\/foo\/bar\/src.jpg","https:\/\/test\/foo\/bar\/data-original.jpg","https:\/\/test\/foo\/bar\/data-orig.jpg","https:\/\/test\/foo\/bar\/data-url.jpg","https:\/\/test\/foo\/bar\/data-src.jpg"]
+[
+    "https:\/\/test\/foo\/bar\/src.jpg",
+    "https:\/\/test\/foo\/bar\/data-original.jpg",
+    "https:\/\/test\/foo\/bar\/data-orig.jpg",
+    "https:\/\/test\/foo\/bar\/data-url.jpg",
+    "https:\/\/test\/foo\/bar\/data-src.jpg"
+]
