@@ -1,6 +1,7 @@
 {
-  "Title": "Welcome to Firefox Developer Edition",
-  "Author": null,
-  "Direction": "ltr",
-  "Excerpt": "Built for those who build the Web. Introducing the only browser made for developers."
+    "Title": "Welcome to Firefox Developer Edition",
+    "Author": null,
+    "Direction": "ltr",
+    "Excerpt": "Built for those who build the Web. Introducing the only browser made for developers.",
+    "Image": "https:\/\/mozorg.cdn.mozilla.net\/media\/img\/firefox\/developer\/page-image.03bbe7da3199.png"
 }
