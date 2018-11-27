@@ -1,5 +1,7 @@
 {
-  "Title": "Preferred title",
-  "Author": "Creator Name",
-  "Excerpt": "Preferred description"
+    "Title": "Preferred title",
+    "Author": "Creator Name",
+    "Excerpt": "Preferred description",
+    "Direction": null,
+    "Image": null
 }

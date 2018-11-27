@@ -59,7 +59,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $readability = new Readability($configuration);
         $readability->parse($html);
 
-        $this->assertSame($expectedImages, json_encode($readability->getImages()));
+        $this->assertSame(json_decode($expectedImages, true), $readability->getImages());
     }
 
     public function getSamplePages()
