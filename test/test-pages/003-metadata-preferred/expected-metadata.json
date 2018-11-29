@@ -1,7 +1,7 @@
 {
-    "Title": "Dublin Core property title",
     "Author": "Dublin Core property author",
-    "Excerpt": "Dublin Core property description",
     "Direction": null,
-    "Image": null
+    "Excerpt": "Dublin Core property description",
+    "Image": null,
+    "Title": "Dublin Core property title"
 }
