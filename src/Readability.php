@@ -373,6 +373,7 @@ class Readability
 
         // get main image
         $key = current(array_intersect([
+            'image',
             'og:image',
             'twitter:image'
         ], array_keys($values)));
