@@ -17,6 +17,9 @@
             "andreskrey\\Readability\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {"andreskrey\\Readability\\Test\\": "test"}
+    },
     "require": {
         "php": ">=7.0.0",
         "ext-dom": "*",
