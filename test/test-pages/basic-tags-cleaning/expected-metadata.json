@@ -3,5 +3,6 @@
     "Direction": null,
     "Excerpt": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\n        tempor incididunt ut labore et dolore magna aliqua.",
     "Image": null,
-    "Title": "Basic tag cleaning test"
+    "Title": "Basic tag cleaning test",
+    "SiteName": null
 }
