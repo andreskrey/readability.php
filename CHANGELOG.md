@@ -2,6 +2,7 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+- Avoid overwriting extracted metadata with similarly named keys (like `og:image` and `og:image:width`) 
 
 ## [v2.0.1](https://github.com/andreskrey/readability.php/releases/tag/v2.0.1)
 - Fixed small issue that prevented the main image from showing up in the results
