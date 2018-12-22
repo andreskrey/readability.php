@@ -3,6 +3,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [v2.0.1](https://github.com/andreskrey/readability.php/releases/tag/v2.0.1)
+- Fixed small issue that prevented the main image from showing up in the results
+
 ## [v2.0.0](https://github.com/andreskrey/readability.php/releases/tag/v2.0.0)
 
 - [BREAKING CHANGE] Bumped the minimum supported version of PHP to 7.0
