@@ -3,5 +3,6 @@
     "Direction": null,
     "Excerpt": "For more than a decade the Web has used XMLHttpRequest (XHR) to achieve asynchronous requests in JavaScript. While very useful, XHR is not a very ...",
     "Image": null,
-    "Title": "This API is so Fetching!"
+    "Title": "This API is so Fetching!",
+    "SiteName": "Mozilla Hacks – the Web developer blog"
 }
