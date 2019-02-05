@@ -522,7 +522,17 @@ class Readability
             $hOnes = $this->dom->getElementsByTagName('h1');
 
             if ($hOnes->length === 1) {
-                $curTitle = $hOnes->item(0)->nodeValue;
+                $header = $hOnes->item(0);
+
+                try {
+                    foreach ($header->getElementsByTagName('*') as $element) {
+                        $header->removeChild($element);
+                    }
+                } catch (\Exception $e) {
+                }
+                
+                $curTitle = $header->nodeValue;
+                
                 $this->logger->info(sprintf('[Metadata] Using title from an H1 node: \'%s\'', $curTitle));
             }
         }
