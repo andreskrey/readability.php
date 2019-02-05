@@ -530,9 +530,9 @@ class Readability
                     }
                 } catch (\Exception $e) {
                 }
-                
+
                 $curTitle = $header->nodeValue;
-                
+
                 $this->logger->info(sprintf('[Metadata] Using title from an H1 node: \'%s\'', $curTitle));
             }
         }
