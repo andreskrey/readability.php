@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+- Avoid overwriting extracted metadata with similarly named keys (like `og:image` and `og:image:width`)
+- Imported new `getSiteName()` feature from JS version as of [21 Dec 2018](https://github.com/mozilla/readability/pull/504)
+
+## [v2.0.1](https://github.com/andreskrey/readability.php/releases/tag/v2.0.1)
+- Fixed small issue that prevented the main image from showing up in the results
 
 ## [v2.0.0](https://github.com/andreskrey/readability.php/releases/tag/v2.0.0)
 
@@ -35,7 +40,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v1.1.1](https://github.com/andreskrey/readability.php/releases/tag/v1.1.1)
 
-- Switched from assertEquals to assertSame on unit testing to avoid weak comparisons. 
+- Switched from assertEquals to assertSame on unit testing to avoid weak comparisons.
 - Added a safe check to avoid sending the DOMDocument as a node when scanning for node ancestors.
 - Fix issue #45: Small mistake in documentation
 - Fix issue #46: Added `data-src` as a image source path
@@ -64,7 +69,7 @@ All notable changes to this project will be documented in this file.
 
 - Trim titles when detecting hierarchical separators to avoid false negatives on strings with spaces.
 - Fix issue when converting divs to p nodes and never rating them (issue #29)
-- Fix "Unsupported operand types" (PR #31) 
+- Fix "Unsupported operand types" (PR #31)
 - Fix division by zero when no title was found (issue #32)
 - New function to retrieve all images at once (PR #30)
 - Get the title from the `<title>` tag before searching on the `<meta>` tags
@@ -127,6 +132,6 @@ We are getting closer to be a 100% complete port of Readability.js!
 
 ## [0.0.2-alpha](https://github.com/andreskrey/readability.php/releases/tag/v0.0.2-alpha)
  - Last version I'm using master as the main development branch. All unreleased changes and main development will happen in the develop branch.
- 
+
 ## [0.0.1-alpha](https://github.com/andreskrey/readability.php/releases/tag/v0.0.1-alpha)
  - Initial release

@@ -57,6 +57,13 @@ class Readability
     protected $author = null;
 
     /**
+     * Website name.
+     *
+     * @var string|null
+     */
+    protected $siteName = null;
+
+    /**
      * Direction of the text.
      *
      * @var string|null
@@ -287,10 +294,10 @@ class Readability
 
         $values = [];
         // property is a space-separated list of values
-        $propertyPattern = '/\s*(dc|dcterm|og|twitter)\s*:\s*(author|creator|description|title|image)(?!:)\s*/i';
+        $propertyPattern = '/\s*(dc|dcterm|og|twitter)\s*:\s*(author|creator|description|title|image|site_name)(?!:)\s*/i';
 
         // name is a single value
-        $namePattern = '/^\s*(?:(dc|dcterm|og|twitter|weibo:(article|webpage))\s*[\.:]\s*)?(author|creator|description|title|image)(?!:)\s*$/i';
+        $namePattern = '/^\s*(?:(dc|dcterm|og|twitter|weibo:(article|webpage))\s*[\.:]\s*)?(author|creator|description|title|image|site_name)(?!:)\s*$/i';
 
         // Find description tags.
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
@@ -332,7 +339,6 @@ class Readability
          * This could be easily replaced with an ugly set of isset($values['key']) or a bunch of ??s.
          * Will probably replace it with ??s after dropping support of PHP5.6
          */
-
         $key = current(array_intersect([
             'dc:title',
             'dcterm:title',
@@ -379,6 +385,12 @@ class Readability
         ], array_keys($values)));
 
         $this->setImage(isset($values[$key]) ? $values[$key] : null);
+
+        $key = current(array_intersect([
+            'og:site_name'
+        ], array_keys($values)));
+
+        $this->setSiteName(isset($values[$key]) ? $values[$key] : null);
     }
 
     /**
@@ -1755,6 +1767,22 @@ class Readability
     protected function setAuthor($author)
     {
         $this->author = $author;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSiteName()
+    {
+        return $this->siteName;
+    }
+
+    /**
+     * @param string $siteName
+     */
+    protected function setSiteName($siteName)
+    {
+        $this->siteName = $siteName;
     }
 
     /**
