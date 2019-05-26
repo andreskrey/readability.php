@@ -42,8 +42,10 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @dataProvider getSamplePages
+     *
+     * @throws ParseException
      */
-    public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
+    public function testHTMLParserParsesImages(TestPage $testPage)
     {
         $options = ['OriginalURL' => 'http://fakehost/test/test.html',
             'fixRelativeURLs' => true,
