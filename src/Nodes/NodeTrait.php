@@ -557,4 +557,21 @@ trait NodeTrait
             $count -= ($count - $nodes->length);
         }
     }
+
+    /**
+     * Mimics JS's firstElementChild property. PHP only has firstChild which could be any type of DOMNode. Use this
+     * function to get the first one that is an DOMElement node.
+     *
+     * @return \DOMElement|null
+     */
+    public function getFirstElementChild()
+    {
+        foreach ($this->childNodes as $node) {
+            if ($node instanceof \DOMElement) {
+                return $node;
+            }
+        }
+
+        return null;
+    }
 }

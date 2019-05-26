@@ -1281,9 +1281,9 @@ class Readability
             /** @var DOMNode $table */
             $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->childNodes[0] : $table;
             if ($tbody->hasSingleTagInsideElement('tr')) {
-                $row = $tbody->firstChild;
+                $row = $tbody->getFirstElementChild();
                 if ($row->hasSingleTagInsideElement('td')) {
-                    $cell = $row->firstChild;
+                    $cell = $row->getFirstElementChild();
                     $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($cell->childNodes), function ($carry, $node) {
                         return $node->isPhrasingContent() && $carry;
                     }, true)) ? 'p' : 'div');
