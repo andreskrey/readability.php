@@ -1610,7 +1610,7 @@ class Readability
             $node->removeAttribute('class');
         }
 
-        for ($node = $node->firstChild; $node !== null; $node = $node->nextSibling) {
+        for ($node = $node->getFirstElementChild(); $node !== null; $node = $node->nextSibling) {
             $this->_cleanClasses($node);
         }
     }

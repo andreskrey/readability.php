@@ -181,11 +181,11 @@ trait NodeTrait
     /**
      * Override for native hasAttribute.
      *
-     * @see getAttribute
-     *
      * @param $attributeName
      *
      * @return bool
+     * @see getAttribute
+     *
      */
     public function hasAttribute($attributeName)
     {
@@ -566,9 +566,11 @@ trait NodeTrait
      */
     public function getFirstElementChild()
     {
-        foreach ($this->childNodes as $node) {
-            if ($node instanceof \DOMElement) {
-                return $node;
+        if ($this->childNodes instanceof \Traversable) {
+            foreach ($this->childNodes as $node) {
+                if ($node instanceof \DOMElement) {
+                    return $node;
+                }
             }
         }
 
