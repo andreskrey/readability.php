@@ -1,6 +1,9 @@
-.PHONY: test-all start test-7.2 test-7.1 test-7.0 stop
+.PHONY: test-all start test-7.3 test-7.2 test-7.1 test-7.0 stop
 
-test-all: start test-7.2 test-7.1 test-7.0 stop
+test-all: start test-7.3 test-7.2 test-7.1 test-7.0 stop
+
+test-7.3:
+	docker-compose exec php-7.3 php /app/vendor/phpunit/phpunit/phpunit --configuration /app/phpunit.xml
 
 test-7.2:
 	docker-compose exec php-7.2 php /app/vendor/phpunit/phpunit/phpunit --configuration /app/phpunit.xml

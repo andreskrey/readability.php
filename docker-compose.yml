@@ -18,3 +18,9 @@ services:
     volumes:
       - ./:/app
     tty: true
+
+  php-7.3:
+    build: ./docker/php-7.3
+    volumes:
+      - ./:/app
+    tty: true
