@@ -735,7 +735,7 @@ class Readability
                  */
                 if ($node->hasSingleTagInsideElement('p') && $node->getLinkDensity() < 0.25) {
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single P node, removing DIV. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
-                    $pNode = NodeUtility::filterTextNodes($node->childNodes)[0];
+                    $pNode = NodeUtility::filterTextNodes($node->childNodes)->item(0);
                     $node->parentNode->replaceChild($pNode, $node);
                     $node = $pNode;
                     $elementsToScore[] = $node;

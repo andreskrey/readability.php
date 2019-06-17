@@ -14,7 +14,7 @@ namespace andreskrey\Readability\Nodes\DOM;
  *
  * @package andreskrey\Readability\Nodes\DOM
  */
-class DOMNodeList implements \ArrayAccess, \Countable, \IteratorAggregate
+class DOMNodeList implements \Countable, \IteratorAggregate
 {
     /**
      * @var array
@@ -42,11 +42,11 @@ class DOMNodeList implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
-     * @param \DOMNode $node
+     * @param DOMNode|DOMElement|DOMComment $node
      *
      * @return DOMNodeList
      */
-    public function add(\DOMNode $node)
+    public function add($node)
     {
         $this->items[] = $node;
         $this->length++;
@@ -55,9 +55,19 @@ class DOMNodeList implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
+     * @param int $offset
+     *
+     * @return DOMNode|DOMElement|DOMComment
+     */
+    public function item(int $offset)
+    {
+        return $this->items[$offset];
+    }
+
+    /**
      * @return int|void
      */
-    public function count()
+    public function count(): int
     {
         return $this->length;
     }
@@ -67,42 +77,9 @@ class DOMNodeList implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * {@inheritDoc}
      */
-    public function getIterator()
+    public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->items);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function offsetExists($offset)
-    {
-        return isset($this->items[$offset]);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function offsetGet($offset)
-    {
-        return $this->items[$offset];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function offsetSet($offset, $value)
-    {
-        $this->items[$offset] = $value;
-        $this->length = count($this->items);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function offsetUnset($offset)
-    {
-        unset($this->items[$offset]);
-        $this->length--;
-    }
 }

@@ -422,7 +422,7 @@ trait NodeTrait
     public function hasSingleTagInsideElement($tag)
     {
         // There should be exactly 1 element child with given tag
-        if (count($children = NodeUtility::filterTextNodes($this->childNodes)) !== 1 || $children[0]->nodeName !== $tag) {
+        if (count($children = NodeUtility::filterTextNodes($this->childNodes)) !== 1 || $children->item(0)->nodeName !== $tag) {
             return false;
         }
 
