@@ -1121,7 +1121,7 @@ class Readability
 
         $this->logger->info('[Rating] Adding top candidate siblings...');
 
-        /** @var DOMElement $sibling */
+        /* @var DOMElement $sibling */
         // Can't foreach here because down there we might change the tag name and that causes the foreach to skip items
         for ($i = 0; $i < $siblings->length; $i++) {
             $sibling = $siblings[$i];

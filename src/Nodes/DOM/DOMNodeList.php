@@ -3,7 +3,7 @@
 namespace andreskrey\Readability\Nodes\DOM;
 
 /**
- * Class DOMNodeList
+ * Class DOMNodeList.
  *
  * This is a fake DOMNodeList class that allows adding items to the list. The original class is static and the nodes
  * are defined automagically when instantiating it. This fake version behaves exactly the same way but adds the function
@@ -11,8 +11,6 @@ namespace andreskrey\Readability\Nodes\DOM;
  *
  * It cannot extend the original DOMNodeList class because the functionality behind the property ->length is hidden
  * from the user and cannot be extended, changed, or tweaked.
- *
- * @package andreskrey\Readability\Nodes\DOM
  */
 class DOMNodeList implements \Countable, \IteratorAggregate
 {
@@ -27,9 +25,9 @@ class DOMNodeList implements \Countable, \IteratorAggregate
     protected $length = 0;
 
     /**
-     * To allow access to length in the same way that DOMNodeList allows
+     * To allow access to length in the same way that DOMNodeList allows.
      *
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function __get($name)
     {
@@ -73,13 +71,12 @@ class DOMNodeList implements \Countable, \IteratorAggregate
     }
 
     /**
-     * To make it compatible with iterator_to_array() function
+     * To make it compatible with iterator_to_array() function.
      *
-     * {@inheritDoc}
+     * {@inheritdoc}
      */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->items);
     }
-
 }

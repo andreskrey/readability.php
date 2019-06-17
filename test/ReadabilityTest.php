@@ -7,15 +7,15 @@ use andreskrey\Readability\ParseException;
 use andreskrey\Readability\Readability;
 
 /**
- * Class ReadabilityTest
- * @package andreskrey\Readability\Test
+ * Class ReadabilityTest.
  */
 class ReadabilityTest extends \PHPUnit\Framework\TestCase
 {
     /**
-     * Test that Readability parses the HTML correctly and matches the expected result
+     * Test that Readability parses the HTML correctly and matches the expected result.
      *
      * @dataProvider getSamplePages
+     *
      * @param TestPage $testPage
      *
      * @throws ParseException
@@ -36,11 +36,11 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
     }
 
-
     /**
-     * Test that Readability parses the HTML correctly and matches the expected result
+     * Test that Readability parses the HTML correctly and matches the expected result.
      *
      * @dataProvider getSamplePages
+     *
      * @param TestPage $testPage
      *
      * @throws ParseException
@@ -66,7 +66,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test that Readability returns all the expected images from the test page
+     * Test that Readability returns all the expected images from the test page.
      *
      * @param TestPage $testPage
      * @dataProvider getSamplePages
@@ -89,7 +89,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Main data provider
+     * Main data provider.
      *
      * @return \Generator
      */
@@ -112,7 +112,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test that Readability throws an exception with malformed HTML
+     * Test that Readability throws an exception with malformed HTML.
      *
      * @throws ParseException
      */
@@ -125,7 +125,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test that Readability throws an exception with incomplete or short HTML
+     * Test that Readability throws an exception with incomplete or short HTML.
      *
      * @throws ParseException
      */
@@ -138,7 +138,7 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Test that the Readability object has no content as soon as it is instantiated
+     * Test that the Readability object has no content as soon as it is instantiated.
      */
     public function testReadabilityCallGetContentWithNoContent()
     {

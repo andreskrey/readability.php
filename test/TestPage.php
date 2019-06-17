@@ -10,7 +10,7 @@ class TestPage
     private $expectedImages;
     private $expectedMetadata;
 
-    public function __construct( $configuration, $sourceHTML, $expectedHTML, $expectedImages, $expectedMetadata)
+    public function __construct($configuration, $sourceHTML, $expectedHTML, $expectedImages, $expectedMetadata)
     {
         $this->configuration = $configuration;
         $this->sourceHTML = $sourceHTML;

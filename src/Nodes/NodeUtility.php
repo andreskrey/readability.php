@@ -160,9 +160,10 @@ class NodeUtility
     }
 
     /**
-     * Remove all empty DOMNodes from DOMNodeLists
+     * Remove all empty DOMNodes from DOMNodeLists.
      *
      * @param \DOMNodeList $list
+     *
      * @return DOMNodeList
      */
     public static function filterTextNodes(\DOMNodeList $list)
@@ -173,6 +174,7 @@ class NodeUtility
                 $newList->add($node);
             }
         }
+
         return $newList;
     }
 }

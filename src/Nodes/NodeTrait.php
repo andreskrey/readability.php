@@ -81,7 +81,7 @@ trait NodeTrait
      */
     public function isReadabilityDataTable()
     {
-        /**
+        /*
          * This is a workaround that I'd like to remove in the future.
          * Seems that although we are extending the base DOMElement and adding custom properties (like this one,
          * 'readabilityDataTable'), these properties get lost when you search for elements with getElementsByTagName.
@@ -184,8 +184,8 @@ trait NodeTrait
      * @param $attributeName
      *
      * @return bool
-     * @see getAttribute
      *
+     * @see getAttribute
      */
     public function hasAttribute($attributeName)
     {
