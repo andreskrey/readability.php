@@ -313,6 +313,30 @@ trait NodeTrait
     }
 
     /**
+     * Returns the children of the current node.
+     *
+     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
+     *
+     * @deprecated Use NodeUtility::filterTextNodes, function will be removed in version 3.0
+     *
+     * @return array
+     */
+    public function getChildren($filterEmptyDOMText = false)
+    {
+        @trigger_error('getChildren was replaced with NodeUtility::filterTextNodes and will be removed in version 3.0', E_USER_DEPRECATED);
+
+        $ret = iterator_to_array($this->childNodes);
+        if ($filterEmptyDOMText) {
+            // Array values is used to discard the key order. Needs to be 0 to whatever without skipping any number
+            $ret = array_values(array_filter($ret, function ($node) {
+                return $node->nodeName !== '#text' || mb_strlen(trim($node->nodeValue));
+            }));
+        }
+
+        return $ret;
+    }
+
+    /**
      * Return an array indicating how many rows and columns this table has.
      *
      * @return array
