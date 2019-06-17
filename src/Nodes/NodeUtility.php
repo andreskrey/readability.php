@@ -168,8 +168,8 @@ class NodeUtility
     public static function filterTextNodes(\DOMNodeList $list)
     {
         $newList = new DOMNodeList();
-        foreach($list as $node){
-            if($node->nodeType !== XML_TEXT_NODE || mb_strlen(trim($node->nodeValue))){
+        foreach ($list as $node) {
+            if ($node->nodeType !== XML_TEXT_NODE || mb_strlen(trim($node->nodeValue))) {
                 $newList->add($node);
             }
         }
