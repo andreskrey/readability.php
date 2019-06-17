@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 - Imported new `getSiteName()` feature from JS version as of [21 Dec 2018](https://github.com/mozilla/readability/pull/504)
 - Added getFirstElementChild function to NodeTrait + test case (Issue #83)
 - Reworked the test suit to use TestPage objects and give more hints about what failed
+- Removed getWordThreshold and setWordThreshold configuration functions
+- Added NodeUtility::filterTextNodes and deprecated NodeTrait getChildren()
+- Added new DOMNodeList fake class that mimics the original DOMNodeList class but allows to add new nodes to the list
 
 ## [v2.0.1](https://github.com/andreskrey/readability.php/releases/tag/v2.0.1)
 - Fixed small issue that prevented the main image from showing up in the results
