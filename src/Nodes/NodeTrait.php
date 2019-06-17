@@ -313,26 +313,6 @@ trait NodeTrait
     }
 
     /**
-     * Returns the children of the current node.
-     *
-     * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
-     *
-     * @return array
-     */
-    public function getChildren($filterEmptyDOMText = false)
-    {
-        $ret = iterator_to_array($this->childNodes);
-        if ($filterEmptyDOMText) {
-            // Array values is used to discard the key order. Needs to be 0 to whatever without skipping any number
-            $ret = array_values(array_filter($ret, function ($node) {
-                return $node->nodeName !== '#text' || mb_strlen(trim($node->nodeValue));
-            }));
-        }
-
-        return $ret;
-    }
-
-    /**
      * Return an array indicating how many rows and columns this table has.
      *
      * @return array
@@ -418,12 +398,12 @@ trait NodeTrait
     public function hasSingleTagInsideElement($tag)
     {
         // There should be exactly 1 element child with given tag
-        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== $tag) {
+        if (count($children = NodeUtility::filterTextNodes($this->childNodes)) !== 1 || $children[0]->nodeName !== $tag) {
             return false;
         }
 
         // And there should be no text nodes with real content
-        return array_reduce($children, function ($carry, $child) {
+        return array_reduce(iterator_to_array($children), function ($carry, $child) {
             if (!$carry === false) {
                 return false;
             }
@@ -443,7 +423,7 @@ trait NodeTrait
     {
         $result = false;
         if ($this->hasChildNodes()) {
-            foreach ($this->getChildren() as $child) {
+            foreach ($this->childNodes as $child) {
                 if (in_array($child->nodeName, $this->divToPElements)) {
                     $result = true;
                 } else {

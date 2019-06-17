@@ -735,7 +735,7 @@ class Readability
                  */
                 if ($node->hasSingleTagInsideElement('p') && $node->getLinkDensity() < 0.25) {
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single P node, removing DIV. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
-                    $pNode = $node->getChildren(true)[0];
+                    $pNode = NodeUtility::filterTextNodes($node->childNodes)[0];
                     $node->parentNode->replaceChild($pNode, $node);
                     $node = $pNode;
                     $elementsToScore[] = $node;
@@ -1095,7 +1095,7 @@ class Readability
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->parentNode;
-            while ($parentOfTopCandidate->nodeName !== 'body' && count($parentOfTopCandidate->getChildren(true)) === 1) {
+            while ($parentOfTopCandidate->nodeName !== 'body' && count(NodeUtility::filterTextNodes($parentOfTopCandidate->childNodes)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->parentNode;
             }
@@ -1115,14 +1115,16 @@ class Readability
         $siblingScoreThreshold = max(10, $topCandidate->contentScore * 0.2);
         // Keep potential top candidate's parent node to try to get text direction of it later.
         $parentOfTopCandidate = $topCandidate->parentNode;
-        $siblings = $parentOfTopCandidate->getChildren();
+        $siblings = $parentOfTopCandidate->childNodes;
 
         $hasContent = false;
 
         $this->logger->info('[Rating] Adding top candidate siblings...');
 
         /** @var DOMElement $sibling */
-        foreach ($siblings as $sibling) {
+        // Can't foreach here because down there we might change the tag name and that causes the foreach to skip items
+        for ($i = 0; $i < $siblings->length; $i++) {
+            $sibling = $siblings[$i];
             $append = false;
 
             if ($sibling === $topCandidate) {
@@ -1160,7 +1162,6 @@ class Readability
                      * We have a node that isn't a common block level element, like a form or td tag.
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
-
                     $sibling = NodeUtility::setNodeTag($sibling, 'div');
                 }
 
