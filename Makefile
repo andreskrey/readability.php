@@ -1,4 +1,4 @@
-.PHONY: test-all start test-7.3 test-7.2 test-7.1 test-7.0 stop
+.PHONY: test-all
 
 test-all: start test-7.3 test-7.2 test-7.1 test-7.0 stop
 
