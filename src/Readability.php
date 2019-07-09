@@ -404,7 +404,7 @@ class Readability
 
         if ($this->configuration->getFixRelativeURLs()) {
             foreach ($result as &$imgSrc) {
-                $imgSrc = $this->toAbsoluteURI($imgSrc);
+                $imgSrc = $this->configuration->getPrefixIMGURL().$this->toAbsoluteURI($imgSrc);
             }
         }
 
@@ -440,7 +440,7 @@ class Readability
         }
 
         if (!empty($imgUrl) && $this->configuration->getFixRelativeURLs()) {
-            $this->setImage($this->toAbsoluteURI($imgUrl));
+            $this->setImage($this->configuration->getPrefixIMGURL().$this->toAbsoluteURI($imgUrl));
         }
     }
 
@@ -1627,7 +1627,7 @@ class Readability
                     } else {
                         $this->logger->debug(sprintf('[PostProcess] Converting link to absolute URI: \'%s\'', substr($href, 0, 128)));
 
-                        $link->setAttribute('href', $this->toAbsoluteURI($href));
+                        $link->setAttribute('href', $this->configuration->getPrefixURL().$this->toAbsoluteURI($href));
                     }
                 }
             }
@@ -1650,7 +1650,7 @@ class Readability
                 if ($src) {
                     $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($src, 0, 128)));
 
-                    $img->setAttribute('src', $this->toAbsoluteURI($src));
+                    $img->setAttribute('src', $this->configuration->getPrefixIMGURL().$this->toAbsoluteURI($src));
                 }
             }
         }

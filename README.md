@@ -95,6 +95,8 @@ Then you pass this Configuration object to Readability. The following options ar
 - **SubstituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&aacute;` to á.
 - **NormalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.
 - **OriginalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
+- **PrefixURL** prefix that gets put before any href urls in the document, default `''`, example `http://localhost:8000/readability.php?url=`
+- **PrefixIMGURL** prefix that gets put before any img src urls in the document, default `''`, can be used for image resizing, example `http://localhost:8000/downscale.php?url=`
 - **SummonCthulhu**: default value `false`, remove all `<script>` nodes via regex. This is not ideal as it might break things, but might be the only solution to [libxml problems with unescaped javascript](https://github.com/andreskrey/readability.php#known-issues). If you're not parsing Javascript tutorials, it's recommended to always set this option as `true`.
 
 ### Debug log

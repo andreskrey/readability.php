@@ -69,6 +69,16 @@ class Configuration
     protected $originalURL = 'http://fakehost';
 
     /**
+     * @var string
+     */
+    protected $prefixURL = '';
+
+    /**
+     * @var string
+     */
+    protected $prefixIMGURL = '';
+
+    /**
      * Configuration constructor.
      *
      * @param array $params
@@ -348,6 +358,46 @@ class Configuration
     public function setOriginalURL($originalURL)
     {
         $this->originalURL = $originalURL;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrefixURL()
+    {
+        return  $this->prefixURL;
+    }
+
+    /**
+     * @param string $prefixURL
+     *
+     * @return $this
+     */
+    public function setPrefixURL($prefixURL)
+    {
+        $this->prefixURL = $prefixURL;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrefixIMGURL()
+    {
+        return  $this->prefixIMGURL;
+    }
+
+    /**
+     * @param string $originalURL
+     *
+     * @return $this
+     */
+    public function setPrefixIMGURL($prefixIMGURL)
+    {
+        $this->prefixIMGURL = $prefixIMGURL;
 
         return $this;
     }
