@@ -1280,7 +1280,7 @@ class Readability
         // Remove single-cell tables
         foreach ($article->shiftingAwareGetElementsByTagName('table') as $table) {
             /** @var DOMNode $table */
-            $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->childNodes[0] : $table;
+            $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->getFirstElementChild() : $table;
             if ($tbody->hasSingleTagInsideElement('tr')) {
                 $row = $tbody->getFirstElementChild();
                 if ($row->hasSingleTagInsideElement('td')) {
