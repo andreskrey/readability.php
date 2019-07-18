@@ -32,7 +32,7 @@ install:
  - docker run --rm --volume $PWD:/app composer install
 
 script:
-  - docker run --rm --volume $PWD:/app andreskrey:php${PHP_VERSION}-libxml${LIBXML_VERSION} php ./vendor/bin/phpunit --coverage-clover ./test/clover.xml
+  - docker run --rm --volume $PWD:/app andreskrey:php-${PHP_VERSION}-libxml-${LIBXML_VERSION} php ./vendor/bin/phpunit --coverage-clover ./test/clover.xml
 
 after_script:
   - docker run --rm --volume $PWD:/app composer require php-coveralls/php-coveralls:^2.0
