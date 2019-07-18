@@ -28,9 +28,6 @@ env:
   - PHP_VERSION=7.0 LIBXML_VERSION=2.9.5
   - PHP_VERSION=7.0 LIBXML_VERSION=2.9.4
 
-before_install:
- - php -i | grep "libxml Version"
-
 install:
  - docker run --rm --volume $PWD:/app composer install
 
