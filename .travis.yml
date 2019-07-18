@@ -1,20 +1,42 @@
-language: php
+language: bash
+services: docker
+
+env:
+ matrix:
+  - PHP_VERSION=7.3 LIBXML_VERSION=2.9.9
+  - PHP_VERSION=7.3 LIBXML_VERSION=2.9.8
+  - PHP_VERSION=7.3 LIBXML_VERSION=2.9.7
+  - PHP_VERSION=7.3 LIBXML_VERSION=2.9.6
+  - PHP_VERSION=7.3 LIBXML_VERSION=2.9.5
+  - PHP_VERSION=7.3 LIBXML_VERSION=2.9.4
+  - PHP_VERSION=7.2 LIBXML_VERSION=2.9.9
+  - PHP_VERSION=7.2 LIBXML_VERSION=2.9.8
+  - PHP_VERSION=7.2 LIBXML_VERSION=2.9.7
+  - PHP_VERSION=7.2 LIBXML_VERSION=2.9.6
+  - PHP_VERSION=7.2 LIBXML_VERSION=2.9.5
+  - PHP_VERSION=7.2 LIBXML_VERSION=2.9.4
+  - PHP_VERSION=7.1 LIBXML_VERSION=2.9.9
+  - PHP_VERSION=7.1 LIBXML_VERSION=2.9.8
+  - PHP_VERSION=7.1 LIBXML_VERSION=2.9.7
+  - PHP_VERSION=7.1 LIBXML_VERSION=2.9.6
+  - PHP_VERSION=7.1 LIBXML_VERSION=2.9.5
+  - PHP_VERSION=7.1 LIBXML_VERSION=2.9.4
+  - PHP_VERSION=7.0 LIBXML_VERSION=2.9.9
+  - PHP_VERSION=7.0 LIBXML_VERSION=2.9.8
+  - PHP_VERSION=7.0 LIBXML_VERSION=2.9.7
+  - PHP_VERSION=7.0 LIBXML_VERSION=2.9.6
+  - PHP_VERSION=7.0 LIBXML_VERSION=2.9.5
+  - PHP_VERSION=7.0 LIBXML_VERSION=2.9.4
 
 before_install:
-  - apt-cache policy libxml2
+ - php -i | grep "libxml Version"
 
 install:
- - composer install
-
-php:
-  - "7.0"
-  - "7.1"
-  - "7.2"
-  - "7.3"
+ - docker run --rm --volume $PWD:/app composer install
 
 script:
-  - ./vendor/bin/phpunit --coverage-clover ./test/clover.xml
+  - docker run --rm --volume $PWD:/app andreskrey:php${PHP_VERSION}-libxml${LIBXML_VERSION} php ./vendor/bin/phpunit --coverage-clover ./test/clover.xml
 
 after_script:
-  - composer require php-coveralls/php-coveralls:^2.0
+  - docker run --rm --volume $PWD:/app composer require php-coveralls/php-coveralls:^2.0
   - php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
