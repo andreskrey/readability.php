@@ -29,11 +29,12 @@ env:
   - PHP_VERSION=7.0 LIBXML_VERSION=2.9.4
 
 install:
- - docker run --rm --volume $PWD:/app composer install
+  - docker run --rm --volume $PWD:/app --workdir="/app" composer install
 
 script:
-  - docker run --rm --volume $PWD:/app andreskrey/php-${PHP_VERSION}-libxml-${LIBXML_VERSION} php /app/vendor/bin/phpunit --coverage-clover /app/test/clover.xml
+  - docker build --build-arg php_version=${PHP_VERSION} --build-arg libxml_version=${LIBXML_VERSION} -t travis-build - < ./docker/php/Dockerfile
+  - docker run --volume $PWD:/app --workdir="/app" travis-build php ./vendor/bin/phpunit --coverage-clover /app/test/clover.xml
 
 after_script:
-  - docker run --rm --volume $PWD:/app composer require php-coveralls/php-coveralls:^2.0
-  - php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
+  - docker run --volume $PWD:/app --workdir="/app" composer require php-coveralls/php-coveralls:^2.0
+  - docker run --volume $PWD:/app --workdir="/app" travis-build php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
