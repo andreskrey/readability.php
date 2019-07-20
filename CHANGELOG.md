@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Removed getWordThreshold and setWordThreshold configuration functions
 - Added NodeUtility::filterTextNodes and deprecated NodeTrait getChildren()
 - Added new DOMNodeList fake class that mimics the original DOMNodeList class but allows to add new nodes to the list
+- Added new Dockerfiles that pulls different versions of PHP and libxml. Now we are supporting 4 versions of PHP and 6 versions of libxml!
 
 ## [v2.0.1](https://github.com/andreskrey/readability.php/releases/tag/v2.0.1)
 - Fixed small issue that prevented the main image from showing up in the results
