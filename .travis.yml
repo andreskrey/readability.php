@@ -32,9 +32,9 @@ install:
   - docker run --rm --volume $PWD:/app --workdir="/app" composer install
 
 script:
-  - docker build --build-arg php_version=${PHP_VERSION} --build-arg libxml_version=${LIBXML_VERSION} -t travis-build - < ./docker/php/Dockerfile
+  - docker build --build-arg PHP_VERSION=${PHP_VERSION} --build-arg LIBXML_VERSION=${LIBXML_VERSION} -t travis-build - < ./docker/php/Dockerfile
   - docker run --volume $PWD:/app --workdir="/app" travis-build php ./vendor/bin/phpunit --coverage-clover /app/test/clover.xml
 
 after_script:
   - docker run --volume $PWD:/app --workdir="/app" composer require php-coveralls/php-coveralls:^2.0
-  - docker run --volume $PWD:/app --workdir="/app" travis-build php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
+  - docker run --volume $PWD:/app --workdir="/app" --env TRAVIS=${TRAVIS} --env TRAVIS_JOB_ID=${TRAVIS_JOB_ID} travis-build php ./vendor/php-coveralls/php-coveralls/bin/php-coveralls -v
