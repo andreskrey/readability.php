@@ -19,3 +19,12 @@ start:
 
 stop:
 	docker-compose stop
+
+test-all-versions:
+	for php_version in 7.0 7.1 7.2 7.3; do \
+	    for libxml_version in 2.9.4 2.9.5 2.9.6 2.9.7 2.9.8 2.9.9; do \
+			docker-compose up -d php-$$php_version-libxml-$$libxml_version; \
+			docker-compose exec php-$$php_version-libxml-$$libxml_version php /app/vendor/phpunit/phpunit/phpunit --configuration /app/phpunit.xml; \
+		done \
+	done
+	docker-compose stop
