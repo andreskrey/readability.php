@@ -86,7 +86,7 @@ $configuration = new Configuration([
 Then you pass this Configuration object to Readability. The following options are available. Remember to prepend `set` when calling them using native setters.
 
 - **MaxTopCandidates**: default value `5`, max amount of top level candidates.
-- **WordThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
+- **CharThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
 - **ArticleByLine**: default value `false`, search for the article byline and remove it from the text. It will be moved to the article metadata. 
 - **StripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
 - **CleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
