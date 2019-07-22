@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+
+## [v2.1.0](https://github.com/andreskrey/readability.php/releases/tag/v2.1.0)
 - Avoid overwriting extracted metadata with similarly named keys (like `og:image` and `og:image:width`)
 - Imported new `getSiteName()` feature from JS version as of [21 Dec 2018](https://github.com/mozilla/readability/pull/504)
 - Added getFirstElementChild function to NodeTrait + test case (Issue #83)
