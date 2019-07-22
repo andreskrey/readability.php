@@ -3,7 +3,6 @@
 namespace andreskrey\Readability\Test;
 
 use andreskrey\Readability\Configuration;
-use andreskrey\Readability\Nodes\DOM\DOMDocument;
 use andreskrey\Readability\ParseException;
 use andreskrey\Readability\Readability;
 
@@ -34,7 +33,6 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $readability = new Readability($configuration);
         $readability->parse($testPage->getSourceHTML());
 
-//        $this->assertXmlStringEqualsXmlString($testPage->getExpectedHTML(), $readability->getContent());
         $this->assertSame($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
     }
 
