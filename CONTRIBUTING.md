@@ -23,7 +23,7 @@ We accept contributions via Pull Requests on [Github](https://github.com/andresk
 ## Running Tests
 
 ``` bash
-$ ./vendor/bin/phpunit
+$ make test-all #requires docker and docker-compose
 ```
 
 

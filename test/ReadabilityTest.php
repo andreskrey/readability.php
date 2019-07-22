@@ -6,12 +6,21 @@ use andreskrey\Readability\Configuration;
 use andreskrey\Readability\ParseException;
 use andreskrey\Readability\Readability;
 
+/**
+ * Class ReadabilityTest.
+ */
 class ReadabilityTest extends \PHPUnit\Framework\TestCase
 {
     /**
+     * Test that Readability parses the HTML correctly and matches the expected result.
+     *
      * @dataProvider getSamplePages
+     *
+     * @param TestPage $testPage
+     *
+     * @throws ParseException
      */
-    public function testReadabilityParsesHTML($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
+    public function testReadabilityParsesHTML(TestPage $testPage)
     {
         $options = ['OriginalURL' => 'http://fakehost/test/test.html',
             'FixRelativeURLs' => true,
@@ -19,80 +28,94 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
             'ArticleByLine' => true
         ];
 
-        if ($config === null || $expectedMetadata === null) {
-            $this->markTestSkipped('Wrong test configuration');
-        }
-
-        if ($config) {
-            $options = array_merge($config, $options);
-        }
-
-        $configuration = new Configuration($options);
+        $configuration = new Configuration(array_merge($testPage->getConfiguration(), $options));
 
         $readability = new Readability($configuration);
-        $readability->parse($html);
+        $readability->parse($testPage->getSourceHTML());
 
-        $this->assertSame($expectedResult, $readability->getContent());
-
-        foreach ($expectedMetadata as $key => $metadata) {
-            $function = 'get' . $key;
-            $this->assertEquals($metadata, $readability->$function(), sprintf('Failed asserting %s metadata', $key));
-        }
+        $this->assertSame($testPage->getExpectedHTML(), $readability->getContent(), 'Parsed text does not match the expected one.');
     }
 
     /**
+     * Test that Readability parses the HTML correctly and matches the expected result.
+     *
      * @dataProvider getSamplePages
+     *
+     * @param TestPage $testPage
+     *
+     * @throws ParseException
      */
-    public function testHTMLParserParsesImages($html, $expectedResult, $expectedMetadata, $config, $expectedImages)
+    public function testReadabilityParsesMetadata(TestPage $testPage)
+    {
+        $options = ['OriginalURL' => 'http://fakehost/test/test.html',
+            'FixRelativeURLs' => true,
+            'SubstituteEntities' => true,
+            'ArticleByLine' => true
+        ];
+
+        $configuration = new Configuration(array_merge($testPage->getConfiguration(), $options));
+
+        $readability = new Readability($configuration);
+        $readability->parse($testPage->getSourceHTML());
+
+        $this->assertSame($testPage->getExpectedMetadata()->Author, $readability->getAuthor(), 'Parsed Author does not match expected value.');
+        $this->assertSame($testPage->getExpectedMetadata()->Direction, $readability->getDirection(), 'Parsed Direction does not match expected value.');
+        $this->assertSame($testPage->getExpectedMetadata()->Excerpt, $readability->getExcerpt(), 'Parsed Excerpt does not match expected value.');
+        $this->assertSame($testPage->getExpectedMetadata()->Image, $readability->getImage(), 'Parsed Image does not match expected value.');
+        $this->assertSame($testPage->getExpectedMetadata()->Title, $readability->getTitle(), 'Parsed Title does not match expected value.');
+    }
+
+    /**
+     * Test that Readability returns all the expected images from the test page.
+     *
+     * @param TestPage $testPage
+     * @dataProvider getSamplePages
+     *
+     * @throws ParseException
+     */
+    public function testHTMLParserParsesImages(TestPage $testPage)
     {
         $options = ['OriginalURL' => 'http://fakehost/test/test.html',
             'fixRelativeURLs' => true,
             'substituteEntities' => true,
         ];
 
-        if ($config) {
-            $options = array_merge($options, $config);
-        }
-
-        $configuration = new Configuration($options);
+        $configuration = new Configuration(array_merge($testPage->getConfiguration(), $options));
 
         $readability = new Readability($configuration);
-        $readability->parse($html);
+        $readability->parse($testPage->getSourceHTML());
 
-        $this->assertSame(json_decode($expectedImages, true), $readability->getImages());
+        $this->assertSame($testPage->getExpectedImages(), $readability->getImages());
     }
 
+    /**
+     * Main data provider.
+     *
+     * @return \Generator
+     */
     public function getSamplePages()
     {
         $path = pathinfo(__FILE__, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . 'test-pages';
         $testPages = scandir($path);
-        if (in_array('.DS_Store', $testPages)) {
-            unset($testPages[array_search('.DS_Store', $testPages)]);
-        }
-
-        $pages = [];
 
         foreach (array_slice($testPages, 2) as $testPage) {
-            $source = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'source.html');
-            $expectedHTML = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected.html');
-            $expectedImages = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-images.json');
+            $testCasePath = $path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR;
 
-            $expectedMetadata = json_decode(file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'expected-metadata.json'));
+            $source = file_get_contents($testCasePath . 'source.html');
+            $expectedHTML = file_get_contents($testCasePath . 'expected.html');
+            $expectedImages = json_decode(file_get_contents($testCasePath . 'expected-images.json'), true);
+            $expectedMetadata = json_decode(file_get_contents($testCasePath . 'expected-metadata.json'));
+            $configuration = file_exists($testCasePath . 'config.json') ? json_decode(file_get_contents($testCasePath . 'config.json'), true) : [];
 
-            $config = false;
-            if (file_exists($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json')) {
-                $config = file_get_contents($path . DIRECTORY_SEPARATOR . $testPage . DIRECTORY_SEPARATOR . 'config.json');
-                if ($config) {
-                    $config = json_decode($config, true);
-                }
-            }
-
-            $pages[$testPage] = [$source, $expectedHTML, $expectedMetadata, $config, $expectedImages];
+            yield $testPage => [new TestPage($configuration, $source, $expectedHTML, $expectedImages, $expectedMetadata)];
         }
-
-        return $pages;
     }
 
+    /**
+     * Test that Readability throws an exception with malformed HTML.
+     *
+     * @throws ParseException
+     */
     public function testReadabilityThrowsExceptionWithMalformedHTML()
     {
         $parser = new Readability(new Configuration());
@@ -101,6 +124,11 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $parser->parse('<html>');
     }
 
+    /**
+     * Test that Readability throws an exception with incomplete or short HTML.
+     *
+     * @throws ParseException
+     */
     public function testReadabilityThrowsExceptionWithUnparseableHTML()
     {
         $parser = new Readability(new Configuration());
@@ -109,6 +137,9 @@ class ReadabilityTest extends \PHPUnit\Framework\TestCase
         $parser->parse('<html><body><p></p></body></html>');
     }
 
+    /**
+     * Test that the Readability object has no content as soon as it is instantiated.
+     */
     public function testReadabilityCallGetContentWithNoContent()
     {
         $parser = new Readability(new Configuration());

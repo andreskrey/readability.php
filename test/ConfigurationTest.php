@@ -41,7 +41,6 @@ class ConfigurationTest extends \PHPUnit\Framework\TestCase
     {
         $this->assertEquals($options['maxTopCandidates'], $config->getMaxTopCandidates());
         $this->assertEquals($options['charThreshold'], $config->getCharThreshold());
-        $this->assertEquals($options['wordThreshold'], $config->getWordThreshold());
         $this->assertEquals($options['articleByLine'], $config->getArticleByLine());
         $this->assertEquals($options['stripUnlikelyCandidates'], $config->getStripUnlikelyCandidates());
         $this->assertEquals($options['cleanConditionally'], $config->getCleanConditionally());

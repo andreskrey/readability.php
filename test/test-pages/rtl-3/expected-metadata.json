@@ -1,7 +1,8 @@
 {
-    "Title": "RTL Test",
     "Author": null,
-    "Excerpt": "Lorem ipsum dolor sit amet.",
     "Direction": "rtl",
-    "Image": null
+    "Excerpt": "Lorem ipsum dolor sit amet.",
+    "Image": null,
+    "Title": "RTL Test",
+    "SiteName": null
 }

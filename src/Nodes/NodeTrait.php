@@ -181,11 +181,11 @@ trait NodeTrait
     /**
      * Override for native hasAttribute.
      *
-     * @see getAttribute
-     *
      * @param $attributeName
      *
      * @return bool
+     *
+     * @see getAttribute
      */
     public function hasAttribute($attributeName)
     {
@@ -317,10 +317,14 @@ trait NodeTrait
      *
      * @param bool $filterEmptyDOMText Filter empty DOMText nodes?
      *
+     * @deprecated Use NodeUtility::filterTextNodes, function will be removed in version 3.0
+     *
      * @return array
      */
     public function getChildren($filterEmptyDOMText = false)
     {
+        @trigger_error('getChildren was replaced with NodeUtility::filterTextNodes and will be removed in version 3.0', E_USER_DEPRECATED);
+
         $ret = iterator_to_array($this->childNodes);
         if ($filterEmptyDOMText) {
             // Array values is used to discard the key order. Needs to be 0 to whatever without skipping any number
@@ -418,12 +422,12 @@ trait NodeTrait
     public function hasSingleTagInsideElement($tag)
     {
         // There should be exactly 1 element child with given tag
-        if (count($children = $this->getChildren(true)) !== 1 || $children[0]->nodeName !== $tag) {
+        if (count($children = NodeUtility::filterTextNodes($this->childNodes)) !== 1 || $children->item(0)->nodeName !== $tag) {
             return false;
         }
 
         // And there should be no text nodes with real content
-        return array_reduce($children, function ($carry, $child) {
+        return array_reduce(iterator_to_array($children), function ($carry, $child) {
             if (!$carry === false) {
                 return false;
             }
@@ -443,7 +447,7 @@ trait NodeTrait
     {
         $result = false;
         if ($this->hasChildNodes()) {
-            foreach ($this->getChildren() as $child) {
+            foreach ($this->childNodes as $child) {
                 if (in_array($child->nodeName, $this->divToPElements)) {
                     $result = true;
                 } else {
@@ -500,18 +504,22 @@ trait NodeTrait
             );
     }
 
+    /**
+     * In the original JS project they check if the node has the style display=none, which unfortunately
+     * in our case we have no way of knowing that. So we just check for the attribute hidden or "display: none".
+     *
+     * Might be a good idea to check for classes or other attributes like 'aria-hidden'
+     *
+     * @return bool
+     */
     public function isProbablyVisible()
     {
-        /*
-         * In the original JS project they check if the node has the style display=none, which unfortunately
-         * in our case we have no way of knowing that. So we just check for the attribute hidden or "display: none".
-         *
-         * Might be a good idea to check for classes or other attributes like 'aria-hidden'
-         */
-
         return !preg_match('/display:( )?none/', $this->getAttribute('style')) && !$this->hasAttribute('hidden');
     }
 
+    /**
+     * @return bool
+     */
     public function isWhitespace()
     {
         return ($this->nodeType === XML_TEXT_NODE && mb_strlen(trim($this->textContent)) === 0) ||
@@ -556,5 +564,24 @@ trait NodeTrait
             // Subtract the amount of nodes removed from the current count
             $count -= ($count - $nodes->length);
         }
+    }
+
+    /**
+     * Mimics JS's firstElementChild property. PHP only has firstChild which could be any type of DOMNode. Use this
+     * function to get the first one that is an DOMElement node.
+     *
+     * @return \DOMElement|null
+     */
+    public function getFirstElementChild()
+    {
+        if ($this->childNodes instanceof \Traversable) {
+            foreach ($this->childNodes as $node) {
+                if ($node instanceof \DOMElement) {
+                    return $node;
+                }
+            }
+        }
+
+        return null;
     }
 }

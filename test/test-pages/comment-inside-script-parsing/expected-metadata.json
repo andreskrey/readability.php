@@ -1,7 +1,8 @@
 {
-    "Title": "Test script parsing",
     "Author": null,
-    "Excerpt": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\n        tempor incididunt ut labore et dolore magna aliqua.",
     "Direction": null,
-    "Image": null
+    "Excerpt": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\n        tempor incididunt ut labore et dolore magna aliqua.",
+    "Image": null,
+    "Title": "Test script parsing",
+    "SiteName": null
 }

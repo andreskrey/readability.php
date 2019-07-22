@@ -57,6 +57,13 @@ class Readability
     protected $author = null;
 
     /**
+     * Website name.
+     *
+     * @var string|null
+     */
+    protected $siteName = null;
+
+    /**
      * Direction of the text.
      *
      * @var string|null
@@ -287,10 +294,10 @@ class Readability
 
         $values = [];
         // property is a space-separated list of values
-        $propertyPattern = '/\s*(dc|dcterm|og|twitter)\s*:\s*(author|creator|description|title|image)\s*/i';
+        $propertyPattern = '/\s*(dc|dcterm|og|twitter)\s*:\s*(author|creator|description|title|image|site_name)(?!:)\s*/i';
 
         // name is a single value
-        $namePattern = '/^\s*(?:(dc|dcterm|og|twitter|weibo:(article|webpage))\s*[\.:]\s*)?(author|creator|description|title|image)\s*$/i';
+        $namePattern = '/^\s*(?:(dc|dcterm|og|twitter|weibo:(article|webpage))\s*[\.:]\s*)?(author|creator|description|title|image|site_name)(?!:)\s*$/i';
 
         // Find description tags.
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
@@ -332,7 +339,6 @@ class Readability
          * This could be easily replaced with an ugly set of isset($values['key']) or a bunch of ??s.
          * Will probably replace it with ??s after dropping support of PHP5.6
          */
-
         $key = current(array_intersect([
             'dc:title',
             'dcterm:title',
@@ -373,11 +379,18 @@ class Readability
 
         // get main image
         $key = current(array_intersect([
+            'image',
             'og:image',
             'twitter:image'
         ], array_keys($values)));
 
         $this->setImage(isset($values[$key]) ? $values[$key] : null);
+
+        $key = current(array_intersect([
+            'og:site_name'
+        ], array_keys($values)));
+
+        $this->setSiteName(isset($values[$key]) ? $values[$key] : null);
     }
 
     /**
@@ -722,7 +735,7 @@ class Readability
                  */
                 if ($node->hasSingleTagInsideElement('p') && $node->getLinkDensity() < 0.25) {
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single P node, removing DIV. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
-                    $pNode = $node->getChildren(true)[0];
+                    $pNode = NodeUtility::filterTextNodes($node->childNodes)->item(0);
                     $node->parentNode->replaceChild($pNode, $node);
                     $node = $pNode;
                     $elementsToScore[] = $node;
@@ -1082,7 +1095,7 @@ class Readability
             // If the top candidate is the only child, use parent instead. This will help sibling
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->parentNode;
-            while ($parentOfTopCandidate->nodeName !== 'body' && count($parentOfTopCandidate->getChildren(true)) === 1) {
+            while ($parentOfTopCandidate->nodeName !== 'body' && count(NodeUtility::filterTextNodes($parentOfTopCandidate->childNodes)) === 1) {
                 $topCandidate = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->parentNode;
             }
@@ -1102,14 +1115,16 @@ class Readability
         $siblingScoreThreshold = max(10, $topCandidate->contentScore * 0.2);
         // Keep potential top candidate's parent node to try to get text direction of it later.
         $parentOfTopCandidate = $topCandidate->parentNode;
-        $siblings = $parentOfTopCandidate->getChildren();
+        $siblings = $parentOfTopCandidate->childNodes;
 
         $hasContent = false;
 
         $this->logger->info('[Rating] Adding top candidate siblings...');
 
-        /** @var DOMElement $sibling */
-        foreach ($siblings as $sibling) {
+        /* @var DOMElement $sibling */
+        // Can't foreach here because down there we might change the tag name and that causes the foreach to skip items
+        for ($i = 0; $i < $siblings->length; $i++) {
+            $sibling = $siblings[$i];
             $append = false;
 
             if ($sibling === $topCandidate) {
@@ -1147,7 +1162,6 @@ class Readability
                      * We have a node that isn't a common block level element, like a form or td tag.
                      * Turn it into a div so it doesn't get filtered out later by accident.
                      */
-
                     $sibling = NodeUtility::setNodeTag($sibling, 'div');
                 }
 
@@ -1266,11 +1280,11 @@ class Readability
         // Remove single-cell tables
         foreach ($article->shiftingAwareGetElementsByTagName('table') as $table) {
             /** @var DOMNode $table */
-            $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->childNodes[0] : $table;
+            $tbody = $table->hasSingleTagInsideElement('tbody') ? $table->getFirstElementChild() : $table;
             if ($tbody->hasSingleTagInsideElement('tr')) {
-                $row = $tbody->firstChild;
+                $row = $tbody->getFirstElementChild();
                 if ($row->hasSingleTagInsideElement('td')) {
-                    $cell = $row->firstChild;
+                    $cell = $row->getFirstElementChild();
                     $cell = NodeUtility::setNodeTag($cell, (array_reduce(iterator_to_array($cell->childNodes), function ($carry, $node) {
                         return $node->isPhrasingContent() && $carry;
                     }, true)) ? 'p' : 'div');
@@ -1597,7 +1611,7 @@ class Readability
             $node->removeAttribute('class');
         }
 
-        for ($node = $node->firstChild; $node !== null; $node = $node->nextSibling) {
+        for ($node = $node->getFirstElementChild(); $node !== null; $node = $node->nextSibling) {
             $this->_cleanClasses($node);
         }
     }
@@ -1754,6 +1768,22 @@ class Readability
     protected function setAuthor($author)
     {
         $this->author = $author;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSiteName()
+    {
+        return $this->siteName;
+    }
+
+    /**
+     * @param string $siteName
+     */
+    protected function setSiteName($siteName)
+    {
+        $this->siteName = $siteName;
     }
 
     /**

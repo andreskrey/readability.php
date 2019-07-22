@@ -5,6 +5,7 @@ namespace andreskrey\Readability\Nodes;
 use andreskrey\Readability\Nodes\DOM\DOMDocument;
 use andreskrey\Readability\Nodes\DOM\DOMElement;
 use andreskrey\Readability\Nodes\DOM\DOMNode;
+use andreskrey\Readability\Nodes\DOM\DOMNodeList;
 
 /**
  * Class NodeUtility.
@@ -156,5 +157,24 @@ class NodeUtility
         } while ($originalNode && !$originalNode->nextSibling);
 
         return ($originalNode) ? $originalNode->nextSibling : $originalNode;
+    }
+
+    /**
+     * Remove all empty DOMNodes from DOMNodeLists.
+     *
+     * @param \DOMNodeList $list
+     *
+     * @return DOMNodeList
+     */
+    public static function filterTextNodes(\DOMNodeList $list)
+    {
+        $newList = new DOMNodeList();
+        foreach ($list as $node) {
+            if ($node->nodeType !== XML_TEXT_NODE || mb_strlen(trim($node->nodeValue))) {
+                $newList->add($node);
+            }
+        }
+
+        return $newList;
     }
 }

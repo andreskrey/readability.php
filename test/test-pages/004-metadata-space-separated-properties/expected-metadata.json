@@ -1,7 +1,8 @@
 {
-    "Title": "Preferred title",
     "Author": "Creator Name",
-    "Excerpt": "Preferred description",
     "Direction": null,
-    "Image": null
+    "Excerpt": "Preferred description",
+    "Image": "http:\/\/fakehost.com\/image.jpg",
+    "Title": "Preferred title",
+    "SiteName": null
 }
