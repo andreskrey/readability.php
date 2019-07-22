@@ -167,7 +167,7 @@ Readability parses all the text with DOMDocument, scans the text nodes and gives
 
 ## Testing
 
-Any version of PHP installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.0, 7.1, and 7.2.
+Any version of PHP installed locally should be enough to develop new features and add new test cases. If you want to be 100% sure that your change doesn't create any issues with other versions of PHP, you can use the provided Docker containers to test currently in 7.0, 7.1, 7.2, and 7.3.
 
 You'll need Docker and Docker Compose for this. To run all the tests in all the available versions just type the following command:
 
@@ -175,7 +175,9 @@ You'll need Docker and Docker Compose for this. To run all the tests in all the 
 make test-all
 ```
 
-This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.0`, `make test-7.1`, or `make test-7.2`.
+This will start all the containers and run all the tests on every supported version of PHP. If you want to test against a specific version, you can use `make test-7.0`, `make test-7.1`, `make test-7.2`, or `make test-7.3`.
+
+If you really want to test against every supported version of PHP and every supported version of libxml, run `test-all-versions`. This will test against PHP versions 7 to 7.3 and libxml versions 2.9.4 to 2.9.9. Normally you won't need to do this unless you think you've found a bug on an specific version of libxml.
 
 ## Code porting
 
