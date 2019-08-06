@@ -1,5 +1,5 @@
 {
-    "name": "andreskrey/readability.php",
+  "name": "drumser/readability.php",
     "type": "library",
     "description": "A PHP port of Readability.js",
     "keywords": ["readability", "html"],
