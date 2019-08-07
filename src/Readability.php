@@ -921,8 +921,10 @@ class Readability
                 continue;
             }
 
+            $hasViqeoPlayer = $node->getElementsByTagName('amp-viqeo-player')->length > 0;
+
             // Discard nodes with less than 25 characters, without blank space
-            if (mb_strlen($node->getTextContent(true)) < 25) {
+            if (!$hasViqeoPlayer && mb_strlen($node->getTextContent(true)) < 25) {
                 continue;
             }
 
@@ -1422,14 +1424,16 @@ class Readability
         $length = $paragraphs->length;
 
         for ($i = 0; $i < $length; $i++) {
+            /** @var DOMNode $paragraph */
             $paragraph = $paragraphs->item($length - 1 - $i);
 
             $imgCount = $paragraph->getElementsByTagName('img')->length;
             $embedCount = $paragraph->getElementsByTagName('embed')->length;
             $objectCount = $paragraph->getElementsByTagName('object')->length;
             // At this point, nasty iframes have been removed, only remain embedded video ones.
-            $iframeCount = $paragraph->getElementsByTagName('iframe')->length;
-            $totalCount = $imgCount + $embedCount + $objectCount + $iframeCount;
+            $iframeCount         = $paragraph->getElementsByTagName('iframe')->length;
+            $ampViqeoPlayerCount = $paragraph->getElementsByTagName('amp-viqeo-player')->length;
+            $totalCount          = $imgCount + $embedCount + $objectCount + $iframeCount + $ampViqeoPlayerCount;
 
             if ($totalCount === 0 && !preg_replace(NodeUtility::$regexps['onlyWhitespace'], '', $paragraph->textContent)) {
                 $this->logger->debug(sprintf('[PrepArticle] Removing extra paragraph. Text content was: \'%s\'', substr($paragraph->textContent, 0, 128)));
@@ -1496,12 +1500,25 @@ class Readability
                 $input = $node->getElementsByTagName('input')->length;
 
                 $embedCount = 0;
-                $embeds = $node->getElementsByTagName('embed');
+                $embeds     = $node->getElementsByTagName('embed');
+                $iframes    = $node->getElementsByTagName('iframe');
 
                 foreach ($embeds as $embedNode) {
                     if (preg_match(NodeUtility::$regexps['videos'], $embedNode->C14N())) {
                         $embedCount++;
                     }
+                }
+
+                $forceNotRemove = false;
+
+                foreach ($iframes as $embedNode) {
+                    if (preg_match(NodeUtility::$regexps['videos'], $embedNode->C14N())) {
+                        $forceNotRemove = true;
+                    }
+                }
+
+                if ($forceNotRemove) {
+                    continue;
                 }
 
                 $linkDensity = $node->getLinkDensity();
