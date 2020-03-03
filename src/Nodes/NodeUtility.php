@@ -30,7 +30,7 @@ class NodeUtility
         'whitespace'           => '/^\s*$/',
         'hasContent'           => '/\S$/',
         'positive'             => '/viqeo|amp-viqeo-player|article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story/i',
-        'negative'             => '/hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|foot|footer|footnote|masthead|media|meta|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|tool|widget/i',
+        'negative'             => '/hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|foot|footer|footnote|masthead|media$|meta|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|tool|widget/i',
         // \x{00A0} is the unicode version of &nbsp;
         'onlyWhitespace'       => '/\x{00A0}|\s+/u'
     ];
