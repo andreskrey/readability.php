@@ -490,16 +490,16 @@ class Readability
          * Sanity warning: if you eval this match in PHPStorm's "Evaluate expression" box, it will return false
          * I can assure you it works properly if you let the code run.
          */
-        if (mb_ereg_match('/ [\|\-\\\\\/>»] /i', $curTitle)) {
-            $titleHadHierarchicalSeparators = (bool)mb_ereg_match('/ [\\\\\/>»] /', $curTitle);
-            $curTitle                       = mb_ereg_replace('/(.*)[\|\-\\\\\/>»] .*/i', '$1', $originalTitle);
+        if (preg_match('/ [\|\-\\\\\/>»] /ui', $curTitle)) {
+            $titleHadHierarchicalSeparators = (bool)preg_match('/ [\\\\\/>»] /u', $curTitle);
+            $curTitle                       = preg_replace('/(.*)[\|\-\\\\\/>»] .*/iu', '$1', $originalTitle);
 
             $this->logger->info(sprintf('[Metadata] Found hierarchical separators in title, new title is: \'%s\'', $curTitle));
 
             // If the resulting title is too short (3 words or fewer), remove
             // the first part instead:
             if (count(preg_split('/\s+/', $curTitle)) < 3) {
-                $curTitle = mb_ereg_replace('/[^\|\-\\\\\/>»]*[\|\-\\\\\/>»](.*)/i', '$1', $originalTitle);
+                $curTitle = preg_replace('/[^\|\-\\\\\/>»]*[\|\-\\\\\/>»](.*)/iu', '$1', $originalTitle);
                 $this->logger->info(sprintf('[Metadata] Title too short, using the first part of the title instead: \'%s\'', $curTitle));
             }
         } elseif (strpos($curTitle, ': ') !== false) {
