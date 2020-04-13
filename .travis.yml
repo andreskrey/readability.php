@@ -55,7 +55,7 @@ install:
   - docker run --rm --volume $PWD:/app --workdir="/app" composer install
 
 script:
-  - docker build --build-arg PHP_VERSION=${PHP_VERSION} --build-arg LIBXML_VERSION=${LIBXML_VERSION} XDEBUG_VERSION=${XDEBUG_VERSION} -t travis-build - < ./docker/php/Dockerfile
+  - docker build --build-arg PHP_VERSION=${PHP_VERSION} --build-arg LIBXML_VERSION=${LIBXML_VERSION} --build-arg XDEBUG_VERSION=${XDEBUG_VERSION} -t travis-build - < ./docker/php/Dockerfile
   - docker run --volume $PWD:/app --workdir="/app" travis-build php ./vendor/bin/phpunit --coverage-clover /app/test/clover.xml
 
 after_script:
