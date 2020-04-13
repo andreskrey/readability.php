@@ -7,7 +7,6 @@ enabled:
 disabled:
   - concat_without_spaces
   - align_double_arrow
-  - simplified_null_return
   - cast_spaces
   - trailing_comma_in_multiline_array
   - phpdoc_align
