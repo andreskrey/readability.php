@@ -124,7 +124,7 @@ class Readability
     public function __construct(Configuration $configuration)
     {
         $this->configuration = $configuration;
-        $this->logger = $this->configuration->getLogger();
+        $this->logger        = $this->configuration->getLogger();
     }
 
     /**
@@ -132,9 +132,9 @@ class Readability
      *
      * @param $html
      *
+     * @return bool
      * @throws ParseException
      *
-     * @return bool
      */
     public function parse($html)
     {
@@ -175,7 +175,7 @@ class Readability
 
             if ($result && $length < $this->configuration->getCharThreshold()) {
                 $this->dom = $this->loadHTML($html);
-                $root = $this->dom->getElementsByTagName('body')->item(0);
+                $root      = $this->dom->getElementsByTagName('body')->item(0);
 
                 if ($this->configuration->getStripUnlikelyCandidates()) {
                     $this->logger->debug('[Parsing] Threshold not met, trying again setting StripUnlikelyCandidates as false');
@@ -294,7 +294,7 @@ class Readability
 
         $values = [];
         // property is a space-separated list of values
-        $propertyPattern = '/\s*(dc|dcterm|og|twitter)\s*:\s*(author|creator|description|title|image|site_name)(?!:)\s*/i';
+        $propertyPattern = '/\s*(dc|dcterm|og|viqeo|twitter)\s*:\s*(author|creator|description|title|image|site_name)(?!:)\s*/i';
 
         // name is a single value
         $namePattern = '/^\s*(?:(dc|dcterm|og|twitter|weibo:(article|webpage))\s*[\.:]\s*)?(author|creator|description|title|image|site_name)(?!:)\s*$/i';
@@ -302,11 +302,11 @@ class Readability
         // Find description tags.
         foreach ($this->dom->getElementsByTagName('meta') as $meta) {
             /* @var DOMNode $meta */
-            $elementName = $meta->getAttribute('name');
+            $elementName     = $meta->getAttribute('name');
             $elementProperty = $meta->getAttribute('property');
-            $content = $meta->getAttribute('content');
-            $matches = null;
-            $name = null;
+            $content         = $meta->getAttribute('content');
+            $matches         = null;
+            $name            = null;
 
             if ($elementProperty) {
                 if (preg_match($propertyPattern, $elementProperty, $matches)) {
@@ -325,7 +325,7 @@ class Readability
                 if ($content) {
                     // Convert to lowercase, remove any whitespace, and convert dots
                     // to colons so we can match below.
-                    $name = preg_replace(['/\s/', '/\./'], ['', ':'], mb_strtolower($name));
+                    $name          = preg_replace(['/\s/', '/\./'], ['', ':'], mb_strtolower($name));
                     $values[$name] = trim($content);
                 }
             }
@@ -340,6 +340,7 @@ class Readability
          * Will probably replace it with ??s after dropping support of PHP5.6
          */
         $key = current(array_intersect([
+            'viqeo:title',
             'dc:title',
             'dcterm:title',
             'og:title',
@@ -349,7 +350,7 @@ class Readability
             'twitter:title'
         ], array_keys($values)));
 
-        $this->setTitle(isset($values[$key]) ? trim($values[$key]) : null);
+        $this->setTitle($this->cleanTitle(isset($values[$key]) ? trim($values[$key]) : null));
 
         if (!$this->getTitle()) {
             $this->setTitle($this->getArticleTitle());
@@ -457,32 +458,9 @@ class Readability
         }
     }
 
-    /**
-     * Returns the title of the html. Prioritizes the title from the metadata against the title tag.
-     *
-     * @return string|null
-     */
-    private function getArticleTitle()
+    private function cleanTitle(string $originalTitle)
     {
-        $originalTitle = null;
-
-        if ($this->getTitle()) {
-            $originalTitle = $this->getTitle();
-        } else {
-            $this->logger->debug('[Metadata] Could not find title in metadata, searching for the title tag...');
-            $titleTag = $this->dom->getElementsByTagName('title');
-            if ($titleTag->length > 0) {
-                $this->logger->info(sprintf('[Metadata] Using title tag as article title: \'%s\'', $titleTag->item(0)->nodeValue));
-                $originalTitle = $titleTag->item(0)->nodeValue;
-            }
-        }
-
-        if ($originalTitle === null) {
-            return null;
-        }
-
-        $curTitle                       = $originalTitle = trim($originalTitle);
-        $titleHadHierarchicalSeparators = false;
+        $curTitle = $originalTitle = trim($originalTitle);
 
         /*
          * If there's a separator in the title, first remove the final part
@@ -542,15 +520,46 @@ class Readability
 
         $curTitle = trim($curTitle);
 
+        return $curTitle;
+    }
+
+    /**
+     * Returns the title of the html. Prioritizes the title from the metadata against the title tag.
+     *
+     * @return string|null
+     */
+    private function getArticleTitle()
+    {
+        $originalTitle = null;
+
+        if ($this->getTitle()) {
+            $originalTitle = $this->getTitle();
+        } else {
+            $this->logger->debug('[Metadata] Could not find title in metadata, searching for the title tag...');
+            $titleTag = $this->dom->getElementsByTagName('title');
+            if ($titleTag->length > 0) {
+                $this->logger->info(sprintf('[Metadata] Using title tag as article title: \'%s\'', $titleTag->item(0)->nodeValue));
+                $originalTitle = $titleTag->item(0)->nodeValue;
+            }
+        }
+
+        if ($originalTitle === null) {
+            return null;
+        }
+
+        $curTitle               = $this->cleanTitle($originalTitle);
+        $curTitleWordCount      = count(preg_split('/\s+/', $curTitle));
+        $originalTitleWordCount = count(preg_split('/\s+/', preg_replace('/[\|\-\\\\\/>»]+/', '', $originalTitle))) - 1;
+
+
+        $titleHadHierarchicalSeparators = preg_match('/ [\|\-\\\\\/>»] /ui', $curTitle) === 1 ? (bool)preg_match('/ [\\\\\/>»] /u', $curTitle) : false;
+
         /*
          * If we now have 4 words or fewer as our title, and either no
          * 'hierarchical' separators (\, /, > or ») were found in the original
          * title or we decreased the number of words by more than 1 word, use
          * the original title.
          */
-        $curTitleWordCount = count(preg_split('/\s+/', $curTitle));
-        $originalTitleWordCount = count(preg_split('/\s+/', preg_replace('/[\|\-\\\\\/>»]+/', '', $originalTitle))) - 1;
-
         if ($curTitleWordCount <= 4 &&
             (!$titleHadHierarchicalSeparators || $curTitleWordCount !== $originalTitleWordCount)) {
             $curTitle = $originalTitle;
@@ -604,7 +613,7 @@ class Readability
     /**
      * Returns full path info of an URL.
      *
-     * @param  string $url
+     * @param string $url
      *
      * @return array [$pathBase, $scheme, $prePath]
      */
@@ -623,7 +632,7 @@ class Readability
             $pathBase = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . dirname(parse_url($url, PHP_URL_PATH)) . '/';
         }
 
-        $scheme = parse_url($pathBase, PHP_URL_SCHEME);
+        $scheme  = parse_url($pathBase, PHP_URL_SCHEME);
         $prePath = $scheme . '://' . parse_url($pathBase, PHP_URL_HOST);
 
         return [$pathBase, $scheme, $prePath];
@@ -706,7 +715,7 @@ class Readability
             // Turn all divs that don't have children block level elements into p's
             if ($node->nodeName === 'div') {
                 // Put phrasing content into paragraphs.
-                $p = null;
+                $p         = null;
                 $childNode = $node->firstChild;
                 while ($childNode) {
                     $nextSibling = $childNode->nextSibling;
@@ -737,11 +746,11 @@ class Readability
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single P node, removing DIV. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
                     $pNode = NodeUtility::filterTextNodes($node->childNodes)->item(0);
                     $node->parentNode->replaceChild($pNode, $node);
-                    $node = $pNode;
+                    $node              = $pNode;
                     $elementsToScore[] = $node;
                 } elseif (!$node->hasSingleChildBlockElement()) {
                     $this->logger->debug(sprintf('[Get Nodes] Found DIV with a single child block element, converting to a P node. Node content is: \'%s\'', substr($node->nodeValue, 0, 128)));
-                    $node = NodeUtility::setNodeTag($node, 'p');
+                    $node              = NodeUtility::setNodeTag($node, 'p');
                     $elementsToScore[] = $node;
                 }
             }
@@ -844,7 +853,7 @@ class Readability
             while (($next = NodeUtility::nextElement($next)) && ($next->nodeName === 'br')) {
                 $this->logger->debug('[PrepDocument] Removing chain of BR nodes...');
 
-                $replaced = true;
+                $replaced  = true;
                 $brSibling = $next->nextSibling;
                 $next->parentNode->removeChild($next);
                 $next = $brSibling;
@@ -893,7 +902,7 @@ class Readability
         }
 
         // Replace font tags with span
-        $fonts = $dom->getElementsByTagName('font');
+        $fonts  = $dom->getElementsByTagName('font');
         $length = $fonts->length;
         for ($i = 0; $i < $length; $i++) {
             $this->logger->debug('[PrepDocument] Converting font tag into a span tag.');
@@ -969,7 +978,7 @@ class Readability
                     $scoreDivider = $level * 3;
                 }
 
-                $currentScore = $ancestor->contentScore;
+                $currentScore           = $ancestor->contentScore;
                 $ancestor->contentScore = $currentScore + ($contentScore / $scoreDivider);
 
                 $this->logger->debug(sprintf('[Rating] Ancestor score %s, value: \'%s\'', $ancestor->contentScore, substr($ancestor->nodeValue, 0, 128)));
@@ -1005,7 +1014,7 @@ class Readability
             }
         }
 
-        $topCandidate = isset($topCandidates[0]) ? $topCandidates[0] : null;
+        $topCandidate         = isset($topCandidates[0]) ? $topCandidates[0] : null;
         $parentOfTopCandidate = null;
 
         /*
@@ -1017,7 +1026,7 @@ class Readability
             $this->logger->info('[Rating] No top candidate found or top candidate is the body tag. Moving all child nodes to a new DIV node.');
 
             // Move all of the page's children into topCandidate
-            $topCandidate = new DOMDocument('1.0', 'utf-8');
+            $topCandidate           = new DOMDocument('1.0', 'utf-8');
             $topCandidate->encoding = 'UTF-8';
             $topCandidate->appendChild($topCandidate->createElement('div', ''));
             $kids = $this->dom->getElementsByTagName('body')->item(0)->childNodes;
@@ -1072,7 +1081,7 @@ class Readability
              */
 
             $parentOfTopCandidate = $topCandidate->parentNode;
-            $lastScore = $topCandidate->contentScore;
+            $lastScore            = $topCandidate->contentScore;
 
             // The scores shouldn't get too low.
             $scoreThreshold = $lastScore / 3;
@@ -1090,7 +1099,7 @@ class Readability
                     $this->logger->info('[Rating] Found a better top candidate.');
                     break;
                 }
-                $lastScore = $parentOfTopCandidate->contentScore;
+                $lastScore            = $parentOfTopCandidate->contentScore;
                 $parentOfTopCandidate = $parentOfTopCandidate->parentNode;
             }
 
@@ -1098,7 +1107,7 @@ class Readability
             // joining logic when adjacent content is actually located in parent's sibling node.
             $parentOfTopCandidate = $topCandidate->parentNode;
             while ($parentOfTopCandidate->nodeName !== 'body' && count(NodeUtility::filterTextNodes($parentOfTopCandidate->childNodes)) === 1) {
-                $topCandidate = $parentOfTopCandidate;
+                $topCandidate         = $parentOfTopCandidate;
                 $parentOfTopCandidate = $topCandidate->parentNode;
             }
         }
@@ -1117,7 +1126,7 @@ class Readability
         $siblingScoreThreshold = max(10, $topCandidate->contentScore * 0.2);
         // Keep potential top candidate's parent node to try to get text direction of it later.
         $parentOfTopCandidate = $topCandidate->parentNode;
-        $siblings = $parentOfTopCandidate->childNodes;
+        $siblings             = $parentOfTopCandidate->childNodes;
 
         $hasContent = false;
 
@@ -1127,7 +1136,7 @@ class Readability
         // Can't foreach here because down there we might change the tag name and that causes the foreach to skip items
         for ($i = 0; $i < $siblings->length; $i++) {
             $sibling = $siblings[$i];
-            $append = false;
+            $append  = false;
 
             if ($sibling === $topCandidate) {
                 $this->logger->debug('[Rating] Sibling is equal to the top candidate, adding to the final article...');
@@ -1402,7 +1411,7 @@ class Readability
     public function _cleanMatchedNodes($node, $regex)
     {
         $endOfSearchMarkerNode = NodeUtility::getNextNode($node, true);
-        $next = NodeUtility::getNextNode($node);
+        $next                  = NodeUtility::getNextNode($node);
         while ($next && $next !== $endOfSearchMarkerNode) {
             if (preg_match($regex, sprintf('%s %s', $next->getAttribute('class'), $next->getAttribute('id')))) {
                 $this->logger->debug(sprintf('Removing matched node with regex: \'%s\', node class was: \'%s\', id: \'%s\'', $regex, $next->getAttribute('class'), $next->getAttribute('id')));
@@ -1421,14 +1430,14 @@ class Readability
     public function _cleanExtraParagraphs(DOMDocument $article)
     {
         $paragraphs = $article->getElementsByTagName('p');
-        $length = $paragraphs->length;
+        $length     = $paragraphs->length;
 
         for ($i = 0; $i < $length; $i++) {
             /** @var DOMNode $paragraph */
             $paragraph = $paragraphs->item($length - 1 - $i);
 
-            $imgCount = $paragraph->getElementsByTagName('img')->length;
-            $embedCount = $paragraph->getElementsByTagName('embed')->length;
+            $imgCount    = $paragraph->getElementsByTagName('img')->length;
+            $embedCount  = $paragraph->getElementsByTagName('embed')->length;
             $objectCount = $paragraph->getElementsByTagName('object')->length;
             // At this point, nasty iframes have been removed, only remain embedded video ones.
             $iframeCount         = $paragraph->getElementsByTagName('iframe')->length;
@@ -1463,7 +1472,7 @@ class Readability
          */
 
         $DOMNodeList = $article->getElementsByTagName($tag);
-        $length = $DOMNodeList->length;
+        $length      = $DOMNodeList->length;
         for ($i = 0; $i < $length; $i++) {
             /** @var $node DOMElement */
             $node = $DOMNodeList->item($length - 1 - $i);
@@ -1494,9 +1503,9 @@ class Readability
                  * ominous signs, remove the element.
                  */
 
-                $p = $node->getElementsByTagName('p')->length;
-                $img = $node->getElementsByTagName('img')->length;
-                $li = $node->getElementsByTagName('li')->length - 100;
+                $p     = $node->getElementsByTagName('p')->length;
+                $img   = $node->getElementsByTagName('img')->length;
+                $li    = $node->getElementsByTagName('li')->length - 100;
                 $input = $node->getElementsByTagName('input')->length;
 
                 $embedCount = 0;
@@ -1521,7 +1530,7 @@ class Readability
                     continue;
                 }
 
-                $linkDensity = $node->getLinkDensity();
+                $linkDensity   = $node->getLinkDensity();
                 $contentLength = mb_strlen($node->getTextContent(true));
 
                 $haveToRemove =
@@ -1556,7 +1565,7 @@ class Readability
         $isEmbed = in_array($tag, ['object', 'embed', 'iframe']);
 
         $DOMNodeList = $article->getElementsByTagName($tag);
-        $length = $DOMNodeList->length;
+        $length      = $DOMNodeList->length;
         for ($i = 0; $i < $length; $i++) {
             $item = $DOMNodeList->item($length - 1 - $i);
 
