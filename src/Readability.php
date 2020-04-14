@@ -461,7 +461,6 @@ class Readability
     private function cleanTitle(string $originalTitle)
     {
         $curTitle = $originalTitle = trim($originalTitle);
-        $curTitle = 'Заголовок - 7Дней.ру';
 
         /*
          * If there's a separator in the title, first remove the final part
