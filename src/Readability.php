@@ -461,6 +461,7 @@ class Readability
     private function cleanTitle(string $originalTitle)
     {
         $curTitle = $originalTitle = trim($originalTitle);
+        $curTitle = 'Заголовок - 7Дней.ру';
 
         /*
          * If there's a separator in the title, first remove the final part
@@ -475,11 +476,6 @@ class Readability
             $this->logger->info(sprintf('[Metadata] Found hierarchical separators in title, new title is: \'%s\'', $curTitle));
 
             // If the resulting title is too short (3 words or fewer), remove
-            // the first part instead:
-            if (count(preg_split('/\s+/', $curTitle)) < 3) {
-                $curTitle = preg_replace('/[^\|\-\\\\\/>»]*[\|\-\\\\\/>»](.*)/iu', '$1', $originalTitle);
-                $this->logger->info(sprintf('[Metadata] Title too short, using the first part of the title instead: \'%s\'', $curTitle));
-            }
         } elseif (strpos($curTitle, ': ') !== false) {
             // Check if we have an heading containing this exact string, so we
             // could assume it's the full title.
