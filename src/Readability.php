@@ -458,8 +458,11 @@ class Readability
         }
     }
 
-    private function cleanTitle(string $originalTitle)
+    private function cleanTitle(string $originalTitle = null)
     {
+        if ($originalTitle === null) {
+            return null;
+        }
         $curTitle = $originalTitle = trim($originalTitle);
 
         /*
