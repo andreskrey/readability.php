@@ -1675,20 +1675,21 @@ class Readability
                 /*
                  * Extract all possible sources of img url and select the first one on the list.
                  */
-                $url = [
-                    $img->getAttribute('src'),
-                    $img->getAttribute('data-src'),
-                    $img->getAttribute('data-original'),
-                    $img->getAttribute('data-orig'),
-                    $img->getAttribute('data-url')
+                $urls = [
+                    'src'           => $img->getAttribute('src'),
+                    'data-src'      => $img->getAttribute('data-src'),
+                    'data-original' => $img->getAttribute('data-original'),
+                    'data-orig'     => $img->getAttribute('data-orig'),
+                    'data-url'      => $img->getAttribute('data-url')
                 ];
 
-                $src = array_filter($url);
-                $src = reset($src);
-                if ($src) {
-                    $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($src, 0, 128)));
+                foreach ($urls as $tag => $url) {
+                    $src = $url;
+                    if ($src) {
+                        $this->logger->debug(sprintf('[PostProcess] Converting image URL to absolute URI: \'%s\'', substr($src, 0, 128)));
 
-                    $img->setAttribute('src', $this->toAbsoluteURI($src));
+                        $img->setAttribute($tag, $this->toAbsoluteURI($src));
+                    }
                 }
             }
         }
