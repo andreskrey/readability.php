@@ -1,13 +1,14 @@
 # Readability.php
-[![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![Build Status](https://travis-ci.org/andreskrey/readability.php.svg?branch=master)](https://travis-ci.org/andreskrey/readability.php) [![Coverage Status](https://coveralls.io/repos/github/andreskrey/readability.php/badge.svg?branch=master)](https://coveralls.io/github/andreskrey/readability.php/?branch=master) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Total Downloads](https://poser.pugx.org/andreskrey/readability.php/downloads)](https://packagist.org/packages/andreskrey/readability.php) [![Monthly Downloads](https://poser.pugx.org/andreskrey/readability.php/d/monthly)](https://packagist.org/packages/andreskrey/readability.php)
+[![Build Status](https://travis-ci.org/drumser/readability.php.svg?branch=master)](https://travis-ci.org/drumser/readability.php)
 
-PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and returns **title**, **author**, **main image** and **text content** without nav bars, ads, footers, or anything that isn't the main body of the text. Analyzes each node, gives them a score, and determines what's relevant and what can be discarded.
+Fork of https://github.com/andreskrey/readability.php is so which in turn is the PHP port of *Mozilla's* **[Readability.js](https://github.com/mozilla/readability)**. Parses html text (usually news and other articles) and returns **title**, **author**, **main image** and **text content** without nav bars, ads, footers, or anything that isn't the main body of the text. Analyzes each node, gives them a score, and determines what's relevant and what can be discarded.
 
 ![Screenshot](https://raw.githubusercontent.com/andreskrey/readability.php/assets/screenshot.png)
 
 The project aim is to be a 1 to 1 port of Mozilla's version and to follow closely all changes introduced there, but there are some major differences on the structure. Most of the code is a 1:1 copy –even the comments were imported– but some functions and structures were adapted to suit better the PHP language.
 
-**Lead Developer**: Andres Rey
+**Original Developer**: Andres Rey
+**This repository Developer**: Aleksandr Kladov
 
 ## Requirements
 
@@ -19,11 +20,11 @@ PHP 7.0+, ext-dom, ext-xml, and ext-mbstring. To install all this dependencies (
 
 First you have to require the library using composer:
 
-`composer require andreskrey/readability.php`
+`composer require drumser/readability.php`
 
 Then, create a Readability class and pass a Configuration class, feed the `parse()` function with your HTML and echo the variable:
 
-```php 
+```php
 use andreskrey\Readability\Readability;
 use andreskrey\Readability\Configuration;
 use andreskrey\Readability\ParseException;
@@ -87,11 +88,11 @@ Then you pass this Configuration object to Readability. The following options ar
 
 - **MaxTopCandidates**: default value `5`, max amount of top level candidates.
 - **CharThreshold**: default value `500`, minimum amount of characters to consider that the article was parsed successful.
-- **ArticleByLine**: default value `false`, search for the article byline and remove it from the text. It will be moved to the article metadata. 
-- **StripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles. 
-- **CleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result. 
-- **WeightClasses**: default value `true`, weight classes during the rating phase. 
-- **FixRelativeURLs**: default value `false`, convert relative URLs to absolute. Like `/test` to `http://host/test`. 
+- **ArticleByLine**: default value `false`, search for the article byline and remove it from the text. It will be moved to the article metadata.
+- **StripUnlikelyCandidates**: default value `true`, remove nodes that are unlikely to have relevant information. Useful for debugging or parsing complex or non-standard articles.
+- **CleanConditionally**: default value `true`, remove certain nodes after parsing to return a cleaner result.
+- **WeightClasses**: default value `true`, weight classes during the rating phase.
+- **FixRelativeURLs**: default value `false`, convert relative URLs to absolute. Like `/test` to `http://host/test`.
 - **SubstituteEntities**: default value `false`, disables the `substituteEntities` flag of libxml. Will avoid substituting HTML entities. Like `&aacute;` to á.
 - **NormalizeEntities**: default value `false`, converts UTF-8 characters to its HTML Entity equivalent. Useful to parse HTML with mixed encoding.
 - **OriginalURL**: default value `http://fakehost`, original URL from the article used to fix relative URLs.
@@ -114,7 +115,7 @@ In the log you will find information about the parsed nodes, why they were remov
 
 ## Limitations
 
-Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php need to be complete and all the content should be in the HTML already.  
+Of course the main limitation is PHP. Websites that load the content through lazy loading, AJAX, or any type of javascript fueled call will be ignored (actually, *not ran*) and the resulting text will be incorrect, compared to the readability.js results. All the articles you want to parse with readability.php need to be complete and all the content should be in the HTML already.
 
 ## Known Issues
 
@@ -182,7 +183,7 @@ If you really want to test against every supported version of PHP and every supp
 ## Code porting
 
 Up to date with readability.js as of [19 Nov 2018](https://github.com/mozilla/readability/commit/876c81f710711ba2afb36dd83889d4c5b4fc2743).
- 
+
 ## License
 
 Based on Arc90's readability.js (1.7.1) script available at: http://code.google.com/p/arc90labs-readability
