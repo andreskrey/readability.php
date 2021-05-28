@@ -1,0 +1,38 @@
+name: PHPUnit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+
+    strategy:
+      # do not stop on another job's failure
+      fail-fast: false
+      matrix:
+        php-versions: ['7.0', '7.1', '7.2', '7.3', '7.4', '8.0']
+
+    name: php${{ matrix.php-versions }}
+
+    steps:
+      - name: Set up php ${{ matrix.php-versions }}
+        uses: shivammathur/setup-php@v1
+        with:
+          php-version: ${{ matrix.php-versions }}
+          tools: phpunit
+          extensions: dom, xml, fileinfo, mbstring
+
+      - name: Checkout app
+        uses: actions/checkout@v2
+
+      - name: Set up PHPUnit
+        working-directory: apps/${{ env.APP_NAME }}
+        run: composer install
+
+      - name: PHPUnit & coverage
+        working-directory: apps/${{ env.APP_NAME }}
+        run: ./vendor/bin/phpunit -c phpunit.xml
