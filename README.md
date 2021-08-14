@@ -1,3 +1,7 @@
+# ⚠️ Library Abandoned ⚠️
+
+## Go to [fivefilters/readability.php](https://github.com/fivefilters/readability.php) for an up-to-date, maintained version.
+
 # Readability.php
 [![Latest Stable Version](https://poser.pugx.org/andreskrey/readability.php/v/stable)](https://packagist.org/packages/andreskrey/readability.php) [![Build Status](https://travis-ci.org/andreskrey/readability.php.svg?branch=master)](https://travis-ci.org/andreskrey/readability.php) [![Coverage Status](https://coveralls.io/repos/github/andreskrey/readability.php/badge.svg?branch=master)](https://coveralls.io/github/andreskrey/readability.php/?branch=master) [![StyleCI](https://styleci.io/repos/71042668/shield?branch=master)](https://styleci.io/repos/71042668) [![Total Downloads](https://poser.pugx.org/andreskrey/readability.php/downloads)](https://packagist.org/packages/andreskrey/readability.php) [![Monthly Downloads](https://poser.pugx.org/andreskrey/readability.php/d/monthly)](https://packagist.org/packages/andreskrey/readability.php)
 

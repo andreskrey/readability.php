@@ -33,5 +33,6 @@
     },
     "suggest": {
         "monolog/monolog": "Allow logging debug information"
-    }
+    },
+    "abandoned": "fivefilters/readability.php"
 }
